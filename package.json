@@ -5,8 +5,10 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite",
-    "openapi:lint": "redocly lint management --format stylish",
-    "openapi:bundle": "redocly bundle management --output artifacts/management.yaml"
+    "openapi:lint": "redocly lint api management --format stylish",
+    "openapi:bundle": "redocly bundle api --output artifacts/api.yaml && redocly bundle management --output artifacts/management.yaml",
+    "gate": "node scripts/pre-sprint1-gate.mjs",
+    "test:gate": "node --test scripts/pre-sprint1-gate.test.mjs"
   },
   "devDependencies": {
     "@redocly/cli": "2.57.0",

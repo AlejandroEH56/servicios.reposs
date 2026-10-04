@@ -1,0 +1,50 @@
+name: Modernization quality
+on:
+  pull_request:
+  push:
+    branches: [main, master]
+permissions:
+  contents: read
+jobs:
+  backend:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
+        with:
+          php-version: '8.4.26'
+          extensions: pdo_sqlite, pdo_mysql, mbstring, openssl
+          tools: composer:2.10.3
+          coverage: none
+      - run: composer validate --strict
+      - run: composer install --no-interaction --prefer-dist
+      - run: php vendor/bin/phpunit
+      - run: composer analyse
+      - run: composer audit --locked
+  frontend-openapi:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version-file: .nvmrc
+      - run: npm install --global npm@11.17.0 --ignore-scripts
+      - run: npm ci --ignore-scripts
+      - run: npm ci --ignore-scripts
+        working-directory: frontend
+      - run: npm run openapi:lint
+      - run: npm run openapi:bundle
+      - run: npm run api:check
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+      - run: npm test -- --watch=false
+        working-directory: frontend
+      - run: npm audit
+      - run: npm audit
+        working-directory: frontend
+      - run: npm run test:gate
+      - run: git diff --exit-code
+
+# MySQL target, SAST/secret/image/SBOM scans and the release gate must be
+# configured on approved runners before these jobs become the complete gate.

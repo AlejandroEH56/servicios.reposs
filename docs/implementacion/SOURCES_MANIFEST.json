@@ -1,115 +1,116 @@
 {
-  "trackedInSourceCommit": false,
-  "files": [
-    {
-      "path": "docs/ANALISIS_BASE_DATOS_MODERNIZACION.md",
-      "sha256": "0c66752b1270afca78c21524bb4d5c778b985cfe6bb7b916299a5a4802c9a793"
-    },
-    {
-      "path": "docs/ANALISIS_DDD_MIGRACION.md",
-      "sha256": "287378be16b75c1c5514347ff4d109878b56230fce48c7d4403281b21b11f9ae"
-    },
-    {
-      "path": "docs/PROPUESTA_BASE_DATOS_ER.md",
-      "sha256": "ae55acdd64f4431716836d29a6be9ca054e098441348b707da25071ae1ca3b45"
-    },
-    {
-      "path": "docs/implementacion/ANGULAR.md",
-      "sha256": "b40ddea4f13b91827dbd6bbd4877a9a529c7646d318facb35f4e44e6a6eabe1a"
-    },
-    {
-      "path": "docs/implementacion/API_REST.md",
-      "sha256": "df582b1862e885facd0a032864ef38c8a5529784e915e2b1f84a1af7d3fb591e"
-    },
-    {
-      "path": "docs/implementacion/ARQUITECTURA_LARAVEL.md",
-      "sha256": "ded34b910c90841d180e55ca3623a199f302bb935b3908bd24b69870d9e8d16f"
-    },
-    {
-      "path": "docs/implementacion/IAM_ENTRA_ID.md",
-      "sha256": "3a72d46b70fc079c96d3433ab8d9238ef28cd14bae88efc1666afc8d598638bb"
-    },
-    {
-      "path": "docs/implementacion/PLAN_EJECUCION.md",
-      "sha256": "f2bb7c170a708ef53e587daedcba23b9fe5f20bf705bc6d4fe91a931e9d0a1b6"
-    },
-    {
-      "path": "docs/implementacion/PLAN_RESOLUCION_PRE_SPRINT_1.md",
-      "sha256": "f9d90e3925ca52e0244ede6157e10625208082e3daa9a2e0a9f7021916d93e22"
-    },
-    {
-      "path": "docs/implementacion/PRE_SPRINT_1_CHECKLIST.md",
-      "sha256": "c0465332417f8fc5809220f8b4d824b857632b52365ebcf97c7916be74cfb813"
-    },
-    {
-      "path": "docs/implementacion/README.md",
-      "sha256": "d071cd542a854669c5267df49214f5553d9812e5c1ee247c23c180a093e4a6aa"
-    },
-    {
-      "path": "docs/implementacion/SEGURIDAD.md",
-      "sha256": "46a59f1d1fa073e097818d11bf72d7d62b86922505d7844673db30eb0322a943"
-    },
-    {
-      "path": "docs/implementacion/SPRINT_0_ENTREGABLE.md",
-      "sha256": "ac5536398a6c0b904e59fa142ac3268148d41508a118763d90b4d7bf5206700f"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-001-monolito-modular.md",
-      "sha256": "f5b6f2baca5e4d297dcc292fb2fc1f75473b9c1b078646a4418d29e36e76a5b9"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-002-laravel-version.md",
-      "sha256": "d85faae17539350fc4fd107bb953519f934f20869af216e11dffc2f7625f2d1e"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-003-angular.md",
-      "sha256": "eed0e00ee0cdf74a3cdd7708fd00a7d7c06b0485d79812c823ca1592ff840c57"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-004-api-rest.md",
-      "sha256": "dacc0bc0165898258c6038acfa98ab9c87839146af9710e8319a54c0a58e850b"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-005-ulid.md",
-      "sha256": "144698688e46ed79d504b2f3bfa5dc68f673e3a97e54fd8601140848a8b5a90e"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-006-entra-oidc.md",
-      "sha256": "4800d1addeac82e16e14c0bcd21c611e64558c205dbf154cc7760b08dc876c34"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-007-autorizacion.md",
-      "sha256": "7dee9aff24f00e56d1e242d19d4e7dc6b7457480040f75fe699a3493e9d35bf8"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-008-outbox.md",
-      "sha256": "64c3f0369e5ba699123cfed3e79454a43649f791b3afb3306b023cb020421896"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-009-storage.md",
-      "sha256": "1a5a03342433dd4e580548c53f02a09d27f50eaa416661512fa19fec2c299aa1"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-010-auditoria.md",
-      "sha256": "50dd8e636a9daeabba69160eb710615b6e3d3caaa388e538565dc427c1bc5de6"
-    },
-    {
-      "path": "docs/implementacion/adr/ADR-011-observabilidad.md",
-      "sha256": "178ac67331dc515f89f84202c60d9f117f4e58490dcfab777a4f533167a50e4e"
-    },
-    {
-      "path": "docs/implementacion/adr/README.md",
-      "sha256": "5c5ed256d8fcc9b420fa20494f6849db7fbf0daa2e7b404e2b65da693c74938a"
-    },
-    {
-      "path": "docs/implementacion/api/openapi.yaml",
-      "sha256": "1de9eb8c1eb32272d01b4a67beb45962c94fae19b49a460669aa3c47150a0d0b"
-    },
-    {
-      "sha256": "7143c200e23264f73ed57df4a0569a35763c6ee618b247edbe20ec48974b9428",
-      "path": "database/mysql/001_create_servicios_moderno.sql"
-    }
-  ],
-  "sourceRoot": "C:/GitHubRepositories/servicios.proyecto",
-  "capturedAt": "2026-10-04"
+    "trackedInSourceCommit":  false,
+    "files":  [
+                  {
+                      "path":  "docs/ANALISIS_BASE_DATOS_MODERNIZACION.md",
+                      "sha256":  "0c66752b1270afca78c21524bb4d5c778b985cfe6bb7b916299a5a4802c9a793"
+                  },
+                  {
+                      "path":  "docs/ANALISIS_DDD_MIGRACION.md",
+                      "sha256":  "287378be16b75c1c5514347ff4d109878b56230fce48c7d4403281b21b11f9ae"
+                  },
+                  {
+                      "path":  "docs/PROPUESTA_BASE_DATOS_ER.md",
+                      "sha256":  "ae55acdd64f4431716836d29a6be9ca054e098441348b707da25071ae1ca3b45"
+                  },
+                  {
+                      "path":  "docs/implementacion/ANGULAR.md",
+                      "sha256":  "b40ddea4f13b91827dbd6bbd4877a9a529c7646d318facb35f4e44e6a6eabe1a"
+                  },
+                  {
+                      "path":  "docs/implementacion/API_REST.md",
+                      "sha256":  "df582b1862e885facd0a032864ef38c8a5529784e915e2b1f84a1af7d3fb591e"
+                  },
+                  {
+                      "path":  "docs/implementacion/ARQUITECTURA_LARAVEL.md",
+                      "sha256":  "ded34b910c90841d180e55ca3623a199f302bb935b3908bd24b69870d9e8d16f"
+                  },
+                  {
+                      "path":  "docs/implementacion/IAM_ENTRA_ID.md",
+                      "sha256":  "3a72d46b70fc079c96d3433ab8d9238ef28cd14bae88efc1666afc8d598638bb"
+                  },
+                  {
+                      "path":  "docs/implementacion/PLAN_EJECUCION.md",
+                      "sha256":  "f2bb7c170a708ef53e587daedcba23b9fe5f20bf705bc6d4fe91a931e9d0a1b6"
+                  },
+                  {
+                      "path":  "docs/implementacion/PLAN_RESOLUCION_PRE_SPRINT_1.md",
+                      "sha256":  "f9d90e3925ca52e0244ede6157e10625208082e3daa9a2e0a9f7021916d93e22"
+                  },
+                  {
+                      "path":  "docs/implementacion/PRE_SPRINT_1_CHECKLIST.md",
+                      "sha256":  "c0465332417f8fc5809220f8b4d824b857632b52365ebcf97c7916be74cfb813",
+                      "snapshotPath":  "docs/implementacion/historico/PRE_SPRINT_1_CHECKLIST_2026-09-27.md"
+                  },
+                  {
+                      "path":  "docs/implementacion/README.md",
+                      "sha256":  "d071cd542a854669c5267df49214f5553d9812e5c1ee247c23c180a093e4a6aa"
+                  },
+                  {
+                      "path":  "docs/implementacion/SEGURIDAD.md",
+                      "sha256":  "46a59f1d1fa073e097818d11bf72d7d62b86922505d7844673db30eb0322a943"
+                  },
+                  {
+                      "path":  "docs/implementacion/SPRINT_0_ENTREGABLE.md",
+                      "sha256":  "ac5536398a6c0b904e59fa142ac3268148d41508a118763d90b4d7bf5206700f"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-001-monolito-modular.md",
+                      "sha256":  "f5b6f2baca5e4d297dcc292fb2fc1f75473b9c1b078646a4418d29e36e76a5b9"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-002-laravel-version.md",
+                      "sha256":  "d85faae17539350fc4fd107bb953519f934f20869af216e11dffc2f7625f2d1e"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-003-angular.md",
+                      "sha256":  "eed0e00ee0cdf74a3cdd7708fd00a7d7c06b0485d79812c823ca1592ff840c57"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-004-api-rest.md",
+                      "sha256":  "dacc0bc0165898258c6038acfa98ab9c87839146af9710e8319a54c0a58e850b"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-005-ulid.md",
+                      "sha256":  "144698688e46ed79d504b2f3bfa5dc68f673e3a97e54fd8601140848a8b5a90e"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-006-entra-oidc.md",
+                      "sha256":  "4800d1addeac82e16e14c0bcd21c611e64558c205dbf154cc7760b08dc876c34"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-007-autorizacion.md",
+                      "sha256":  "7dee9aff24f00e56d1e242d19d4e7dc6b7457480040f75fe699a3493e9d35bf8"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-008-outbox.md",
+                      "sha256":  "64c3f0369e5ba699123cfed3e79454a43649f791b3afb3306b023cb020421896"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-009-storage.md",
+                      "sha256":  "1a5a03342433dd4e580548c53f02a09d27f50eaa416661512fa19fec2c299aa1"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-010-auditoria.md",
+                      "sha256":  "50dd8e636a9daeabba69160eb710615b6e3d3caaa388e538565dc427c1bc5de6"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/ADR-011-observabilidad.md",
+                      "sha256":  "178ac67331dc515f89f84202c60d9f117f4e58490dcfab777a4f533167a50e4e"
+                  },
+                  {
+                      "path":  "docs/implementacion/adr/README.md",
+                      "sha256":  "5c5ed256d8fcc9b420fa20494f6849db7fbf0daa2e7b404e2b65da693c74938a"
+                  },
+                  {
+                      "path":  "docs/implementacion/api/openapi.yaml",
+                      "sha256":  "1de9eb8c1eb32272d01b4a67beb45962c94fae19b49a460669aa3c47150a0d0b"
+                  },
+                  {
+                      "sha256":  "7143c200e23264f73ed57df4a0569a35763c6ee618b247edbe20ec48974b9428",
+                      "path":  "database/mysql/001_create_servicios_moderno.sql"
+                  }
+              ],
+    "sourceRoot":  "C:/GitHubRepositories/servicios.proyecto",
+    "capturedAt":  "2026-10-04"
 }

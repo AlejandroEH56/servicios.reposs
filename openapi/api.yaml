@@ -1,0 +1,92 @@
+openapi: 3.1.1
+info:
+  title: Servicios - API
+  version: 0.1.0
+  description: Sólo capacidades desplegadas. IAM local informa autorización vacía hasta Sprint 2.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: ''
+    description: Mismo origin que Laravel. SPA separada requiere topología y CORS aprobados.
+security:
+  - session: []
+tags:
+  - name: IAM
+    description: Identidad institucional y sesión local, sin tokens Microsoft.
+paths:
+  /api/v1/me:
+    get:
+      operationId: getMe
+      summary: Obtener identidad de la sesión activa
+      description: Requiere cookie Laravel, identidad ACTIVA y sesión vigente. No acepta bearer tokens Microsoft. No almacena caché.
+      tags: [IAM]
+      parameters:
+        - $ref: './management.yaml#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Identidad actual. Roles, permisos y scopes están vacíos antes de Sprint 2.
+          headers:
+            X-Correlation-ID:
+              $ref: './management.yaml#/components/headers/CorrelationId'
+            Cache-Control:
+              description: Respuesta privada de sesión, sin almacenamiento en caché.
+              schema:
+                type: string
+                const: 'no-store, private'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MeResponse'
+        '401':
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+components:
+  securitySchemes:
+    session:
+      type: apiKey
+      in: cookie
+      name: laravel_session
+      description: Nombre del ambiente local APP_NAME=Laravel. Configurar SESSION_COOKIE para otros ambientes y actualizar contrato.
+  schemas:
+    MeResponse:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          $ref: '#/components/schemas/Identity'
+    Identity:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, email, status, roles, permissions, scopes, sessionExpiresAt]
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        displayName:
+          type: string
+          maxLength: 255
+        email:
+          type: [string, 'null']
+          format: email
+          maxLength: 254
+        status:
+          type: string
+          enum: [PENDIENTE, ACTIVA, SUSPENDIDA, DESACTIVADA]
+        roles:
+          type: array
+          items:
+            type: string
+        permissions:
+          type: array
+          items:
+            type: string
+        scopes:
+          type: array
+          items:
+            type: string
+        sessionExpiresAt:
+          type: string
+          format: date-time

@@ -31,5 +31,6 @@ if ((Get-FileHash $composerFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne '
     throw 'Checksum Composer incorrecto. No se ejecutó el PHAR.'
 }
 . (Join-Path $PSScriptRoot 'use-local-tools.ps1')
+php (Join-Path $PSScriptRoot 'configure-local-ca.php')
 php -v
 php $composerFile --version

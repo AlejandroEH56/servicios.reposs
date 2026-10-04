@@ -6,7 +6,9 @@
     "start": "ng serve",
     "build": "ng build",
     "watch": "ng build --watch --configuration development",
-    "test": "ng test"
+    "test": "ng test",
+    "api:generate": "npm --prefix .. run openapi:bundle && ng-openapi-gen --config ng-openapi-gen.json",
+    "api:check": "node ../scripts/check-generated-client.mjs"
   },
   "private": true,
   "packageManager": "npm@11.17.0",
@@ -25,6 +27,7 @@
     "@angular/cli": "22.2.1",
     "@angular/compiler-cli": "22.2.1",
     "jsdom": "30.1.1",
+    "ng-openapi-gen": "1.1.0",
     "prettier": "3.9.9",
     "typescript": "6.0.3",
     "vitest": "5.0.3"

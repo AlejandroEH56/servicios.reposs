@@ -6,3 +6,4 @@ if (-not (Test-Path (Join-Path $localPhp 'php.exe'))) {
 $env:PATH = $localPhp + ';' + $env:PATH
 $env:COMPOSER_CACHE_DIR = Join-Path $projectRoot '.tools/composer-cache'
 $env:npm_config_cache = Join-Path $projectRoot '.tools/npm-cache'
+$env:OPENSSL_CONF = Join-Path $localPhp 'extras/ssl/openssl.cnf'

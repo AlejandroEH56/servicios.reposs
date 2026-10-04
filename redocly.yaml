@@ -1,5 +1,7 @@
 extends:
   - recommended-strict
 apis:
+  api:
+    root: openapi/api.yaml
   management:
     root: openapi/management.yaml

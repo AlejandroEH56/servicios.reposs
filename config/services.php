@@ -34,5 +34,15 @@ return [
             'channel' => env('SLACK_BOT_USER_DEFAULT_CHANNEL'),
         ],
     ],
+    'microsoft' => [
+        'tenant_id' => strtolower((string) env('MICROSOFT_TENANT_ID')),
+        'client_id' => strtolower((string) env('MICROSOFT_CLIENT_ID')),
+        'client_secret' => env('MICROSOFT_CLIENT_SECRET'),
+        'redirect_uri' => env(
+            'MICROSOFT_REDIRECT_URI',
+            'http://localhost:8000/auth/microsoft/callback'
+        ),
+        'atlos_user_group_id' => strtolower((string) env('MICROSOFT_ATLOS_USER_GROUP_ID')),
+    ],
 
 ];
