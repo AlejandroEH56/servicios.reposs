@@ -1,0 +1,5 @@
+extends:
+  - recommended-strict
+apis:
+  management:
+    root: openapi/management.yaml

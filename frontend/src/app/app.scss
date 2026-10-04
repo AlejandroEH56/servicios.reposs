@@ -1,0 +1,7 @@
+:host { display: block; min-height: 100dvh; background: #f3f6f8; color: #162d40; font-family: system-ui, sans-serif; }
+.portal { max-width: 56rem; margin: auto; padding: clamp(2rem, 8vw, 6rem) 1.5rem; }
+.eyebrow { letter-spacing: .12em; text-transform: uppercase; font-size: .8rem; font-weight: 600; color: #416c80; }
+h1 { font-size: clamp(2.5rem, 7vw, 4rem); margin: .6rem 0 1rem; }
+p { line-height: 1.7; max-width: 40rem; color: #4d626f; }
+section { margin-top: 3rem; padding: 2rem; background: white; border: 1px solid #dce5ea; border-radius: .7rem; }
+h2 { font-size: 1.25rem; margin-top: 0; }

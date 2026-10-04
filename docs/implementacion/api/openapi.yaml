@@ -1,0 +1,659 @@
+openapi: 3.1.1
+info:
+  title: Servicios Institucionales API
+  version: 0.1.0
+  description: >-
+    Contrato raíz de arquitectura. Cada vertical slice debe completar campos,
+    ejemplos y respuestas antes de implementar. La sesión se obtiene mediante
+    /auth/entra/* y se consume como cookie HttpOnly de primera parte.
+servers:
+  - url: https://servicios.example.edu.mx/api/v1
+    description: Ejemplo; sustituir por el dominio institucional aprobado
+tags:
+  - name: IAM
+  - name: Organization
+  - name: Residencies
+  - name: Publications
+  - name: AcademicPlanning
+  - name: LaboratoryRequests
+  - name: Inventories
+  - name: Shared
+security:
+  - sessionCookie: []
+paths:
+  /health/live:
+    get:
+      tags: [Shared]
+      operationId: getLiveness
+      security: []
+      responses:
+        '200':
+          description: El proceso responde
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+  /health/ready:
+    get:
+      tags: [Shared]
+      operationId: getReadiness
+      security: []
+      responses:
+        '200':
+          description: Dependencias críticas disponibles
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+        '503':
+          $ref: '#/components/responses/Problem'
+  /me:
+    get:
+      tags: [IAM]
+      operationId: getCurrentIdentity
+      responses:
+        '200':
+          description: Identidad y autorización efectiva
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/CurrentIdentityEnvelope'
+        '401':
+          $ref: '#/components/responses/Problem'
+  /iam/roles:
+    get:
+      tags: [IAM]
+      operationId: listRoles
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+        '403':
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [IAM]
+      operationId: createRole
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /organization/employees:
+    get:
+      tags: [Organization]
+      operationId: listEmployees
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+        - name: filter[search]
+          in: query
+          schema:
+            type: string
+            maxLength: 120
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+        '403':
+          $ref: '#/components/responses/Problem'
+  /residencies/projects:
+    post:
+      tags: [Residencies]
+      operationId: createResidencyProject
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateResidencyProjectRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /residencies/evidence:
+    post:
+      tags: [Residencies]
+      operationId: submitResidencyEvidence
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SubmitEvidenceRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /residencies/evidence/{evidenceId}/reviews:
+    post:
+      tags: [Residencies]
+      operationId: reviewResidencyEvidence
+      parameters:
+        - $ref: '#/components/parameters/EvidenceId'
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReviewEvidenceRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /public/notices:
+    get:
+      tags: [Publications]
+      operationId: listPublicNotices
+      security: []
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+  /publications/notices:
+    post:
+      tags: [Publications]
+      operationId: createNotice
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateNoticeRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /academic-planning/laboratories:
+    get:
+      tags: [AcademicPlanning]
+      operationId: listLaboratories
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+  /academic-planning/laboratories/{laboratoryId}/availability:
+    get:
+      tags: [AcademicPlanning]
+      operationId: getLaboratoryAvailability
+      parameters:
+        - $ref: '#/components/parameters/LaboratoryId'
+        - name: startAt
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+        - name: endAt
+          in: query
+          required: true
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          $ref: '#/components/responses/Resource'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /laboratory-requests:
+    get:
+      tags: [LaboratoryRequests]
+      operationId: listLaboratoryRequests
+      parameters:
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+    post:
+      tags: [LaboratoryRequests]
+      operationId: createLaboratoryRequest
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLaboratoryRequestRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /inventories/{inventoryId}/items:
+    get:
+      tags: [Inventories]
+      operationId: listInventoryItems
+      parameters:
+        - $ref: '#/components/parameters/InventoryId'
+        - $ref: '#/components/parameters/PageSize'
+        - $ref: '#/components/parameters/PageAfter'
+      responses:
+        '200':
+          $ref: '#/components/responses/ResourcePage'
+        '403':
+          $ref: '#/components/responses/Problem'
+    post:
+      tags: [Inventories]
+      operationId: registerInventoryItem
+      parameters:
+        - $ref: '#/components/parameters/InventoryId'
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RegisterInventoryItemRequest'
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '409':
+          $ref: '#/components/responses/Problem'
+        '422':
+          $ref: '#/components/responses/Problem'
+  /files/staged:
+    post:
+      tags: [Shared]
+      operationId: stageFile
+      parameters:
+        - $ref: '#/components/parameters/XsrfToken'
+        - $ref: '#/components/parameters/IdempotencyKey'
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              type: object
+              additionalProperties: false
+              required: [file, purpose]
+              properties:
+                file:
+                  type: string
+                  format: binary
+                purpose:
+                  type: string
+                  enum: [RESIDENCY_EVIDENCE, NOTICE_RESOURCE, INVENTORY_DOCUMENT]
+      responses:
+        '201':
+          $ref: '#/components/responses/ResourceCreated'
+        '413':
+          $ref: '#/components/responses/Problem'
+        '415':
+          $ref: '#/components/responses/Problem'
+components:
+  securitySchemes:
+    sessionCookie:
+      type: apiKey
+      in: cookie
+      name: servicios_session
+      description: Cookie HttpOnly de sesión Laravel/Sanctum; mutaciones requieren CSRF.
+  parameters:
+    PageSize:
+      name: page[size]
+      in: query
+      schema:
+        type: integer
+        minimum: 1
+        maximum: 100
+        default: 25
+    PageAfter:
+      name: page[after]
+      in: query
+      schema:
+        type: [string, 'null']
+        maxLength: 500
+    XsrfToken:
+      name: X-XSRF-TOKEN
+      in: header
+      required: true
+      schema:
+        type: string
+    IdempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: true
+      schema:
+        type: string
+        minLength: 16
+        maxLength: 100
+    EvidenceId:
+      name: evidenceId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Ulid'
+    LaboratoryId:
+      name: laboratoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Ulid'
+    InventoryId:
+      name: inventoryId
+      in: path
+      required: true
+      schema:
+        $ref: '#/components/schemas/Ulid'
+  responses:
+    Problem:
+      description: Error documentado
+      headers:
+        X-Correlation-ID:
+          schema:
+            type: string
+            format: uuid
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+    Resource:
+      description: Recurso
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceEnvelope'
+    ResourceCreated:
+      description: Recurso creado
+      headers:
+        Location:
+          schema:
+            type: string
+            format: uri-reference
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourceEnvelope'
+    ResourcePage:
+      description: Colección paginada
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ResourcePage'
+  schemas:
+    Ulid:
+      type: string
+      pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+      examples: [01J00000000000000000000001]
+    ProblemDetails:
+      type: object
+      required: [type, title, status, code, correlationId]
+      properties:
+        type:
+          type: string
+          format: uri
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+          format: uri-reference
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_]+$'
+        correlationId:
+          type: string
+          format: uuid
+        errors:
+          type: object
+          additionalProperties:
+            type: array
+            items:
+              type: string
+    HealthResponse:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          enum: [ok, degraded]
+    ResourceEnvelope:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: object
+          required: [id]
+          properties:
+            id:
+              $ref: '#/components/schemas/Ulid'
+            version:
+              type: integer
+              minimum: 1
+          additionalProperties: true
+    ResourcePage:
+      type: object
+      required: [data, page, links]
+      properties:
+        data:
+          type: array
+          items:
+            type: object
+            additionalProperties: true
+        page:
+          type: object
+          additionalProperties: false
+          required: [size, hasMore]
+          properties:
+            size:
+              type: integer
+            nextCursor:
+              type: [string, 'null']
+            hasMore:
+              type: boolean
+        links:
+          type: object
+          required: [self, next]
+          properties:
+            self:
+              type: string
+            next:
+              type: [string, 'null']
+    CurrentIdentityEnvelope:
+      type: object
+      additionalProperties: false
+      required: [data]
+      properties:
+        data:
+          type: object
+          additionalProperties: false
+          required: [id, displayName, status, roles, permissions]
+          properties:
+            id:
+              $ref: '#/components/schemas/Ulid'
+            displayName:
+              type: string
+            email:
+              type: [string, 'null']
+              format: email
+            status:
+              type: string
+            roles:
+              type: array
+              items:
+                type: string
+            permissions:
+              type: array
+              items:
+                type: string
+    CreateRoleRequest:
+      type: object
+      additionalProperties: false
+      required: [code, name]
+      properties:
+        code:
+          type: string
+          pattern: '^[A-Z][A-Z0-9_]+$'
+        name:
+          type: string
+          maxLength: 128
+        description:
+          type: [string, 'null']
+          maxLength: 500
+    CreateResidencyProjectRequest:
+      type: object
+      additionalProperties: false
+      required: [residentId, periodId, companyId, programId, name, startDate, endDate]
+      properties:
+        residentId:
+          $ref: '#/components/schemas/Ulid'
+        periodId:
+          $ref: '#/components/schemas/Ulid'
+        companyId:
+          $ref: '#/components/schemas/Ulid'
+        programId:
+          $ref: '#/components/schemas/Ulid'
+        name:
+          type: string
+          maxLength: 255
+        startDate:
+          type: string
+          format: date
+        endDate:
+          type: string
+          format: date
+    SubmitEvidenceRequest:
+      type: object
+      additionalProperties: false
+      required: [requirementId, residentId, stagedFileId]
+      properties:
+        requirementId:
+          $ref: '#/components/schemas/Ulid'
+        residentId:
+          $ref: '#/components/schemas/Ulid'
+        projectId:
+          oneOf:
+            - $ref: '#/components/schemas/Ulid'
+            - type: 'null'
+        stagedFileId:
+          $ref: '#/components/schemas/Ulid'
+    ReviewEvidenceRequest:
+      type: object
+      additionalProperties: false
+      required: [decision, expectedReviewNumber]
+      properties:
+        decision:
+          type: string
+          enum: [APROBADO, RECHAZADO, CAMBIOS_SOLICITADOS]
+        observations:
+          type: [string, 'null']
+          maxLength: 5000
+        grade:
+          type: [number, 'null']
+          minimum: 0
+          maximum: 100
+        expectedReviewNumber:
+          type: integer
+          minimum: 1
+    CreateNoticeRequest:
+      type: object
+      additionalProperties: false
+      required: [type, title, description]
+      properties:
+        type:
+          type: string
+          enum: [AVISO, VACANTE]
+        title:
+          type: string
+          maxLength: 255
+        description:
+          type: string
+          maxLength: 10000
+        stagedFileIds:
+          type: array
+          maxItems: 10
+          items:
+            $ref: '#/components/schemas/Ulid'
+    CreateLaboratoryRequestRequest:
+      type: object
+      additionalProperties: false
+      required: [type, laboratoryId, startAt, endAt, purpose]
+      properties:
+        type:
+          type: string
+          enum: [PRACTICA, VARIA, EXTRAORDINARIA]
+        laboratoryId:
+          $ref: '#/components/schemas/Ulid'
+        startAt:
+          type: string
+          format: date-time
+        endAt:
+          type: string
+          format: date-time
+        purpose:
+          type: string
+          maxLength: 1000
+        practice:
+          type: [object, 'null']
+        various:
+          type: [object, 'null']
+        extraordinary:
+          type: [object, 'null']
+    RegisterInventoryItemRequest:
+      type: object
+      additionalProperties: false
+      required: [type, code, name, locationId, quantity, unit]
+      properties:
+        type:
+          type: string
+          enum: [EQUIPO, MATERIAL, REACTIVO, SOFTWARE, INFRAESTRUCTURA]
+        code:
+          type: string
+          maxLength: 80
+        name:
+          type: string
+          maxLength: 255
+        locationId:
+          $ref: '#/components/schemas/Ulid'
+        quantity:
+          type: string
+          pattern: '^[0-9]+(?:\.[0-9]{1,4})?$'
+        unit:
+          type: string
+          maxLength: 30
+        detail:
+          type: object
+          additionalProperties: true

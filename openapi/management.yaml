@@ -1,0 +1,154 @@
+openapi: 3.1.1
+info:
+  title: Servicios - Management
+  version: 0.1.0
+  description: Endpoints técnicos de Sprint 0. No anuncia operaciones IAM ni de negocio.
+  license:
+    name: MIT
+    identifier: MIT
+servers:
+  - url: /
+    description: Mismo origin que el backend; rutas sin versión.
+security: []
+tags:
+  - name: Health
+    description: Liveness independiente y readiness de DB, storage privado y worker Outbox.
+paths:
+  /health/live:
+    get:
+      operationId: getLiveness
+      summary: Comprobar que el proceso HTTP está vivo
+      description: No consulta DB, storage, collector ni Entra.
+      tags: [Health]
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Proceso vivo.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Live'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+  /health/ready:
+    get:
+      operationId: getReadiness
+      summary: Comprobar dependencias necesarias para recibir tráfico
+      description: Prueba DB, escritura y limpieza en storage privado y heartbeat Outbox. La ausencia del worker devuelve 503. No comprueba Entra ni OTLP.
+      tags: [Health]
+      parameters:
+        - $ref: '#/components/parameters/CorrelationId'
+      responses:
+        '200':
+          description: Dependencias disponibles y heartbeat vigente.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Ready'
+        '503':
+          description: Una dependencia no está disponible o el heartbeat falta o expiró. Sin detalles internos.
+          headers:
+            X-Correlation-ID:
+              $ref: '#/components/headers/CorrelationId'
+            Cache-Control:
+              $ref: '#/components/headers/NoStore'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Unavailable'
+        '400':
+          $ref: '#/components/responses/Problem'
+        default:
+          $ref: '#/components/responses/Problem'
+components:
+  parameters:
+    CorrelationId:
+      name: X-Correlation-ID
+      in: header
+      required: false
+      description: UUID de correlación; si el valor no es válido, el servidor genera uno.
+      schema:
+        type: string
+  headers:
+    CorrelationId:
+      description: UUID efectivo validado o generado por el backend.
+      schema:
+        type: string
+        format: uuid
+    NoStore:
+      description: Impide cachear la disponibilidad.
+      schema:
+        type: string
+        const: no-store
+  responses:
+    Problem:
+      description: Error común en formato RFC 9457, sin datos sensibles.
+      headers:
+        X-Correlation-ID:
+          $ref: '#/components/headers/CorrelationId'
+      content:
+        application/problem+json:
+          schema:
+            $ref: '#/components/schemas/ProblemDetails'
+  schemas:
+    Live:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: live
+    Ready:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: ready
+    Unavailable:
+      type: object
+      additionalProperties: false
+      required: [status]
+      properties:
+        status:
+          type: string
+          const: unavailable
+    ProblemDetails:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail, instance, code, correlationId]
+      properties:
+        type:
+          type: string
+          format: uri
+          const: about:blank
+        title:
+          type: string
+        status:
+          type: integer
+          minimum: 400
+          maximum: 599
+        detail:
+          type: string
+        instance:
+          type: string
+        code:
+          type: string
+        correlationId:
+          type: string
+          format: uuid
