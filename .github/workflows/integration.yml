@@ -44,6 +44,19 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Enable containerd image store for provenance
+        run: |
+          sudo python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('/etc/docker/daemon.json')
+          config = json.loads(path.read_text()) if path.exists() else {}
+          config.setdefault('features', {})['containerd-snapshotter'] = True
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(config))
+          PY
+          sudo systemctl restart docker
+          docker info --format '{{json .DriverStatus}}'
       - name: Install pinned Compose with official checksum
         run: |
           mkdir -p "$HOME/.docker/cli-plugins"
@@ -112,6 +125,19 @@ jobs:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 0
+      - name: Enable containerd image store for provenance
+        run: |
+          sudo python3 - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('/etc/docker/daemon.json')
+          config = json.loads(path.read_text()) if path.exists() else {}
+          config.setdefault('features', {})['containerd-snapshotter'] = True
+          path.parent.mkdir(parents=True, exist_ok=True)
+          path.write_text(json.dumps(config))
+          PY
+          sudo systemctl restart docker
+          docker info --format '{{json .DriverStatus}}'
       - name: Install pinned tools with release checksums
         run: |
           mkdir -p .tools/quality artifacts
