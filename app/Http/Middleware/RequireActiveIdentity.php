@@ -17,10 +17,13 @@ class RequireActiveIdentity
         $user = $request->user();
         $started = $request->session()->get('iam_authenticated_at', 0);
         $last = $request->session()->get('iam_last_activity', 0);
+        $version = $request->session()->get('iam_authorization_version', 1);
         if (! $user instanceof User || $user->estado !== IdentityState::Active
             || ! is_int($started) || ! is_int($last)
+            || $version !== $user->version_autorizacion
             || $started > now()->timestamp || $last > now()->timestamp
             || now()->timestamp - $started >= config('modernization.sessions.absolute_seconds')
+            || now()->timestamp - $started >= config('modernization.sessions.group_freshness_seconds')
             || now()->timestamp - $last >= min(config('modernization.sessions.idle_seconds'), config('session.lifetime') * 60)) {
             Auth::logout();
             $request->session()->invalidate();

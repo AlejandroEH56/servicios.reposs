@@ -1,39 +1,39 @@
-# PRE_SPRINT_1_CHECKLIST vigente para servicios.reposs
+# Checklist vigente de servicios.reposs
 
-Evaluación: 2026-10-04. HEAD de referencia: `0546644746f1b2a281730a95c5fd8ef8bb48e2cc`; working tree modificado. **NO-GO**.
+Evaluación: 2026-10-08, America/Mexico_City. HEAD de referencia: 41e15f566813e7cbc640f7a3811e657d7c36a4ae; cambios de trabajo sin versionar. **NO-GO**.
 
-Este checklist reemplaza el diagnóstico de otro repositorio del 2026-09-27; [la copia original](historico/PRE_SPRINT_1_CHECKLIST_2026-09-27.md) permanece disponible con su checksum. La regla no cambia: sólo VERIFIED con evidencia vigente del mismo SHA satisface el Entry Gate. PASS local es avance técnico; no se marca una casilla global por una prueba sobre cambios aún sin commit.
+[Plan paso a paso](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md), [ambientes](AMBIENTES_MODERNIZACION.md), [responsable](RACI_CIERRES.md) y [resultados](VIABILIDAD_SERVICIOS_REPOSS.md).
 
-| ID | Estado global | Evidencia local disponible | Condición exacta aún pendiente |
+El solicitante confirmó responsable, recursos y autorización de pruebas/recreación de desarrollo/herramientas. Se retiran los estados BLOCKED_INFO por decisiones institucionales pendientes; los cierres técnicos siguen PARTIAL. VERIFIED exige evidencia vigente del mismo SHA final y aprobación conforme al gate. La [copia histórica](historico/PRE_SPRINT_1_CHECKLIST_2026-09-27.md) permanece disponible.
+
+| ID | Estado | Avance comprobado | Cierre aún necesario |
 |---|---|---|---|
-| B01 | PARTIAL | API /me y management strict, bundles y cliente Angular reproducible PASS | Breaking diff, contrato común ETag/If-Match aplicable y CI mismo SHA |
-| B02 | PARTIAL | Estados y activación por grupo decididos; sesión y deny local PASS | Transiciones administrativas, archivo y revocación authorizationVersion/grupo, aprobación formal |
-| B03 | PARTIAL | Outbox/lease/retry/FAILED/inbox/crash/replay técnico y concurrencia MySQL PASS | Autorización de replay, retención, métricas/umbrales y aprobación operativa |
-| B04 | PARTIAL | Manifest ownership y fresh/adopción upgrade PASS, sin users duplicado | Aprobación institucional de frontera y migraciones de fases futuras |
-| B05 | PARTIAL | Correo único, colisión/change y lookup tenant/objectId PASS | Perfilado legacy y procedimiento administrativo de correo reciclado |
-| B06 | PARTIAL | Auditoría vacía convertida a ULID | Catálogos/retención del baseline y excepciones ADR para IDs técnicos |
-| B07 | BLOCKED_INFO | Sólo callback HTTP loopback y sesión same-origin local | Topología representativa TLS, DNS/proxy/CORS y navegador E2E Secure/HttpOnly/SameSite/XSRF |
-| B08 | PARTIAL | Configuración presente y metadata pública TLS verificada | App Registration/consentimiento/callback exacto, catálogo de usuarios allow/deny y claims redactados |
-| B09 | PARTIAL | Adapter PKCE y Firebase/JWKS: suite sintética positiva/negativa PASS | Spike real del tenant y aceptación del candidato por arquitectura/seguridad |
-| B10 | BLOCKED_INFO | Storage privado local usado por readiness | Driver productivo, AV/cuarentena/promoción y backup/restore |
-| B11 | BLOCKED_INFO | Credenciales .env local no se publican; CA PHP corregido | Secret store, owners, expiración, rotación/revocación y secret scan |
-| B12 | BLOCKED_INFO | Correlación HTTP y logs IAM redactados | Collector OTLP, señales correladas, política de fallo y redacción aprobada |
-| B13 | PARTIAL | Workflows pinneados preparados, PHPStan y audits online PASS | CI ejecutada, breaking/SAST/secret/SBOM/image scans y required checks/branch rules |
-| B14 | PARTIAL | MySQL 26.7.0: fresh/upgrade y principals temporales audit append-only PASS | MySQL objetivo, runtime/migrator persistentes separados, grants y runner aprobados |
-| B15 | PARTIAL | Worker heartbeat, health tests y smoke HTTP live/ready=200 PASS | Worker supervisado, métricas y fault injection real en topología/Compose aprobada |
-| BN-01 | PARTIAL | Laravel raíz + Angular + OpenAPI + scripts + workflows | Compose completo, servicios externos y clon limpio reproducible |
-| BN-02 | PARTIAL | Fuentes existentes en HEAD y hashes históricos conservados | Versionar cambios/decisiones actuales, aprobación y verificación desde clon del SHA final |
-| BN-03 | PARTIAL | Toolchain local y runner Windows preparados | Runner/Compose soportado y paridad CI/ambientes |
-| BN-04 | BLOCKED_INFO | Existe baseline físico moderno vacío, no datos legacy | DDL/grants/volúmenes/perfilado legacy anonimizado con autorización y checksum |
-| BN-05 | BLOCKED_INFO | Existe repositorio remoto configurado; sin administración remota realizada | Owners nominales/RACI/CODEOWNERS y readback de branch rules/reviews |
+| B01 | PARTIAL | Contratos strict/bundles/cliente generado | Breaking diff y CI del candidato; ETag/If-Match al introducir mutaciones |
+| B02 | PARTIAL | Estados, grupo activa, CLI auditada, authorizationVersion y vigencia de grupo 5 min | Acreditación real de retirada/archivo/rehabilitación y evidencia final |
+| B03 | PARTIAL | Lease/concurrencia/inbox/retry/FAILED/replay CLI restringido y supervisor | Retención/métricas y fallos Docker implementados y probados; vincular evidencia al candidato |
+| B04 | PARTIAL | Ownership definido; fresh/adopción pasan | Aceptación y evidencia del candidato, migraciones futuras en sus fases |
+| B05 | PARTIAL | Correo único/colisiones/cambio/tenant-objectId probados | Contacto administrativo implementado y probado; alcance de datos nuevos aceptado |
+| B06 | PARTIAL | Auditoría ULID y clasificación ADR-012 | Verificación de excepciones; conversión catálogo/FK en su fase |
+| B07 | PARTIAL | Cinco pruebas Chromium en staging y cinco en ensayo production, TLS verificado, cookies/CSRF | Reproducir en topología Docker/CI y acreditar flujo Entra real |
+| B08 | PARTIAL | Credenciales configuradas; metadata HTTPS y callbacks TLS de ensayo | App Registration/consentimiento/callbacks registrados y usuarios allow/deny |
+| B09 | PARTIAL | PKCE/RS256/JWKS/claims y casos sintéticos PASS | Spike real redactado y aceptación del adapter |
+| B10 | PARTIAL | Storage privado separado y perfil ClamAV preparado | Port/ClamAV/cuarentena/EICAR/fallo cerrado/restore comprobados; evidencia del candidato y recuperación productiva |
+| B11 | PARTIAL | Credenciales ignoradas/ACL; runtime-migrator separados | DPAPI local, DB/APP_KEY y secret scan comprobados; falta Entra y recuperación fuera del perfil Windows |
+| B12 | PARTIAL | Correlación y collector/redacción definidos | SDK, señales/exemplars correlados y fallo real acreditados; evidencia del SHA final |
+| B13 | PARTIAL | Workflows base, pins, análisis/audits PASS | CI candidato, breaking/SAST/secret/SBOM/image/provenance y reglas remotas |
+| B14 | PARTIAL | MySQL 26.7; fresh/upgrade/grants; principals persistentes de tres ambientes probados | Matriz Docker/CI y restauración sobre candidato |
+| B15 | PARTIAL | Health, supervisor, fallos DB/storage PASS 2/35, worker 503 tras TTL y recuperación 200 | Repetición en Docker, métricas y recuperación con eventos representativos |
+| BN-01 | PARTIAL | Laravel raíz/Angular/OpenAPI/Compose/configs | Servicios Docker activos; Linux desde locks probado; repetir CI candidato |
+| BN-02 | PARTIAL | Fuentes preservadas y decisiones actuales redactadas | Versionar candidato y repetir evidencia sobre su SHA limpio |
+| BN-03 | PARTIAL | Toolchain nativo, staging/production, WSL/Docker instalados; componentes habilitados con NoRestart | Reinicio/motor/runtime acreditados; Linux y suites Docker PASS; CI candidato |
+| BN-04 | PARTIAL | Perfilado de configuración legacy autorizado y manifest | Funcionalidades con datos nuevos aceptado por el responsable (ADR-013); vincular decisión al candidato |
+| BN-05 | PARTIAL | Responsable nominal/CODEOWNERS y permisos admin GitHub comprobados | Protección aplicada/readback mediante CLI del propietario; cinco checks y SHA candidato |
 
-- [ ] Todos los B01–B15 y BN-01–BN-05 VERIFIED sobre el mismo SHA.
-- [ ] Evidencia incluye fecha, herramienta/versión, comando, exit code, ambiente y artifact con checksum.
-- [ ] Required checks y branch rules verificados en GitHub.
-- [ ] PRE_SPRINT_1_GATE devuelve GO como primera línea.
+- [ ] Los veinte bloqueantes VERIFIED sobre el mismo SHA.
+- [ ] Artifacts con fecha/comando/versión/ambiente/exit code/checksum.
+- [ ] Required checks y branch rules efectivos comprobados.
+- [ ] Gate devuelve GO y exit 0.
 
-Comprobaciones ejecutadas y límites: [VIABILIDAD_SERVICIOS_REPOSS.md](VIABILIDAD_SERVICIOS_REPOSS.md). Decisiones del solicitante: [IAM_ESTADOS.md](decisiones/IAM_ESTADOS.md). Prueba aislada autorizada: `phpunit.mysql.xml` fuerza APP_ENV=testing y servicios_moderno_test; jamás usar fresh sobre la base persistente.
+Los ambientes usan pruebas destructivas sólo en testing + servicios_moderno_test o SQLite :memory:. La autorización para recrear desarrollo no obliga a borrar la base existente; su identidad y datos se conservaron. El ensayo production local no es un despliegue público. No se usa la aprobación general para sustituir pruebas reales de proveedor o runtime. No se transfieren datos históricos por decisión expresa del responsable.
 
-Secuencia R0: decisiones IAM → ownership → contrato/cliente → fresh/upgrade/grants → outbox/heartbeat → suite local → topología/Entra/secretos/legacy y servicios externos → CI/owners → evidencia del SHA final → gate. La parte independiente de desarrollo ya está implementada y probada; los datos externos no se inventan ni se sustituye su validación con doubles.
-
-Ejecutar `scripts/validate-pre-sprint1.ps1` para conservar logs de la secuencia y `node scripts/pre-sprint1-gate.mjs` para evaluar ESTADO_LOCAL_REPOSS.json. El manifest local conserva estados parciales; debe reemplazarse por evidencia CI completa para promoción. El gate comprueba formato/integridad/vigencia y SHA; la confianza/firma de artifacts y autoridad de approvals pertenecen al pipeline y branch rules aún pendientes.
+Resultado posterior al reinicio: [ejecución 2026-10-08](RESULTADOS_EJECUCION_2026-10-08.md). Los estados siguen PARTIAL hasta ligar evidencia vigente al SHA limpio y cerrar Entra real.

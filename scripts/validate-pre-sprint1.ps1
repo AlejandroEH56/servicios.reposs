@@ -2,6 +2,8 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 Set-Location -LiteralPath $projectRoot
 $php = Join-Path $projectRoot '.tools/php/php.exe'
+$env:PATH = (Join-Path $projectRoot '.tools/php') + ';' + $env:PATH
+$env:OPENSSL_CONF = Join-Path $projectRoot '.tools/php/extras/ssl/openssl.cnf'
 if (-not (Test-Path -LiteralPath $php)) { throw 'Instala el toolchain con scripts/install-local-tools.ps1.' }
 $artifactRoot = Join-Path $projectRoot 'artifacts/local-validation'
 New-Item -ItemType Directory -Force -Path $artifactRoot | Out-Null
@@ -23,7 +25,7 @@ try {
     Invoke-Check 'composer-validate' $php @('.tools/composer.phar','validate','--strict')
     Invoke-Check 'platform' $php @('.tools/composer.phar','check-platform-reqs')
     Invoke-Check 'phpunit' $php @('vendor/bin/phpunit','--log-junit','artifacts/local-validation/phpunit.xml')
-    Invoke-Check 'test-database' $php @('artisan','modernization:prepare-test-database')
+    Invoke-Check 'test-database' $php @('artisan','modernization:prepare-test-database','--env=testing')
     Invoke-Check 'mysql' $php @('vendor/bin/phpunit','-c','phpunit.mysql.xml','--log-junit','artifacts/local-validation/mysql.xml')
     Invoke-Check 'phpstan' $php @('vendor/bin/phpstan','analyse','--no-progress','--memory-limit=512M')
     Invoke-Check 'openapi' 'npm.cmd' @('run','openapi:lint')

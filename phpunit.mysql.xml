@@ -5,6 +5,9 @@
             <directory>tests/Integration</directory>
             <file>tests/Feature/MicrosoftAuthenticationTest.php</file>
             <file>tests/Feature/OutboxTest.php</file>
+            <file>tests/Feature/IdentityContactTest.php</file>
+            <file>tests/Feature/OutboxRetentionTest.php</file>
+            <file>tests/Feature/PrivateFileStoreTest.php</file>
         </testsuite>
     </testsuites>
     <php>
