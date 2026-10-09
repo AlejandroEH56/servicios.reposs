@@ -22,3 +22,18 @@ ignore:
       name: ^gnutls$
       version: 3.8.10-9.el9_8
       type: rpm
+
+  - vulnerability: ELSA-2026-50075
+    namespace: oracle:distro:oraclelinux:9
+    reason: FIPS epoch 10 channel mismatch; reviewed non-FIPS OpenSSL 3.5.8 release 2 retains upstream January fixes.
+    package:
+      name: ^openssl$
+      version: 1:3.5.8-2.0.1.el9_8
+      type: rpm
+  - vulnerability: ELSA-2026-50075
+    namespace: oracle:distro:oraclelinux:9
+    reason: FIPS epoch 10 channel mismatch; reviewed non-FIPS OpenSSL 3.5.8 release 2 retains upstream January fixes.
+    package:
+      name: ^openssl-libs$
+      version: 1:3.5.8-2.0.1.el9_8
+      type: rpm
