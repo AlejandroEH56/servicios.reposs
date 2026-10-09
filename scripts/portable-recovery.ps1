@@ -56,6 +56,7 @@ if($Action -eq 'Backup') {
  if($usage -gt $MaximumGiB*1GB){throw 'Backup capacity reached; review retention before creating another snapshot.'}
  Set-PrivateDirectory $directory
  $streams=[ordered]@{}
+ $streams['images.age']=Invoke-PrivatePipeline $dockerPath @('image','save','servicios-backend:local','servicios-mysql:local','servicios-proxy:local','servicios-antivirus:local') $age @('-r',$recipient) (Join-Path $directory 'images.age')
  $streams['database.age']=Invoke-PrivatePipeline $dockerPath ($compose+@('exec','-T','mysql','bash','-c',$dump)) $age @('-r',$recipient) (Join-Path $directory 'database.age') -CanonicalSql
  foreach($entry in @(@('storage.age','backend','/srv/app/storage/app/private'),@('antivirus.age','antivirus','/var/lib/clamav'),@('tls.age','proxy','/data'))){$streams[$entry[0]]=Invoke-PrivatePipeline $dockerPath ($compose+@('exec','-T',$entry[1],'tar','-cf','-','-C',$entry[2],'.')) $age @('-r',$recipient) (Join-Path $directory $entry[0])}
  [byte[]]$files=Invoke-DockerBytes ($compose+@('exec','-T','--workdir','/srv/app/storage/app/private','backend','php','-r',$inventory))
@@ -83,6 +84,9 @@ $directory=Assert-SnapshotPath $Snapshot
 $manifest=Get-Content -LiteralPath (Join-Path $directory 'manifest.json') -Raw|ConvertFrom-Json
 if(-not $manifest.completed){throw 'Snapshot incomplete.'}
 foreach($file in $manifest.encryptedFiles.PSObject.Properties){if($file.Name -notmatch '^[a-z]+\.age$'){throw 'Invalid encrypted file name.'};$hash=(Get-FileHash -LiteralPath (Join-Path $directory $file.Name) -Algorithm SHA256).Hash.ToLowerInvariant();if($hash -ne $file.Value.sha256){throw 'Encrypted snapshot integrity check failed.'}}
+if($manifest.encryptedFiles.PSObject.Properties.Name -contains 'images.age') {
+ [void](Invoke-PrivatePipeline $age @('-d','-i',$keyFile,(Join-Path $directory 'images.age')) $dockerPath @('image','load'))
+}
 foreach($image in $manifest.images.PSObject.Properties){$id=Invoke-DockerBytes @('image','inspect','--format','{{.Id}}',$image.Name);if([Text.Encoding]::UTF8.GetString($id).Trim() -ne $image.Value){throw 'Recovery image differs from snapshot; restore the pinned release images first.'}}
 $root=Join-Path $recoveryRoot $Snapshot
 if(Test-Path -LiteralPath $root){throw 'Recovery already exists; use a fresh snapshot.'}
@@ -94,7 +98,7 @@ try {foreach($name in @('container-runtime.env','container-migrator.env','contai
 $credentials=Get-Content -LiteralPath (Join-Path $root 'compose-credentials.json') -Raw|ConvertFrom-Json
 foreach($role in @('root','runtime','migrator','operator')){if($credentials.$role -notmatch '^[a-f0-9]{64}$'){throw 'Invalid recovered DB credential format.'}}
 $prefix='servicios-cold-'+$Snapshot.ToLowerInvariant();$network=$prefix+'-network';$db=$prefix+'-mysql';$backend=$prefix+'-backend';$worker=$prefix+'-worker';$av=$prefix+'-antivirus';$proxy=$prefix+'-proxy';$containers=@();$volumes=@{mysql=$prefix+'-mysql-data';storage=$prefix+'-private';antivirus=$prefix+'-av';tls=$prefix+'-tls'}
-$result=[ordered]@{snapshot=$Snapshot;startedAt=$started.ToString('o');sourceCommit=$manifest.commit;workingTreeDirtyAtBackup=$manifest.workingTreeDirty;portableDecryptPlatform='Linux amd64 / age 1.3.2, network none';dpapiUsed=$false;newVolumes=$true;isolatedInternalNetwork=$true;publishedPorts=0;physicalHostChanged=$false;secretsIntegrity=$true;databaseMatches=$false;storageMatches=$false;runtimeDdlDenied=$false;auditMutationDenied=$false;operatorDdlDenied=$false;applicationRecovered=$false;workerRecovered=$false;tlsVerified=$false;antivirusRecovered=$false;stopped=$false}
+$result=[ordered]@{snapshot=$Snapshot;startedAt=$started.ToString('o');sourceCommit=$manifest.commit;workingTreeDirtyAtBackup=$manifest.workingTreeDirty;portableDecryptPlatform='Linux amd64 / age 1.3.2, network none';dpapiUsed=$false;newVolumes=$true;isolatedInternalNetwork=$true;publishedPorts=0;physicalHostChanged=$false;releaseImagesIncluded=($manifest.encryptedFiles.PSObject.Properties.Name -contains 'images.age');releaseImagesLoaded=($manifest.encryptedFiles.PSObject.Properties.Name -contains 'images.age');secretsIntegrity=$true;databaseMatches=$false;storageMatches=$false;runtimeDdlDenied=$false;auditMutationDenied=$false;operatorDdlDenied=$false;applicationRecovered=$false;workerRecovered=$false;tlsVerified=$false;antivirusRecovered=$false;stopped=$false}
 try {
  [void](Invoke-DockerBytes @('network','create','--internal','--label',('servicios.recovery='+$Snapshot),$network))
  foreach($volume in $volumes.Values){[void](Invoke-DockerBytes @('volume','create','--label',('servicios.recovery='+$Snapshot),$volume))}

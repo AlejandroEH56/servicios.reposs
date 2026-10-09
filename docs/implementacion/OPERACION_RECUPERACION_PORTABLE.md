@@ -29,7 +29,7 @@ Consultar `Get-Help ./scripts/rotate-entra-secret.ps1` y el parámetro del scrip
 ./scripts/install-portable-backup-task.ps1
 ```
 
-Age 1.3.2 Windows/Linux se descarga de su release oficial y verifica SHA-256 fijado. InitKey preserva una clave existente y comprueba su destinatario público. Backup sólo usa el destinatario público; la clave privada `.tools/recovery-keys/age-identity.txt` nunca entra en el archivo cifrado. Las copias están en `.tools/portable-backups/<ID>`: SQL canónico, storage privado, firmas AV, datos TLS de Caddy, inventario y credenciales runtime/migrator/operator cifrados. Manifest incluye hashes, IDs de imágenes, commit y estado del árbol; no contiene valores secretos.
+Age 1.3.2 Windows/Linux se descarga de su release oficial y verifica SHA-256 fijado. InitKey preserva una clave existente y comprueba su destinatario público. Backup sólo usa el destinatario público; la clave privada `.tools/recovery-keys/age-identity.txt` nunca entra en el archivo cifrado. Las copias están en `.tools/portable-backups/<ID>`: imágenes exactas de la release, SQL canónico, storage privado, firmas AV, datos TLS de Caddy, inventario y credenciales runtime/migrator/operator cifrados. Manifest incluye hashes, IDs de imágenes, commit y estado del árbol; no contiene valores secretos.
 
 La copia portátil sustituye la dependencia de DPAPI para recuperación de la fundación; los snapshots DPAPI previos conservan sólo utilidad local. El responsable confirmó custodia externa del snapshot `20261009T070504Z` y la clave en almacenamiento privado en la nube. La confirmación es del custodio; no se auditó la configuración del proveedor. Mantener la clave separada de los conjuntos de respaldo y transferir los nuevos snapshots al destino de custodia. La tarea local no sincroniza con la nube ni dispone de credenciales del proveedor.
 
@@ -40,7 +40,7 @@ Retención 14 días, máximo 30 snapshots completos y presupuesto 40 GiB; se con
 ## Recuperación en frío
 
 1. Recuperar un commit y los lockfiles de Git; instalar Docker/Compose, PowerShell Windows y las herramientas age verificadas.
-2. Recuperar las cuatro imágenes exactas backend/mysql/proxy/antivirus de la release (IDs incluidos en manifest). Las copias de datos no incluyen imágenes; conservarlas en registry/archivo de release y verificar provenance/scans. Un tag reconstruido que cambie de ID será rechazado.
+2. Las copias nuevas incluyen `images.age` con las cuatro imágenes exactas backend/mysql/proxy/antivirus. Restore lo descifra con age Windows verificado y lo importa por streaming antes de iniciar el descifrado Linux de datos; luego valida sus IDs. Las copias anteriores sin images.age requieren recuperar las imágenes exactas externamente. Se rechaza un tag reconstruido con ID distinto. El import de release restaura esos tags locales sin reiniciar los contenedores origen; revisar el snapshot elegido antes de ejecutarlo.
 3. Restaurar la carpeta cifrada en `.tools/portable-backups/<ID>` y la clave en su ubicación privada; ejecutar InitKey para verificar el destinatario, sin crear una key sustituta para esa copia.
 4. Ejecutar `./scripts/portable-recovery.ps1 -Action Restore -Snapshot <ID>`.
 5. Revisar `artifacts/portable-cold-restore-<ID>.json`: equivalencia SQL antes de iniciar worker, inventario de archivos, integridad de perfiles, grants negativos, HTTPS/TLS verificado usando CA recuperada, AV, worker activo con heartbeat nuevo, RPO/RTO y parada final.
@@ -50,4 +50,4 @@ El descifrado lo realiza age Linux en contenedor sin red, con key read-only. MyS
 
 ## Controles posteriores por módulo
 
-Ejecutar `php artisan modernization:verify-identifiers --enable-module=organization` (o residencies/planning/inventory) antes de habilitarlo. Convertir catálogo y FKs declaradas/lógicas; el control sólo puede inspeccionar FKs físicas y rutas reconocidas. Las APIs actuales sólo habilitan IAM/Shared. Ver [ADR-012](adr/ADR-012-identificadores-tecnicos-y-baseline.md), [spike OIDC aceptado](SPIKE_OIDC_CIERRE_B09.md) y [checklist vigente](PRE_SPRINT_1_CHECKLIST.md).
+Ejecutar `php artisan modernization:verify-identifiers --enable-module=organization` (o residencies/planning/inventory) antes de habilitarlo, usando el perfil migrator que puede inspeccionar todo el schema. El operator tiene visibilidad restringida a IAM/auditoría y no acredita el inventario completo; runtime inspecciona la fundación actualmente habilitada. Convertir catálogo y FKs declaradas/lógicas; el control sólo puede inspeccionar FKs físicas y rutas reconocidas. Las APIs actuales sólo habilitan IAM/Shared. Ver [ADR-012](adr/ADR-012-identificadores-tecnicos-y-baseline.md), [spike OIDC aceptado](SPIKE_OIDC_CIERRE_B09.md) y [checklist vigente](PRE_SPRINT_1_CHECKLIST.md).
