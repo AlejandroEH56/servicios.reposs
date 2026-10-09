@@ -1,3 +1,5 @@
+Actualización vigente 2026-10-09: los cinco cierres técnicos restantes fueron ejecutados. Consulta [checklist vigente](PRE_SPRINT_1_CHECKLIST.md), [plan de cierre](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md) y [operación/recuperación](OPERACION_RECUPERACION_PORTABLE.md); el dossier final del commit limpio determina el Entry Gate. El contenido siguiente conserva el análisis histórico.
+
 # Actualización posterior al reinicio — 2026-10-08
 
 La implementación es viable y la fundación local ya opera en Docker con pruebas. El alcance es migrar funcionalidades con datos nuevos. [Resultados actuales](RESULTADOS_EJECUCION_2026-10-08.md) y [plan restante](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md) prevalecen sobre los pendientes históricos del análisis siguiente. El gate sigue NO-GO por acreditación real de Entra y evidencias del candidato.

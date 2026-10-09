@@ -10,7 +10,7 @@ x-backend: &backend
   volumes:
     - private_storage:/srv/app/storage/app/private
   networks: [internal]
-  environment:
+  environment: &backend-environment
     APP_DEBUG: "false"
     LOG_CHANNEL: stderr
     DB_HOST: mysql
@@ -81,6 +81,19 @@ services:
     profiles: [maintenance]
     env_file: ${MIGRATOR_ENV_FILE:-.tools/environments/container-migrator.env}
     command: [php, artisan, migrate, --force, --no-interaction]
+    depends_on:
+      mysql:
+        condition: service_healthy
+  operator:
+    <<: *backend
+    restart: "no"
+    profiles: [maintenance]
+    env_file: ${OPERATOR_ENV_FILE:-.tools/environments/container-operator.env}
+    environment:
+      <<: *backend-environment
+      MODERNIZATION_OPERATIONS_ENABLED: "true"
+    entrypoint: [php, artisan]
+    command: [list]
     depends_on:
       mysql:
         condition: service_healthy
