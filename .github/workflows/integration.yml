@@ -109,6 +109,13 @@ jobs:
         run: |
           for i in $(seq 1 60); do if docker compose --env-file docker/environment.example exec -T antivirus clamdscan --ping 1; then break; fi; sleep 2; done
           npx playwright install --with-deps chromium
+          sudo apt-get install --yes libnss3-tools
+          for database in "$HOME/.pki/nssdb" "$HOME/.local/share/pki/nssdb"; do
+            mkdir -p "$database"
+            if [ ! -f "$database/cert9.db" ]; then certutil -N --empty-password -d "sql:$database"; fi
+            certutil -A -d "sql:$database" -n servicios-stage -t 'C,,' -i artifacts/docker-tls/root.crt
+            certutil -L -d "sql:$database" -n servicios-stage
+          done
           npm run test:tls
           npm run test:e2e
           php vendor/bin/phpunit tests/Integration/DockerOperationalTest.php --log-junit artifacts/docker-operational.xml
