@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
+use App\Http\Controllers\SharedFileController;
 use App\Http\Middleware\RequireActiveIdentity;
 use Illuminate\Support\Facades\Route;
 
@@ -16,6 +17,7 @@ Route::middleware(['guest', 'throttle:30,1'])->group(function () {
 });
 
 Route::middleware(['auth', RequireActiveIdentity::class])->group(function () {
+    Route::get('/files/{file}', SharedFileController::class)->whereUlid('file')->name('files.download');
     Route::view('/dashboard', 'dashboard')->name('dashboard');
     Route::get('/api/v1/me', MeController::class)->name('identity.me');
 });

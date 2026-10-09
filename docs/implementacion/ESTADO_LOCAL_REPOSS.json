@@ -1,69 +1,211 @@
 {
-  "sprint0": "FUNDACION_LOCAL_OPERATIVA",
-  "sprint1": "NO-GO",
-  "requiredBlockers": {
-    "B01": "PARTIAL",
-    "B02": "PARTIAL",
-    "B03": "PARTIAL",
-    "B04": "PARTIAL",
-    "B05": "PARTIAL",
-    "B06": "PARTIAL",
-    "B07": "BLOCKED_INFO",
-    "B08": "PARTIAL",
-    "B09": "PARTIAL",
-    "B10": "BLOCKED_INFO",
-    "B11": "BLOCKED_INFO",
-    "B12": "BLOCKED_INFO",
-    "B13": "PARTIAL",
-    "B14": "PARTIAL",
-    "B15": "PARTIAL",
-    "BN-01": "PARTIAL",
-    "BN-02": "PARTIAL",
-    "BN-03": "PARTIAL",
-    "BN-04": "BLOCKED_INFO",
-    "BN-05": "BLOCKED_INFO"
-  },
-  "commit": "0546644746f1b2a281730a95c5fd8ef8bb48e2cc",
-  "workingTreeDirty": true,
-  "project": "servicios.reposs",
-  "evaluatedAt": "2026-10-04",
-  "evidence": {},
-  "requiredChecks": {},
-  "localChecks": {
-    "phpunit": {
-      "tests": 50,
-      "assertions": 180,
-      "result": "PASS"
-    },
-    "mysql": {
-      "version": "26.7.0",
-      "tests": 17,
-      "assertions": 251,
-      "result": "PASS"
-    },
-    "phpstan": "PASS",
-    "pint": "PASS",
-    "composerValidate": "PASS",
-    "composerAuditOnline": "PASS",
-    "npmAuditRootOnline": "PASS",
-    "npmAuditFrontendOnline": "PASS",
-    "openapiLint": "PASS",
-    "openapiBundle": "PASS",
-    "angularClientReproducible": "PASS",
-    "angularBuild": "PASS",
-    "angularTests": 2,
-    "gateTests": 9,
-    "oidcMetadataVerifiedTls": "PASS",
-    "httpSmoke": {
-      "live": 200,
-      "ready": 200,
-      "meUnauthenticated": 401
-    }
-  },
-  "notes": [
-    "Resultados locales sobre working tree, no VERIFIED del SHA final.",
-    "Fresh/grants exclusivamente servicios_moderno_test; los principals persistentes no cambiaron.",
-    "Credenciales locales presentes no acreditan secreto/consentimiento/rotación.",
-    "No iniciar fases promovidas sin GO completo."
-  ]
+    "sprint0":  "FUNDACION_LOCAL_OPERATIVA",
+    "sprint1":  "NO-GO",
+    "requiredBlockers":  {
+                             "B01":  "PARTIAL",
+                             "B02":  "PARTIAL",
+                             "B03":  "PARTIAL",
+                             "B04":  "PARTIAL",
+                             "B05":  "PARTIAL",
+                             "B06":  "PARTIAL",
+                             "B07":  "PARTIAL",
+                             "B08":  "PARTIAL",
+                             "B09":  "PARTIAL",
+                             "B10":  "PARTIAL",
+                             "B11":  "PARTIAL",
+                             "B12":  "PARTIAL",
+                             "B13":  "PARTIAL",
+                             "B14":  "PARTIAL",
+                             "B15":  "PARTIAL",
+                             "BN-01":  "PARTIAL",
+                             "BN-02":  "PARTIAL",
+                             "BN-03":  "PARTIAL",
+                             "BN-04":  "PARTIAL",
+                             "BN-05":  "PARTIAL"
+                         },
+    "commit":  "41e15f566813e7cbc640f7a3811e657d7c36a4ae",
+    "workingTreeDirty":  true,
+    "project":  "servicios.reposs",
+    "evaluatedAt":  "2026-10-09T04:18:21.1046111Z",
+    "evidence":  {
+
+                 },
+    "requiredChecks":  {
+
+                       },
+    "localChecks":  {
+                        "phpunit":  {
+                                        "tests":  69,
+                                        "assertions":  302,
+                                        "result":  "PASS"
+                                    },
+                        "mysql":  {
+                                      "version":  "26.7.0",
+                                      "tests":  28,
+                                      "assertions":  327,
+                                      "result":  "PASS",
+                                      "skipped":  10
+                                  },
+                        "phpstan":  "PASS",
+                        "pint":  "PASS",
+                        "composerValidate":  "PASS",
+                        "composerAuditOnline":  "PASS",
+                        "npmAuditRootOnline":  "PASS",
+                        "npmAuditFrontendOnline":  "PASS",
+                        "openapiLint":  "PASS",
+                        "openapiBundle":  "PASS",
+                        "angularClientReproducible":  "PASS",
+                        "angularBuild":  "PASS",
+                        "angularTests":  2,
+                        "gateTests":  9,
+                        "oidcMetadataVerifiedTls":  "PASS",
+                        "httpSmoke":  {
+                                          "live":  200,
+                                          "ready":  200,
+                                          "meUnauthenticated":  401
+                                      },
+                        "browserStaging":  {
+                                               "result":  "PASS",
+                                               "tests":  5,
+                                               "tlsVerification":  true
+                                           },
+                        "composeConfig":  "PASS_RUNTIME",
+                        "persistentEnvironmentGrants":  {
+                                                            "assertions":  21,
+                                                            "result":  "PASS",
+                                                            "tests":  2
+                                                        },
+                        "browserProduction":  {
+                                                  "result":  "PASS",
+                                                  "tests":  5,
+                                                  "tlsVerification":  true
+                                              },
+                        "nativeTls":  {
+                                          "result":  "PASS",
+                                          "production":  2,
+                                          "staging":  2
+                                      },
+                        "nativeReadinessFaults":  {
+                                                      "result":  "PASS",
+                                                      "tests":  2,
+                                                      "assertions":  35,
+                                                      "environment":  "staging native",
+                                                      "artifact":  "artifacts/readiness-faults.xml"
+                                                  },
+                        "workerFaultRecovery":  {
+                                                    "result":  "PASS",
+                                                    "readinessStopped":  503,
+                                                    "livenessStopped":  200,
+                                                    "readinessRecovered":  200,
+                                                    "ttlSeconds":  120,
+                                                    "recoveryTests":  2,
+                                                    "artifact":  "artifacts/worker-recovery.xml"
+                                                },
+                        "dockerOperational":  {
+                                                  "assertions":  93,
+                                                  "result":  "PASS",
+                                                  "tests":  8
+                                              },
+                        "linux":  {
+                                      "assertions":  281,
+                                      "result":  "PASS",
+                                      "skipped":  2,
+                                      "tests":  67,
+                                      "phpstan":  "PASS"
+                                  },
+                        "backendImageScan":  {
+                                                 "base":  "PHP 8.4.26 Alpine 3.24",
+                                                 "medium":  6,
+                                                 "high":  0,
+                                                 "result":  "PASS_HIGH_THRESHOLD",
+                                                 "artifact":  "artifacts/backend-alpine-grype-20261008.json",
+                                                 "critical":  0
+                                             },
+                        "telemetry":  {
+                                          "correlatedSignalTraces":  1166,
+                                          "result":  "PASS",
+                                          "collectorFailure":  "FAIL_OPEN",
+                                          "unsafeFieldNames":  0
+                                      },
+                        "rotations":  {
+                                          "appPreviousKeyRecovers":  true,
+                                          "entra":  "PENDING_HTTP_403",
+                                          "databaseOldRejected":  true
+                                      },
+                        "branchProtection":  {
+                                                 "deletion":  false,
+                                                 "result":  "PASS_READBACK",
+                                                 "forcePush":  false,
+                                                 "checks":  [
+                                                                "backend",
+                                                                "frontend-openapi",
+                                                                "mysql",
+                                                                "docker",
+                                                                "security-contracts"
+                                                            ]
+                                             },
+                        "imageMatrix":  {
+                                            "backend-alpine":  {
+                                                                   "highCritical":  0,
+                                                                   "classified":  1,
+                                                                   "result":  "PASS"
+                                                               },
+                                            "proxy-patched":  {
+                                                                  "highCritical":  0,
+                                                                  "classified":  1,
+                                                                  "result":  "PASS"
+                                                              },
+                                            "antivirus-patched":  {
+                                                                      "highCritical":  0,
+                                                                      "classified":  1,
+                                                                      "result":  "PASS"
+                                                                  },
+                                            "collector":  {
+                                                              "highCritical":  0,
+                                                              "classified":  1,
+                                                              "result":  "PASS"
+                                                          },
+                                            "mysql-classified":  {
+                                                                     "highCritical":  0,
+                                                                     "classified":  3,
+                                                                     "result":  "PASS"
+                                                                 }
+                                        }
+                    },
+    "notes":  [
+                  "Resultados locales sobre working tree, no VERIFIED del SHA final.",
+                  "Fresh/grants del harness aislados en servicios_moderno_test; provisiÃƒÆ’Ã‚Â³n persistente separada y grants reales comprobados.",
+                  "Credenciales locales presentes no acreditan secreto/consentimiento/rotaciÃƒÆ’Ã†â€™Ãƒâ€šÃ‚Â³n.",
+                  "No iniciar fases promovidas sin GO completo."
+              ],
+    "authorization":  {
+                          "testsAndToolsAuthorized":  true,
+                          "environmentsMayBeAdapted":  true,
+                          "responsible":  "AlejandroEH56",
+                          "resources":  "current workstation",
+                          "developmentDatabasesMayBeRecreated":  true
+                      },
+    "environmentProvisioning":  {
+                                    "testing":  "ISOLATED",
+                                    "staging":  "RUNNING_NATIVE",
+                                    "dockerClient":  "29.8.1",
+                                    "productionRehearsal":  "RUNNING_NATIVE",
+                                    "dockerEngine":  "HOST_VIRTUALIZATION_PENDING",
+                                    "wsl":  "3.0.1",
+                                    "development":  "PROVISIONED",
+                                    "windowsRestartRequired":  true,
+                                    "windowsFeaturesArtifact":  "artifacts/environment/windows-container-features.json"
+                                },
+    "legacyScope":  {
+                        "adr":  "docs/implementacion/adr/ADR-013-migracion-funcional-con-datos-nuevos.md",
+                        "historicalTransfer":  false,
+                        "acceptedBy":  "project developer / AlejandroEH56",
+                        "acceptedAt":  "2026-10-08",
+                        "decision":  "FUNCTIONAL_MIGRATION_NEW_DATA"
+                    },
+    "outstanding":  [
+                        "Register Entra callbacks and real allow/deny/group-withdrawal evidence; current write HTTP 403 and login AADSTS50011",
+                        "Entra secret rotation and cross-host/production secret recovery",
+                        "Clean candidate CI/evidence and final gate; other deployment images need their scans"
+                    ]
 }

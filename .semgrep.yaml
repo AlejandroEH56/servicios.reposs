@@ -1,0 +1,39 @@
+rules:
+  - id: php-request-to-shell
+    languages: [php]
+    severity: ERROR
+    message: Request data reaches a shell command.
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET[...]
+      - pattern: $_POST[...]
+      - pattern: $REQUEST->input(...)
+    pattern-sinks:
+      - pattern: shell_exec(...)
+      - pattern: exec(...)
+      - pattern: system(...)
+      - pattern: passthru(...)
+  - id: php-request-to-raw-sql
+    languages: [php]
+    severity: ERROR
+    message: Request data reaches raw SQL without parameter binding.
+    mode: taint
+    pattern-sources:
+      - pattern: $_GET[...]
+      - pattern: $_POST[...]
+      - pattern: $REQUEST->input(...)
+    pattern-sinks:
+      - pattern: DB::unprepared(...)
+      - pattern: DB::statement($SQL)
+  - id: php-disable-tls-verification
+    languages: [php]
+    severity: ERROR
+    message: TLS verification must remain enabled.
+    pattern-either:
+      - pattern: "['verify' => false, ...]"
+      - pattern: "curl_setopt($C, CURLOPT_SSL_VERIFYPEER, false)"
+  - id: angular-trust-untrusted-html
+    languages: [typescript]
+    severity: ERROR
+    message: Review bypass of Angular sanitization.
+    pattern: $SANITIZER.bypassSecurityTrustHtml(...)

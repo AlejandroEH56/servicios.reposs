@@ -1,0 +1,11 @@
+# Configuracion no secreta: copiar a un archivo ignorado fuera del repositorio.
+COMPOSE_PROJECT_NAME=servicios_stage
+SITE_ADDRESS=https://localhost:8443
+TLS_DIRECTIVE=tls internal
+HTTPS_PORT=8443
+HTTP_PORT=8080
+HOST_BIND=127.0.0.1
+RUNTIME_ENV_FILE=.tools/environments/container-runtime.env
+MIGRATOR_ENV_FILE=.tools/environments/container-migrator.env
+MYSQL_ROOT_PASSWORD_FILE=.tools/environments/mysql-root-password.txt
+MYSQL_DATABASE=servicios_moderno_stage

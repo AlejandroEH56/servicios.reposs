@@ -53,6 +53,7 @@ class MicrosoftAuthController extends Controller
             $request->session()->regenerate();
             $request->session()->put('iam_authenticated_at', now()->timestamp);
             $request->session()->put('iam_last_activity', now()->timestamp);
+            $request->session()->put('iam_authorization_version', Auth::user()->version_autorizacion);
             $request->session()->forget('url.intended');
 
             return redirect()->route('dashboard');

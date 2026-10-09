@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Middleware\CorrelationId;
+use App\Http\Middleware\OperationalTelemetry;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
@@ -20,6 +21,8 @@ return Application::configure(basePath: dirname(__DIR__))
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->append(CorrelationId::class);
+        $middleware->append(OperationalTelemetry::class);
+        $middleware->trustProxies(at: ['127.0.0.1', '::1', '172.30.0.2'], headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
