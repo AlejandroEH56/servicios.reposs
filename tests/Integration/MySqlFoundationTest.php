@@ -50,8 +50,9 @@ class MySqlFoundationTest extends TestCase
         $migratorName = 'mm_'.bin2hex(random_bytes(6));
         $password = bin2hex(random_bytes(32));
         $admin = DB::connection()->getPdo();
-        $runtime = $admin->quote($runtimeName)."@'localhost'";
-        $migrator = $admin->quote($migratorName)."@'localhost'";
+        $clientHost = $admin->quote(explode('@', (string) $admin->query('SELECT USER()')->fetchColumn(), 2)[1]);
+        $runtime = $admin->quote($runtimeName).'@'.$clientHost;
+        $migrator = $admin->quote($migratorName).'@'.$clientHost;
         try {
             $admin->exec('CREATE USER '.$runtime.' IDENTIFIED BY '.$admin->quote($password));
             $admin->exec('CREATE USER '.$migrator.' IDENTIFIED BY '.$admin->quote($password));

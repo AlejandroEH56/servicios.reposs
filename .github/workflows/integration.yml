@@ -44,6 +44,14 @@ jobs:
     runs-on: ubuntu-24.04
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - name: Install pinned Compose with official checksum
+        run: |
+          mkdir -p "$HOME/.docker/cli-plugins"
+          curl --fail --location https://github.com/docker/compose/releases/download/v5.5.1/docker-compose-linux-x86_64 -o /tmp/docker-compose-linux-x86_64
+          curl --fail --location https://github.com/docker/compose/releases/download/v5.5.1/docker-compose-linux-x86_64.sha256 -o /tmp/docker-compose-linux-x86_64.sha256
+          (cd /tmp && sha256sum --check --strict docker-compose-linux-x86_64.sha256)
+          install -m 755 /tmp/docker-compose-linux-x86_64 "$HOME/.docker/cli-plugins/docker-compose"
+          docker compose version
       - uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
           php-version: '8.4.26'
@@ -122,8 +130,9 @@ jobs:
         run: |
           base="${{ github.event.pull_request.base.sha || github.event.before }}"
           if [ -z "$base" ] || [ "$base" = "0000000000000000000000000000000000000000" ]; then base="$(git merge-base HEAD origin/main)"; fi
-          git show "$base:openapi/api.yaml" > artifacts/openapi-base.yaml
-          .tools/quality/oasdiff breaking artifacts/openapi-base.yaml openapi/api.yaml --fail-on ERR --format json > artifacts/openapi-breaking.json
+          mkdir -p artifacts/contract-base
+          git archive "$base" openapi | tar -x -C artifacts/contract-base
+          .tools/quality/oasdiff breaking artifacts/contract-base/openapi/api.yaml openapi/api.yaml --fail-on ERR --format json > artifacts/openapi-breaking.json
           .tools/quality/gitleaks git --redact --no-banner --report-format json --report-path artifacts/secrets.json
           docker run --rm --network none -v "$PWD:/src:ro" semgrep/semgrep@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3 semgrep scan --oss-only --timeout 15 --max-memory 256 --jobs 2 --config /src/.semgrep.yaml --metrics=off --error --json /src/app /src/frontend/src > artifacts/sast.json
       - name: Image SBOM and vulnerability gate

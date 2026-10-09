@@ -6,7 +6,7 @@ x-backend: &backend
   image: servicios-backend:${RELEASE_SHA:-local}
   restart: unless-stopped
   init: true
-  security_opt: [no-new-privileges:true]
+  security_opt: ["no-new-privileges:true"]
   volumes:
     - private_storage:/srv/app/storage/app/private
   networks: [internal]
