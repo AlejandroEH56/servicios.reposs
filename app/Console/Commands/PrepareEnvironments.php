@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Modules\Shared\Infrastructure\Operations\EnvironmentProfileSource;
 use Dotenv\Dotenv;
 use Illuminate\Console\Attributes\Description;
 use Illuminate\Console\Attributes\Signature;
@@ -16,7 +17,7 @@ use Throwable;
 #[Description('Provision isolated local databases and persistent restricted runtime/migrator accounts')]
 class PrepareEnvironments extends Command
 {
-    public function handle(): int
+    public function handle(EnvironmentProfileSource $profiles): int
     {
         if (! app()->environment('local') || DB::getDriverName() !== 'mysql'
             || ! in_array(config('database.connections.mysql.host'), ['localhost', '127.0.0.1', '::1'], true)
@@ -33,6 +34,8 @@ class PrepareEnvironments extends Command
             chmod($adminFile, 0600);
         }
         $original = File::get($adminFile);
+        $activeProfile = File::get(base_path('.env'));
+        $original = $this->environment($original, $profiles->updates($activeProfile));
         $adminValues = Dotenv::parse($original);
         $host = $adminValues['DB_HOST'] ?? '127.0.0.1';
         $port = $adminValues['DB_PORT'] ?? '3306';
@@ -48,7 +51,7 @@ class PrepareEnvironments extends Command
             $environments = ['local' => $current, 'staging' => 'servicios_moderno_stage', 'production' => 'servicios_moderno_prod'];
             foreach ($environments as $environment => $database) {
                 $admin->exec('CREATE DATABASE IF NOT EXISTS `'.$database.'` CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
-                foreach (['migrator', 'runtime'] as $role) {
+                foreach (['migrator', 'runtime', 'operator'] as $role) {
                     $username = 'sr_'.match ($environment) {
                         'local' => 'dev', 'staging' => 'stage', default => 'prod'
                     }.'_'.$role;
@@ -64,9 +67,17 @@ class PrepareEnvironments extends Command
                     } else {
                         $privileges = json_decode(File::get(database_path('privileges.json')), true, flags: JSON_THROW_ON_ERROR);
                         $existingTables = $admin->query('SHOW TABLES FROM `'.$database.'`')->fetchAll(PDO::FETCH_COLUMN);
-                        foreach ($privileges['runtimeWritable'] as $table) {
+                        foreach ($privileges[$role === 'runtime' ? 'runtimeWritable' : 'operatorWritable'] as $table) {
                             if (in_array($table, $existingTables, true)) {
-                                $admin->exec('GRANT SELECT, INSERT, UPDATE, DELETE ON `'.$database.'`.`'.$table.'` TO '.$account);
+                                $verbs = $role === 'runtime' ? 'SELECT, INSERT, UPDATE, DELETE' : 'SELECT, INSERT, UPDATE';
+                                $admin->exec('GRANT '.$verbs.' ON `'.$database.'`.`'.$table.'` TO '.$account);
+                            }
+                        }
+                        if ($role === 'operator') {
+                            foreach ($privileges['operatorReadOnly'] as $table) {
+                                if (in_array($table, $existingTables, true)) {
+                                    $admin->exec('GRANT SELECT ON `'.$database.'`.`'.$table.'` TO '.$account);
+                                }
                             }
                         }
                         foreach ($privileges['appendOnly'] as $table) {
@@ -80,17 +91,22 @@ class PrepareEnvironments extends Command
                         'DB_DATABASE' => $database, 'DB_USERNAME' => $username, 'DB_PASSWORD' => $credentials[$username],
                         'DB_URL' => '', 'SESSION_COOKIE' => 'laravel_session', 'SESSION_DOMAIN' => 'null',
                         'SESSION_HTTP_ONLY' => 'true', 'SESSION_SAME_SITE' => 'lax',
-                        'CACHE_PREFIX' => 'sr_'.$environment.'_', 'MODERNIZATION_OPERATIONS_ENABLED' => 'false',
+                        'CACHE_PREFIX' => 'sr_'.$environment.'_', 'MODERNIZATION_OPERATIONS_ENABLED' => $role === 'operator' ? 'true' : 'false',
                     ];
+                    if ($role === 'operator') {
+                        $values['MODERNIZATION_OPERATIONS_OWNER'] = 'AlejandroEH56';
+                    }
                     if ($environment !== 'local') {
                         $origin = 'https://localhost:'.($environment === 'staging' ? '8443' : '9443');
                         $values += ['APP_KEY' => $credentials[$environment.'_app_key'] ??= 'base64:'.base64_encode(random_bytes(32)),
                             'APP_URL' => $origin, 'MICROSOFT_REDIRECT_URI' => $origin.'/auth/microsoft/callback',
                             'SESSION_SECURE_COOKIE' => 'true', 'LOG_LEVEL' => 'info', 'PRIVATE_STORAGE_ROOT' => storage_path('app/'.$environment.'/private')];
                     }
-                    $content = $this->environment($original, $values);
-                    $file = $environment === 'local' ? ($role === 'runtime' ? $directory.'/runtime.env' : base_path('.env.migrator'))
-                        : base_path('.env.'.$environment.($role === 'runtime' ? '' : '-migrator'));
+                    $file = $environment === 'local' ? ($role === 'runtime' ? $directory.'/runtime.env' : base_path('.env.'.$role))
+                        : base_path('.env.'.$environment.($role === 'runtime' ? '' : '-'.$role));
+                    $existing = $environment === 'local' ? $activeProfile : (is_file($file) ? File::get($file) : null);
+                    $values = array_replace($values, $profiles->updates($activeProfile, $existing));
+                    $content = $this->environment($existing ?? $original, $values);
                     File::put($file, $content);
                     chmod($file, 0600);
                     if ($role === 'migrator') {
@@ -109,7 +125,6 @@ class PrepareEnvironments extends Command
             $admin->exec('CREATE DATABASE IF NOT EXISTS servicios_moderno_test CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci');
             File::put(base_path('.env.testing'), $this->environment($original, ['APP_ENV' => 'testing', 'DB_DATABASE' => 'servicios_moderno_test', 'DB_URL' => '']));
             $runtime = File::get($directory.'/runtime.env');
-            File::put(base_path('.env.operator'), $this->environment($runtime, ['MODERNIZATION_OPERATIONS_ENABLED' => 'true', 'MODERNIZATION_OPERATIONS_OWNER' => 'AlejandroEH56']));
             if ($this->option('activate-runtime')) {
                 File::put(base_path('.env'), $runtime);
             }
