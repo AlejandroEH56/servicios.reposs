@@ -38,6 +38,17 @@ class SprintTwoOrganizationTest extends TestCase
             'iam_authorization_version' => $user->version_autorizacion]);
     }
 
+    public function test_organization_commands_reject_unknown_fields_instead_of_ignoring_them(): void
+    {
+        $this->login($this->administrator);
+        $this->postJson('/api/v1/organization/units', ['code' => 'STRICT', 'name' => 'Strict fixture', 'kind' => 'DEPARTAMENTO',
+            'active' => true, 'unexpected' => 'value'])->assertUnprocessable();
+        $this->assertDatabaseMissing('organizacion_unidades', ['codigo' => 'STRICT']);
+        $this->postJson('/api/v1/organization/employees', ['identityId' => $this->administrator->id, 'givenNames' => 'Fixture',
+            'firstSurname' => 'Strict', 'isAdviser' => false, 'email' => null])->assertUnprocessable();
+        $this->assertDatabaseCount('organizacion_empleados', 0);
+    }
+
     /** @param array<string, mixed> $data
      * @return array<string, mixed> */
     private function execute(string $operation, ?string $id, array $data): array

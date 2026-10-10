@@ -5,9 +5,25 @@ namespace App\Modules\Organization\Presentation\Http\Requests\Api\V1;
 use App\Modules\Organization\Application\OrganizationDirectory;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Validation\Validator;
 
 class OrganizationRequest extends FormRequest
 {
+    /** @var list<string> */
+    private array $submittedFields = [];
+
+    public function withValidator(Validator $validator): void
+    {
+        $rules = $this->rules();
+        $allowed = array_keys(array_filter($rules, fn (array $rules): bool => ! in_array('prohibited', $rules, true)));
+        $allowed = array_diff($allowed, ['positionId', 'degreeId']);
+        $validator->after(function (Validator $validator) use ($allowed): void {
+            foreach (array_diff($this->submittedFields, $allowed) as $field) {
+                $validator->errors()->add($field, 'Unsupported field.');
+            }
+        });
+    }
+
     public function authorize(): bool
     {
         $action = $this->route('operation');
@@ -25,6 +41,7 @@ class OrganizationRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $this->submittedFields = array_keys($this->all());
         foreach (['position' => 'positionId', 'degree' => 'degreeId'] as $route => $field) {
             if ($this->route($route) !== null) {
                 $this->merge([$field => $this->route($route)]);

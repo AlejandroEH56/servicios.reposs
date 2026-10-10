@@ -32,6 +32,8 @@ Las unidades forman un árbol. Un mutex compartido protege cambios de padres y d
 
 Las pantallas Angular `/portal/iam` y `/portal/organization` incluyen roles/permisos, asignaciones/historial, empleados, puestos manuales, grados, árbol y niveles, además del directorio de asesores. Signals mantienen el estado y RxJS realiza I/O mediante el cliente generado. Los guards revalidan `/me`; la autorización definitiva está en el API. Los writes inicializan CSRF y envían la versión esperada, sin reintento automático al recibir 409. No se almacenan tokens Microsoft en el navegador.
 
+El contrato ejecutable del slice está en `openapi/api.yaml`. Los commands rechazan campos desconocidos, incluidos campos adicionales dentro de permisos; los IDs de puesto/grado proceden exclusivamente de la ruta. La versión esperada se envía en el DTO (`expectedVersion`/`expectedAuthorizationVersion`), conforme al cliente generado. Las búsquedas de identidades, empleados y asesores devuelven como máximo 100 coincidencias por consulta mediante `q`; este slice no implementa todavía el cursor y las cabeceras `If-Match` del diseño general `API_REST.md`. No se afirma que se haya completado todo ese diseño transversal.
+
 ## Esquema y adopción
 
 Cada módulo carga sus migraciones. El esquema fresco crea IDs ULID ASCII binarios. La adopción del SQL baseline conserva las tablas y datos: convierte niveles académicos numéricos a ULID, reescribe las FKs de grados y registra `migracion_mapa_ids`; exige conciliación previa si aparecen referencias desconocidas, roles/asignaciones preexistentes o permisos ajenos a las semillas identificadas del baseline. Las semillas de permisos futuros no reciben grants.

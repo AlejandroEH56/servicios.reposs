@@ -2,7 +2,7 @@ openapi: 3.1.1
 info:
   title: 'Servicios - API'
   version: 0.2.0
-  description: 'Identidad, autorizaci?n local y Organization desplegados. Permisos y alcances se eval?an en el servidor; ning?n puesto Microsoft concede roles.'
+  description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
     identifier: MIT

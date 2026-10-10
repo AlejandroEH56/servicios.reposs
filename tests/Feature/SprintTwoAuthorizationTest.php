@@ -42,6 +42,19 @@ class SprintTwoAuthorizationTest extends TestCase
         return DB::table('iam_roles')->where('codigo', $code)->value('id');
     }
 
+    public function test_commands_reject_unknown_root_and_nested_fields_without_writing(): void
+    {
+        $this->login($this->administrator);
+        $this->postJson('/api/v1/iam/roles', ['code' => 'STRICT', 'name' => 'Strict fixture', 'automaticGrant' => true])->assertUnprocessable();
+        $this->assertDatabaseMissing('iam_roles', ['codigo' => 'STRICT']);
+        $role = $this->role('EMPLEADO');
+        $permission = DB::table('iam_permisos')->where('codigo', 'organization.grados.gestionar')->value('id');
+        $this->putJson('/api/v1/iam/roles/'.$role.'/permissions', ['expectedVersion' => 1,
+            'permissions' => [['permissionId' => $permission, 'scope' => 'SELF', 'resourceOwner' => $this->administrator->id]],
+        ])->assertUnprocessable();
+        $this->assertSame(1, DB::table('iam_roles')->where('id', $role)->value('version'));
+    }
+
     public function test_group_access_does_not_grant_local_privileges_and_every_iam_endpoint_denies_by_default(): void
     {
         $ordinary = User::factory()->create();
