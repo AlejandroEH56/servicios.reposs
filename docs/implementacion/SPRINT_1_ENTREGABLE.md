@@ -18,6 +18,10 @@ Logout: GET `/sanctum/csrf-cookie`, seguido de POST `/auth/entra/logout` con `X-
 
 ## Persistencia y decisiones
 
+El CI inicial detectó hallazgos High/Critical en Go 1.26.8 y x/net 0.58/0.59 dentro de proxy y collector. Se conservan los reportes FAIL. Caddy 2.11.7 se recompila con Go 1.26.9 (imagen por digest) y x/net 0.60.0; el collector mantiene componentes 0.161.0, pero se construye con OCB oficial y sólo OTLP, memory limiter, attributes/redact, batch y file export, con las mismas dependencias corregidas. Se conservan configuración, pipelines y usuario del contenedor. CI escanea las cinco imágenes construidas; no se agregan exclusiones de seguridad. El backup incorpora ahora también la imagen exacta del collector.
+
+Fuentes: [correcciones Go](https://go.dev/doc/devel/release), [GO-2026-6612](https://pkg.go.dev/vuln/GO-2026-6612) y [builder oficial OpenTelemetry](https://opentelemetry.io/docs/collector/extend/ocb/). El uso de una distribución mínima requiere validar recepción, redacción y exportación de las tres señales; no se afirma compatibilidad con componentes ajenos a la configuración del proyecto.
+
 No se agregan tablas ni se recrean las bases persistentes: `iam_identidades`, `iam_cuentas_externas`, sesiones y cache ya están implementadas. El provisioning existente mantiene vínculo exclusivo `(tenant, objectId)`, unicidad de correo y rechazo de colisiones, activación por grupo autorizado y bloqueo por suspensión/desactivación. Los catálogos y roles/permisos de Sprint 2 permanecen fuera del alcance.
 
 ## Criterios de salida y evidencias
@@ -44,10 +48,10 @@ Resultados de ejecución y estado de CI/shadow login se registran en `artifacts/
 1. Ejecutar `php vendor/bin/phpunit` y la suite aislada `php vendor/bin/phpunit -c phpunit.mysql.xml`.
 2. Ejecutar Pint para PHP modificado y `composer analyse`.
 3. Ejecutar `npm run openapi:lint`; en frontend, `npm run api:check`, `npm test -- --watch=false` y `npm run build`.
-4. Construir backend/proxy con Compose y recrear sólo backend/worker/proxy, conservando los volúmenes y credenciales existentes.
-5. Ejecutar `npm run test:tls` y `npm run test:e2e` con CA de desarrollo confiable; no deshabilitar TLS.
+4. Construir backend/proxy/collector con Compose y recrear backend/worker/proxy/collector, conservando los volúmenes y credenciales existentes.
+5. Ejecutar `npm run test:tls`, `npm run test:e2e` y `DockerOperationalTest` con CA de desarrollo confiable; verificar OTLP, redacción y exportación de trazas, logs y métricas. No deshabilitar TLS.
 6. Versionar en rama de feature y abrir PR. Validar los cinco jobs del candidato y completar shadow login de la cuenta de ensayo.
 
-Rollback de código: reconstruir backend/proxy desde el candidato base conservando las bases. No hay migración nueva que revertir. El respaldo cifrado de cierre pre-Sprint 1 sigue disponible para recuperación completa conforme al runbook portable.
+Rollback funcional: reconstruir backend y frontend desde el candidato base conservando las bases y las correcciones de Go del runtime. No hay migración nueva que revertir. El respaldo cifrado de cierre pre-Sprint 1 sigue disponible para recuperación completa conforme al runbook portable; sus imágenes anteriores requieren aplicar nuevamente estas correcciones antes de habilitar el servicio.
 
 No iniciar Sprint 2 antes de cumplir la salida dependiente y registrar el resultado real del nuevo slice.
