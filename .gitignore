@@ -4,6 +4,8 @@
 .env.backup
 .env.production
 .env.testing
+.env.*
+!.env.*.example
 .phpactor.json
 .phpunit.result.cache
 /.codex
@@ -27,6 +29,8 @@
 /frontend/dist
 /frontend/.angular
 /artifacts
+/test-results
+/playwright-report
 _ide_helper.php
 Homestead.json
 Homestead.yaml

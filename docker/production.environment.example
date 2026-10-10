@@ -1,0 +1,13 @@
+# Perfil de despliegue público: completar el dominio propio y preparar secretos
+# independientes. No reutilizar las credenciales de desarrollo ni de staging.
+COMPOSE_PROJECT_NAME=servicios_production
+SITE_ADDRESS=servicios.example.com
+CANONICAL_ORIGIN=https://servicios.example.com
+TLS_DIRECTIVE=
+HTTPS_PORT=443
+HTTP_PORT=80
+RUNTIME_ENV_FILE=/run/servicios-secrets/runtime.env
+MIGRATOR_ENV_FILE=/run/servicios-secrets/migrator.env
+MYSQL_ROOT_PASSWORD_FILE=/run/servicios-secrets/mysql-root-password.txt
+MYSQL_DATABASE=servicios_moderno_stage
+HOST_BIND=0.0.0.0

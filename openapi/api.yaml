@@ -15,6 +15,41 @@ tags:
   - name: IAM
     description: Identidad institucional y sesión local, sin tokens Microsoft.
 paths:
+  /sanctum/csrf-cookie:
+    get:
+      operationId: prepareCsrf
+      summary: Inicializar protección CSRF de la sesión
+      description: Emite XSRF-TOKEN para mutaciones del mismo origen. Angular lo envía como X-XSRF-TOKEN; no contiene credenciales Microsoft.
+      tags: [IAM]
+      security: []
+      responses:
+        '204':
+          description: Cookie CSRF inicializada, sin cuerpo.
+        '400':
+          description: Solicitud HTTP malformada.
+        default:
+          description: Error de inicialización.
+  /auth/entra/logout:
+    post:
+      operationId: logoutSession
+      summary: Cerrar la sesión local
+      description: Requiere cookie de sesión y X-XSRF-TOKEN de esa misma sesión. Invalida la sesión y rota CSRF. No ejecuta logout federado.
+      tags: [IAM]
+      parameters:
+        - name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Sesión invalidada, sin cuerpo.
+        '401':
+          $ref: './management.yaml#/components/responses/Problem'
+        '419':
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
   /api/v1/me:
     get:
       operationId: getMe

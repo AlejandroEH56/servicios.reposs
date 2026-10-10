@@ -77,7 +77,7 @@ class MicrosoftAuthenticationTest extends TestCase
             ->getJson('/api/v1/me')->assertOk()->assertHeader('Cache-Control', 'no-store, private')->assertExactJson(['data' => [
                 'id' => $user->id, 'displayName' => $user->nombre_mostrado, 'email' => $user->correo_normalizado,
                 'status' => 'ACTIVA', 'roles' => [], 'permissions' => [], 'scopes' => [],
-                'sessionExpiresAt' => now()->addMinutes(30)->toISOString(),
+                'sessionExpiresAt' => now()->addMinutes(5)->toISOString(),
             ]]);
     }
 

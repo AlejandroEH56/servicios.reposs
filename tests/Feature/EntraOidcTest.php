@@ -96,6 +96,27 @@ class EntraOidcTest extends TestCase
         }
     }
 
+    public static function clockBoundaries(): array
+    {
+        return [['exp', -59, true], ['exp', -60, false], ['nbf', 60, true], ['nbf', 61, false], ['iat', 60, true], ['iat', 61, false]];
+    }
+
+    #[DataProvider('clockBoundaries')]
+    public function test_clock_tolerance_is_bounded_to_sixty_seconds(string $claim, int $offset, bool $allowed): void
+    {
+        $this->fakeProvider($this->token([$claim => now()->timestamp + $offset]));
+        if ($allowed) {
+            $this->assertSame($this->object, app(EntraOidcClient::class)->authenticate('code', 'verifier', 'nonce')->objectId);
+        } else {
+            try {
+                app(EntraOidcClient::class)->authenticate('code', 'verifier', 'nonce');
+                $this->fail('Token outside clock tolerance accepted.');
+            } catch (RuntimeException) {
+                Http::assertNotSent(fn ($request) => str_contains($request->url(), 'graph.microsoft.com'));
+            }
+        }
+    }
+
     public function test_wrong_signature_is_rejected(): void
     {
         $token = $this->token();

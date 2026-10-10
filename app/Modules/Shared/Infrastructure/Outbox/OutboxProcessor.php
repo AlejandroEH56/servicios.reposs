@@ -2,6 +2,8 @@
 
 namespace App\Modules\Shared\Infrastructure\Outbox;
 
+use App\Modules\Shared\Infrastructure\Telemetry\OperationalTelemetry;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Connection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -66,6 +68,10 @@ class OutboxProcessor
                     || ($payload['version'] ?? null) !== 1 || ! isset($this->handlers[$row->tipo_evento])) {
                     throw new RuntimeException('OUTBOX_INVALID_OR_UNHANDLED');
                 }
+                if (! is_string($payload['occurredAt'] ?? null)
+                    || CarbonImmutable::parse($payload['occurredAt'])->lessThan(now()->subDays(config('modernization.outbox.inbox_retention_days')))) {
+                    throw new RuntimeException('OUTBOX_OUTSIDE_IDEMPOTENCY_WINDOW');
+                }
                 foreach ($this->handlers[$row->tipo_evento] as $consumer => $handler) {
                     $inbox = ['consumidor' => $consumer, 'id_evento' => $row->id];
                     if (! $this->db()->table('compartido_bandeja_entrada')->where($inbox)->exists()) {
@@ -104,13 +110,21 @@ class OutboxProcessor
         }
         Cache::put(config('modernization.health.outbox_heartbeat_key'), now()->timestamp,
             config('modernization.health.outbox_heartbeat_ttl'));
+        if (config('modernization.telemetry.enabled')) {
+            try {
+                app(OperationalTelemetry::class)->record('outbox.batch',
+                    ['correlationId' => (string) Str::uuid()], (new OutboxMetrics)->snapshot());
+            } catch (Throwable) {
+                // Telemetry does not change publication or readiness.
+            }
+        }
 
         return count($rows);
     }
 
-    public function replay(string $eventId, string $actorId): void
+    public function replay(string $eventId, ?string $actorId, ?string $operator = null): void
     {
-        $this->db()->transaction(function () use ($eventId, $actorId): void {
+        $this->db()->transaction(function () use ($eventId, $actorId, $operator): void {
             $row = $this->db()->table('compartido_mensajes_salida')->where('id', $eventId)->lockForUpdate()->first();
             if (! $row || $row->estado !== 'FAILED') {
                 throw new RuntimeException('Only failed events can be replayed.');
@@ -123,6 +137,7 @@ class OutboxProcessor
                 'id' => (string) Str::ulid(), 'ocurrido_en' => now(), 'id_identidad_actor' => $actorId,
                 'nombre_contexto' => 'Shared', 'accion' => 'OUTBOX_REPLAY', 'tipo_sujeto' => 'Outbox',
                 'id_sujeto' => $eventId, 'id_correlacion' => (string) Str::uuid(),
+                'metadatos' => json_encode(['operator' => $operator], JSON_THROW_ON_ERROR),
             ]);
         });
     }

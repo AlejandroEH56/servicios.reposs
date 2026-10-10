@@ -1,0 +1,28 @@
+{
+    admin off
+    skip_install_trust
+    https_port 8443
+    auto_https disable_redirects
+}
+:80 {
+    redir {$CANONICAL_ORIGIN}{uri} 308
+}
+{$SITE_ADDRESS} {
+    {$TLS_DIRECTIVE}
+    header {
+        X-Content-Type-Options nosniff
+        Referrer-Policy strict-origin-when-cross-origin
+    }
+    handle_path /portal/* {
+        root * /srv/frontend
+        try_files {path} /index.html
+        file_server
+    }
+    handle {
+        root * /srv/app/public
+        php_fastcgi backend:9000 {
+            trusted_proxies private_ranges
+        }
+        file_server
+    }
+}

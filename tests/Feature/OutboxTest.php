@@ -19,7 +19,7 @@ class OutboxTest extends TestCase
         $id = (string) Str::ulid();
         DB::table('compartido_mensajes_salida')->insert(['id' => $id, 'nombre_contexto' => 'Test', 'tipo_agregado' => 'Test',
             'id_agregado' => (string) Str::ulid(), 'tipo_evento' => $type, 'estado' => 'PENDING', 'ocurrido_en' => now(), 'disponible_en' => now(),
-            'contenido' => json_encode(['eventId' => $id, 'type' => $type, 'version' => 1], JSON_THROW_ON_ERROR)]);
+            'contenido' => json_encode(['eventId' => $id, 'type' => $type, 'version' => 1, 'occurredAt' => now()->toISOString()], JSON_THROW_ON_ERROR)]);
 
         return $id;
     }

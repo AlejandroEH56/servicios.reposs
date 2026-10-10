@@ -1,72 +1,64 @@
-# Resolución local de bloqueantes: servicios.reposs
+Actualización vigente 2026-10-09: los cinco cierres técnicos restantes fueron ejecutados. Consulta [checklist vigente](PRE_SPRINT_1_CHECKLIST.md), [plan de cierre](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md) y [operación/recuperación](OPERACION_RECUPERACION_PORTABLE.md); el dossier final del commit limpio determina el Entry Gate. El contenido siguiente conserva el análisis histórico.
 
-Evaluación vigente: 2026-10-04. HEAD de referencia: `0546644746f1b2a281730a95c5fd8ef8bb48e2cc`. Cambios de esta implementación todavía en working tree: no hay evidencia de CI sobre su SHA final.
+# Actualización posterior al reinicio — 2026-10-08
 
-**Fundación de modernización viable y operativa en desarrollo. PRE_SPRINT_1_GATE: NO-GO.** Se completó la secuencia local de autenticación, adopción de esquema, outbox y validación. Los requisitos institucionales de TLS, operación, CI y datos legacy todavía impiden declarar cerrado todo el Entry Gate.
+La implementación es viable y la fundación local ya opera en Docker con pruebas. El alcance es migrar funcionalidades con datos nuevos. [Resultados actuales](RESULTADOS_EJECUCION_2026-10-08.md) y [plan restante](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md) prevalecen sobre los pendientes históricos del análisis siguiente. El gate sigue NO-GO por acreditación real de Entra y evidencias del candidato.
 
-Las fuentes normativas siguen siendo PLAN_RESOLUCION_PRE_SPRINT_1.md e IAM_ENTRA_ID.md. El [checklist vigente](PRE_SPRINT_1_CHECKLIST.md) aplica esos criterios al Laravel actual. El [diagnóstico inicial](historico/VIABILIDAD_INICIAL_2026-10-04.md) y el [checklist histórico](historico/PRE_SPRINT_1_CHECKLIST_2026-09-27.md) se conservan para distinguir evidencias anteriores. SOURCES_MANIFEST.json usa snapshotPath para localizar la copia histórica del checklist original.
+# Viabilidad y resultados de servicios.reposs
 
-## Resultado implementado
+Actualizado: 2026-10-05, America/Mexico_City. Referencia: HEAD 41e15f566813e7cbc640f7a3811e657d7c36a4ae, working tree modificado. **Fundación local operativa; Entry Gate NO-GO**.
 
-- La pertenencia al grupo Microsoft autorizado activa identidades nuevas/PENDIENTE; SUSPENDIDA/DESACTIVADA se rechazan. Se conserva correo único y se rechazan colisiones sin fusionar identidades. El vínculo usa exclusivamente tenant/objectId. [Decisión IAM](decisiones/IAM_ESTADOS.md).
-- El callback usa Authorization Code con PKCE S256, state consumible una vez, nonce y validación criptográfica RS256/JWKS, issuer, audience, tenant, oid y tiempos. Graph confirma grupo y el mismo objectId. Los errores/logs omiten credenciales, tokens y perfil.
-- User representa iam_identidades con ULID; se eliminó la creación de usuarios/password del skeleton. Login rota sesión; logout POST invalida sesión y CSRF. /api/v1/me requiere ACTIVA, inactividad máxima 30 minutos y absoluta 8 horas; devuelve scopes/expiración y no entrega tokens.
-- La base de desarrollo ya contenía el baseline y no tenía registros IAM/audit/outbox. Las migraciones adoptaron ese esquema, añadieron sessions/cache/jobs/inbox y lease/estado del outbox; auditoría vacía pasó de PK numérica a ULID. No se recrearon ni se vaciaron las tablas de negocio. [Ownership y límites](MIGRATION_OWNERSHIP.md).
-- Se creó servicios_moderno_test con autorización explícita. Fresh/refresh/wipe están protegidos: sólo testing + esa base exacta o SQLite :memory:. Las migraciones de adopción requieren roll-forward.
-- Outbox implementa claim SKIP LOCKED, lease/dueño, reclaim, retry/backoff, FAILED, error redactado e inbox transaccional. El consumidor implementado produce IDENTITY_LINKED. Replay interno se prueba, pero todavía no se expone como operación administrativa autorizada. [Política](OUTBOX_POLICY.md).
-- Se declaró firebase/php-jwt como dependencia directa, conservando Graph SDK 3.7.0. Composer quedó válido sin advertencias de restricción exacta; no se cambiaron versiones instaladas. ng-openapi-gen 1.1.0 genera el cliente Angular de la API desplegada.
-- Se configuró el CA bundle del Composer con checksum verificado para PHP portable: se corrigió cURL 60 sin desactivar TLS. La consulta pública de metadata del tenant configurado pasa por HTTPS; no inicia login ni valida el secreto/consentimiento de la App Registration.
-- OpenAPI api.yaml contiene sólo /api/v1/me; management.yaml contiene health sin versión. Cliente Angular se regenera en un directorio de comparación y se verifica por hashes.
-- Workflows locales tienen Actions fijadas por SHA oficial, PHP/Node/npm y herramientas fijadas, installs desde lockfiles, tests, análisis y audits. Son artefactos preparados: no se publicaron ni ejecutaron en GitHub; no equivalen a required checks aprobados.
-- El gate automático exige los 20 IDs VERIFIED, evidencia vigente del mismo SHA, checks obligatorios, hashes de artifacts y working tree limpio. Sus pruebas rechazan falta de evidencia, estado parcial, SHA incorrecto, vencimiento, exit no cero, checksum incorrecto y check faltante.
+La modernización es viable en el proyecto Laravel actual. El solicitante designó al desarrollador como responsable, autorizó pruebas/recreación de desarrollo/herramientas y confirmó que los ambientes se adecuarán al proyecto con los recursos del equipo actual. Se eliminan los pendientes de elección institucional; quedan implementación, pruebas y evidencia.
 
-## Evidencia ejecutada
+El trabajo restante se ordena en el [plan de cierres](PLAN_CIERRES_PENDIENTES_PRE_SPRINT_1.md). [Checklist](PRE_SPRINT_1_CHECKLIST.md), [ambientes/runbook](AMBIENTES_MODERNIZACION.md), [RACI](RACI_CIERRES.md), [perfilado legacy](PERFILADO_LEGACY_ANONIMIZADO.md).
 
-| Comprobación | Resultado |
+## Cambios ejecutados
+
+- Bases/perfiles separados de desarrollo, pruebas, staging y ensayo production. Se adoptó desarrollo sin fresh; staging/production tienen claves, credenciales, cache prefix y storage propios. Runtime por tabla sin DDL, auditoría SELECT/INSERT; migrator limitado a su esquema y sin CREATE USER.
+- Microsoft sigue vinculando exclusivamente tenant/objectId; el grupo autorizado activa y las colisiones de correo se rechazan. El callback conserva PKCE S256, state/nonce y RS256/JWKS/claims. No se almacenan tokens del proveedor ni se envían al frontend.
+- iam:state opera desde el perfil operator protegido por ACL, registra reason/actor técnico/transición y aumenta version_autorizacion. La rehabilitación vuelve a PENDIENTE; requiere nueva prueba de grupo para activar. Las sesiones anteriores se rechazan aun después de rehabilitar.
+- Vigencia de comprobación de grupo: cinco minutos desde login, además de idle 30 min/absoluta 8 h. Al vencer se exige reautenticación; /me publica la expiración efectiva. No se afirma polling continuo del grupo.
+- outbox:replay queda restringido al entorno operator y audita al operador sin asignar un GitHub handle a un FK de identidad. Worker nativo supervisado; heartbeat TTL 120 s.
+- Caddy sirve Angular /portal y backend bajo el mismo origen HTTPS. TrustProxies se limita a loopback y a la IP fija del proxy Compose, sin confiar arbitrariamente en X-Forwarded-Host. Cookies host-only Secure/HttpOnly/Lax; CSRF negativo y positivo probados en Chromium.
+- Dockerfiles/Compose preparados con imágenes fijadas por digest del registry, MySQL 26.7, PHP-FPM, worker, proxy/Angular, migrator/grants, ClamAV y collector. SQL con contraseñas se entrega como secret; el runtime no recibe credencial root.
+- Caddy 2.11.7, Compose 5.6.0 y Playwright 1.63.0/Chromium instalados. Caddy se verificó con SHA-512 oficial y Compose con SHA-256. Se instalaron WSL 3.0.1 y Docker Desktop por usuario con instalador firmado por Docker Inc; cliente Docker 29.8.1 disponible. El motor aún requiere inicialización y componentes/virtualización del host.
+- RACI/CODEOWNERS asignan al desarrollador actual. El conector confirmó la misma cuenta GitHub y admin sobre el repositorio; branch protection devolvió 403 Resource not accessible by integration.
+- El perfilado read-only encontró sin tablas los cuatro esquemas legacy configurados. Código de servicios.proyecto disponible; no se acredita una población histórica que no está en este servidor.
+
+## Pruebas y evidencia
+
+| Comprobación | Resultado ejecutado |
 |---|---|
-| PHPUnit base, IAM/OIDC, health/ProblemDetails y arquitectura | PASS: 50 pruebas, 180 aserciones |
-| PHPUnit MySQL real, fresh/upgrade, dos conexiones, outbox, IAM y grants | PASS: 17 pruebas, 251 aserciones; MySQL 26.7.0 local |
-| PHPStan nivel 6 / Pint dirty | PASS: cero errores / formato aplicado |
-| Redocly recommended-strict API y management + bundle | PASS: sin errores ni warnings |
-| Generación Angular y comparación de hashes | PASS; cliente tipado compila en strict |
-| Angular build / tests | PASS / 2 pruebas |
-| Gate unitario | PASS: 9 casos; gate real NO-GO esperado |
-| Composer validate strict / platform | PASS |
-| Composer audit y npm audit online, root y frontend | PASS: cero avisos de vulnerabilidad |
-| Preflight OIDC público | PASS: metadata HTTPS verificada, tablas presentes, cero estados legacy |
-| Smoke HTTP real localhost | live=200, ready=200 tras outbox --once, /me sin sesión=401 application/problem+json |
+| Suite Laravel, IAM/OIDC, outbox, health y arquitectura | PASS: 56 pruebas, 219 aserciones |
+| Suite MySQL real fresh/upgrade/concurrencia/IAM/outbox/grants | PASS: 17 pruebas, 275 aserciones, MySQL 26.7.0; dos pruebas nativas opt-in omitidas en esta ejecución |
+| Cuentas persistentes de desarrollo/staging/production | PASS: 2 pruebas, 21 aserciones; negativas DDL/auditoría/global accounts |
+| Chromium staging | PASS: 5 pruebas; TLS verificado sin ignoreHTTPSErrors |
+| Chromium ensayo production | PASS: 5 pruebas; CA y datos independientes |
+| Smoke Node TLS staging/production | PASS: 2 pruebas por perfil, cadena/hostname/health/cookies/CSRF negativo/API 401 |
+| Fallos DB/storage reales en staging nativo | PASS: 2 pruebas, 35 aserciones; readiness 503/liveness 200, redacción y recuperación |
+| Worker detenido y recuperado | PASS: readiness 503 después del TTL de 120 s, recuperación a 200; dos pruebas TLS PASS después del reinicio del worker |
+| Angular build / tests | PASS / 2 pruebas; tests repetidos fuera del sandbox tras bloqueo del worker |
+| PHPStan nivel 6 / Pint | PASS: cero errores / formato aplicado |
+| Redocly API y management | PASS: cero errores/warnings |
+| Gate unitario | PASS: 9 casos |
+| Composer validate strict / Composer audit | PASS / sin avisos |
+| npm audit raíz/frontend | PASS: cero vulnerabilidades |
+| OIDC metadata pública desde staging | PASS por HTTPS; no acredita secreto/consentimiento |
+| Compose config --quiet | PASS estructural; no acredita imágenes construidas/servicios arrancados |
+| Gate real | NO-GO esperado: estados parciales, cambios sin versionar y evidencia/checks finales pendientes |
 
-Runner completo: 15 comprobaciones PASS en artifacts/local-validation/manifest.json. Las suites finales, tras reforzar concurrencia y contrato /me, se repitieron en los XML siguientes.
+Artifacts locales ignorados: artifacts/phpunit-closures.xml, mysql-closures.xml, browser-stage.xml, browser-production.xml, readiness-faults.xml, worker-recovery.xml y legacy-profile/manifest.json. No contienen dumps personales ni credenciales. La evidencia de esta tabla pertenece al working tree; debe repetirse sobre el candidato versionado. La base de desarrollo conserva sus datos existentes, incluido el IAM que se encontraba implementado.
 
-Artifacts locales ignorados por Git: artifacts/phpunit-iam.xml, artifacts/mysql-iam.xml, artifacts/http-smoke.json. Los resultados validan working tree local; deben repetirse y adjuntarse en el commit final, con CI y approvals, antes de cambiar un requisito global a VERIFIED. Los grants probados pertenecen a cuentas temporales del test; las credenciales de la base persistente no se cambiaron.
+El hardware tiene Windows 11 Pro, 12 procesadores lógicos, 15.7 GB RAM y 264.2 GB libres al inspeccionarlo. enable-container-host.ps1 se ejecutó con elevación y NoRestart; artifacts/environment/windows-container-features.json registra restartNeeded=true. Guardar el trabajo y reiniciar Windows, comprobar WSL y Server en docker version; si persiste el diagnóstico de virtualización, revisar firmware. No se reinició automáticamente el equipo.
 
-## Secuencia operativa reproducible
+## Cierres que siguen abiertos
 
-Desde la raíz del proyecto, en Windows, usar el PHP portable directamente o cargar use-local-tools.ps1 en una sesión cuya política permita scripts. No cambiar la política global de Windows.
+1. Host Docker, build/arranque, clon limpio y matriz Linux/CI.
+2. Entra real: callbacks registrados, consentimiento, allow/deny y retirada de grupo; corrección administrativa de contacto.
+3. Origen físico legacy o decisión formal de ausencia de históricos; reconciliación/fixtures e IDs en sus fases.
+4. Secret store/rotaciones/recuperación de APP_KEY, storage/AV/EICAR y backup/restore.
+5. OTLP recibido/correlado/redactado y métricas/retención outbox; repetir fallos nativos ya comprobados en la topología Docker.
+6. Breaking diff, scans/SBOM/provenance, CI y protección de rama con permisos del conector suficientes.
+7. Versionar/revisar el candidato, evidencia del mismo SHA limpio y GO del gate.
 
-```powershell
-& .\.tools\php\php.exe artisan modernization:preflight --oidc
-& .\.tools\php\php.exe artisan modernization:prepare-test-database
-& .\.tools\php\php.exe vendor/bin/phpunit -c phpunit.mysql.xml
-& .\.tools\php\php.exe artisan migrate --force --no-interaction
-& .\.tools\php\php.exe artisan outbox:work
-```
-
-migrate ya se aplicó en desarrollo y un segundo pase no tiene trabajo. Mantener outbox:work supervisado: --once fue sólo el smoke; al detener el worker, readiness debe pasar a 503 después de 120 segundos.
-
-`powershell -NoProfile -ExecutionPolicy Bypass -File scripts/validate-pre-sprint1.ps1` habilita la política únicamente en ese proceso. Ejecuta la secuencia completa, conserva logs/checksums/contexto en artifacts/local-validation y termina con el gate. Necesita conectividad HTTPS para audits/metadata y acceso administrativo exclusivamente para crear la base/principals temporales de prueba. No ejecuta fresh sobre desarrollo. El exit 1 final por NO-GO es deliberado cuando faltan requisitos; un fallo de prueba detiene la secuencia antes.
-
-## Cierres aún necesarios para avanzar de fase
-
-1. Aprobar ownership/ADR de IDs y la política operativa de outbox, incluidos replay autorizado, retención y métricas. Completar transiciones administrativas y revocación por cambios de autorización/grupo durante sesión.
-2. Acreditar topología TLS representativa y ejecutar navegador E2E de cookies Secure/HttpOnly/SameSite, XSRF, CORS y callback. La callback local configurada sigue HTTP loopback; no acredita B07.
-3. Ejecutar catálogo de login real allow/deny en el tenant no productivo, documentar App Registration, callbacks/consentimiento y aprobar el spike OIDC. Metadata accesible no prueba que la credencial o el grupo sean correctos.
-4. Configurar runtime/migrator reales con grants mínimos, append-only y MySQL objetivo; repetir en runner/Compose. Los ensayos locales en MySQL 26.7.0 no acreditan una versión productiva todavía no elegida.
-5. Elegir/probar secret store y rotación/revocación, storage/AV/cuarentena/restore, OTLP/redacción/fallo collector. No se sustituyen esas decisiones instalando paquetes arbitrarios.
-6. Obtener DDL/grants/perfilado legacy anonimizado y checksums; la base moderna vacía no es evidencia de calidad del legacy.
-7. Nombrar owners/RACI/CODEOWNERS; ejecutar CI completa con SAST/secret/SBOM/image scans, breaking diff y contenedores pinneados; configurar y verificar branch rules/required checks.
-8. Versionar el working tree, repetir toda la evidencia sobre el mismo SHA y ejecutar `node scripts/pre-sprint1-gate.mjs <manifest-CI>`. Sólo todos los obligatorios VERIFIED producen GO.
-
-No se ejecutó login interactivo, publicación, push ni configuración administrativa de GitHub. El usuario autorizó continuar IAM pese a la secuencia histórica que situaba el spike antes del login; esto permite esta implementación local y no elimina los requisitos de promoción.
-
-Referencias técnicas verificadas: [Microsoft OIDC + PKCE](https://learn.microsoft.com/en-us/entra/identity-platform/v2-oauth2-auth-code-flow), [Graph checkMemberGroups](https://learn.microsoft.com/en-us/graph/api/directoryobject-checkmembergroups?view=graph-rest-1.0), [ng-openapi-gen](https://github.com/cyclosproject/ng-openapi-gen), [MySQL 26.7.0 y su versionado](https://dev.mysql.com/doc/relnotes/mysql/26.7/en/news-26-7-0.html).
+Los informes y documentos de septiembre describen el punto de partida del legacy; no sustituyen este estado del Laravel. Se conservan las decisiones de dominio y las fuentes originales. La autoridad del desarrollador permite continuar los pasos; no se usa para declarar PASS sin ejecutar una prueba.

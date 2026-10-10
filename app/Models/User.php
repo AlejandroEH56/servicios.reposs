@@ -10,7 +10,10 @@ use Illuminate\Database\Eloquent\Concerns\HasUlids;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 
-/** @property IdentityState $estado */
+/**
+ * @property IdentityState $estado
+ * @property int $version_autorizacion
+ */
 #[Fillable(['nombre_mostrado', 'correo_normalizado', 'estado'])]
 class User extends Authenticatable
 {
@@ -19,6 +22,8 @@ class User extends Authenticatable
 
     protected $table = 'iam_identidades';
 
+    protected $attributes = ['version_autorizacion' => 1];
+
     public const CREATED_AT = 'creado_en';
 
     public const UPDATED_AT = 'actualizado_en';
@@ -26,7 +31,7 @@ class User extends Authenticatable
     /** @return array<string, string> */
     protected function casts(): array
     {
-        return ['estado' => IdentityState::class, 'ultimo_acceso_en' => 'datetime'];
+        return ['estado' => IdentityState::class, 'ultimo_acceso_en' => 'datetime', 'version_autorizacion' => 'integer'];
     }
 
     /** @return Attribute<string, never> */

@@ -21,6 +21,18 @@ class MySqlFoundationTest extends TestCase
         $this->artisan('migrate:fresh', ['--force' => true])->assertSuccessful();
     }
 
+    public function test_identifier_boundary_ignores_tables_from_another_database(): void
+    {
+        $otherDatabase = 'identifier_probe_'.bin2hex(random_bytes(6));
+        DB::statement('CREATE DATABASE `'.$otherDatabase.'`');
+        try {
+            DB::statement('CREATE TABLE `'.$otherDatabase.'`.`unexpected_domain` (id BIGINT PRIMARY KEY)');
+            $this->artisan('modernization:verify-identifiers')->assertSuccessful();
+        } finally {
+            DB::statement('DROP DATABASE `'.$otherDatabase.'`');
+        }
+    }
+
     public function test_two_connections_skip_locked_rows_and_never_claim_same_event(): void
     {
         foreach ([1, 2] as $index) {
@@ -50,8 +62,9 @@ class MySqlFoundationTest extends TestCase
         $migratorName = 'mm_'.bin2hex(random_bytes(6));
         $password = bin2hex(random_bytes(32));
         $admin = DB::connection()->getPdo();
-        $runtime = $admin->quote($runtimeName)."@'localhost'";
-        $migrator = $admin->quote($migratorName)."@'localhost'";
+        $clientHost = $admin->quote(explode('@', (string) $admin->query('SELECT USER()')->fetchColumn(), 2)[1]);
+        $runtime = $admin->quote($runtimeName).'@'.$clientHost;
+        $migrator = $admin->quote($migratorName).'@'.$clientHost;
         try {
             $admin->exec('CREATE USER '.$runtime.' IDENTIFIED BY '.$admin->quote($password));
             $admin->exec('CREATE USER '.$migrator.' IDENTIFIED BY '.$admin->quote($password));
@@ -97,6 +110,8 @@ class MySqlFoundationTest extends TestCase
         }
         $this->assertTrue(Schema::hasColumns('compartido_mensajes_salida', ['estado', 'bloqueado_por', 'bloqueado_hasta']));
         $this->assertFalse(Schema::hasTable('users'));
+        $this->artisan('modernization:verify-identifiers')->assertSuccessful();
+        $this->artisan('modernization:verify-identifiers', ['--enable-module' => ['organization']])->assertFailed();
         $column = collect(Schema::getColumns('compartido_registros_auditoria'))->firstWhere('name', 'id');
         $this->assertSame('char', $column['type_name']);
         $this->artisan('migrate', ['--force' => true])->assertSuccessful();
