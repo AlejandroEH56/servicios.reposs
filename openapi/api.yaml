@@ -1,71 +1,82 @@
 openapi: 3.1.1
 info:
-  title: Servicios - API
-  version: 0.1.0
-  description: Sólo capacidades desplegadas. IAM local informa autorización vacía hasta Sprint 2.
+  title: 'Servicios - API'
+  version: 0.2.0
+  description: 'Identidad, autorizaci?n local y Organization desplegados. Permisos y alcances se eval?an en el servidor; ning?n puesto Microsoft concede roles.'
   license:
     name: MIT
     identifier: MIT
 servers:
-  - url: ''
-    description: Mismo origin que Laravel. SPA separada requiere topología y CORS aprobados.
+  -
+    url: ''
+    description: 'Mismo origin que Laravel. SPA separada requiere topología y CORS aprobados.'
 security:
-  - session: []
+  -
+    session: []
 tags:
-  - name: IAM
-    description: Identidad institucional y sesión local, sin tokens Microsoft.
+  -
+    name: IAM
+    description: 'Identidad institucional y sesión local, sin tokens Microsoft.'
+  -
+    name: Organization
+    description: 'Empleados confirmados, puestos, grados y estructura organizacional.'
 paths:
   /sanctum/csrf-cookie:
     get:
       operationId: prepareCsrf
-      summary: Inicializar protección CSRF de la sesión
-      description: Emite XSRF-TOKEN para mutaciones del mismo origen. Angular lo envía como X-XSRF-TOKEN; no contiene credenciales Microsoft.
-      tags: [IAM]
+      summary: 'Inicializar protección CSRF de la sesión'
+      description: 'Emite XSRF-TOKEN para mutaciones del mismo origen. Angular lo envía como X-XSRF-TOKEN; no contiene credenciales Microsoft.'
+      tags:
+        - IAM
       security: []
       responses:
-        '204':
-          description: Cookie CSRF inicializada, sin cuerpo.
-        '400':
-          description: Solicitud HTTP malformada.
+        204:
+          description: 'Cookie CSRF inicializada, sin cuerpo.'
+        400:
+          description: 'Solicitud HTTP malformada.'
         default:
-          description: Error de inicialización.
+          description: 'Error de inicialización.'
   /auth/entra/logout:
     post:
       operationId: logoutSession
-      summary: Cerrar la sesión local
-      description: Requiere cookie de sesión y X-XSRF-TOKEN de esa misma sesión. Invalida la sesión y rota CSRF. No ejecuta logout federado.
-      tags: [IAM]
+      summary: 'Cerrar la sesión local'
+      description: 'Requiere cookie de sesión y X-XSRF-TOKEN de esa misma sesión. Invalida la sesión y rota CSRF. No ejecuta logout federado.'
+      tags:
+        - IAM
       parameters:
-        - name: X-XSRF-TOKEN
+        -
+          name: X-XSRF-TOKEN
           in: header
           required: true
           schema:
             type: string
       responses:
-        '204':
-          description: Sesión invalidada, sin cuerpo.
-        '401':
+        204:
+          description: 'Sesión invalidada, sin cuerpo.'
+        401:
           $ref: './management.yaml#/components/responses/Problem'
-        '419':
+        419:
           $ref: './management.yaml#/components/responses/Problem'
         default:
           $ref: './management.yaml#/components/responses/Problem'
   /api/v1/me:
     get:
       operationId: getMe
-      summary: Obtener identidad de la sesión activa
-      description: Requiere cookie Laravel, identidad ACTIVA y sesión vigente. No acepta bearer tokens Microsoft. No almacena caché.
-      tags: [IAM]
+      summary: 'Obtener identidad de la sesión activa'
+      description: 'Requiere cookie Laravel, identidad ACTIVA y sesión vigente. No acepta bearer tokens Microsoft. No almacena caché.'
+      tags:
+        - IAM
       parameters:
-        - $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
       responses:
-        '200':
-          description: Identidad actual. Roles, permisos y scopes están vacíos antes de Sprint 2.
+        200:
+          description: 'Identidad y autorizaci?n local efectiva de la sesi?n actual.'
           headers:
             X-Correlation-ID:
               $ref: './management.yaml#/components/headers/CorrelationId'
             Cache-Control:
-              description: Respuesta privada de sesión, sin almacenamiento en caché.
+              description: 'Respuesta privada de sesión, sin almacenamiento en caché.'
               schema:
                 type: string
                 const: 'no-store, private'
@@ -73,29 +84,1010 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/MeResponse'
-        '401':
+        401:
           $ref: './management.yaml#/components/responses/Problem'
         default:
           $ref: './management.yaml#/components/responses/Problem'
+  /api/v1/iam/roles:
+    get:
+      operationId: listRoles
+      summary: 'Consultar roles locales'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+    post:
+      operationId: createRole
+      summary: 'Crear rol local sin permisos iniciales'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        201:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateRoleRequest'
+  /api/v1/iam/permissions:
+    get:
+      operationId: listPermissions
+      summary: 'Consultar catálogo de permisos'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PermissionListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  /api/v1/iam/identities:
+    get:
+      operationId: listIamIdentities
+      summary: 'Consultar identidades para administración'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuthorizationIdentityListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  '/api/v1/iam/identities/{identityId}/roles':
+    get:
+      operationId: getRoleAssignments
+      summary: 'Consultar roles e historial'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: identityId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAssignmentsResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  '/api/v1/iam/identities/{identityId}/roles/{roleId}':
+    post:
+      operationId: grantRole
+      summary: 'Otorgar rol y revocar sesiones previas'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: identityId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAssignmentsResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentRequest'
+    delete:
+      operationId: revokeRole
+      summary: 'Revocar rol con historial'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: identityId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleAssignmentsResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RoleAssignmentRequest'
+  '/api/v1/iam/roles/{roleId}/permissions':
+    put:
+      operationId: replaceRolePermissions
+      summary: 'Reemplazar permisos y alcances'
+      tags:
+        - IAM
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: roleId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RoleResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ReplaceRolePermissionsRequest'
+  /api/v1/organization/employees:
+    get:
+      operationId: listOrganizationEmployees
+      summary: 'Consultar employees'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+    post:
+      operationId: createEmployee
+      summary: 'Registrar employees'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        201:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateEmployeeRequest'
+  '/api/v1/organization/employees/{employeeId}':
+    put:
+      operationId: updateEmployee
+      summary: 'Actualizar con versión esperada'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateEmployeeRequest'
+    get:
+      operationId: getEmployee
+      summary: 'Consultar empleado según propiedad y permiso'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  /api/v1/organization/units:
+    get:
+      operationId: listOrganizationUnits
+      summary: 'Consultar units'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUnitListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+    post:
+      operationId: createUnit
+      summary: 'Registrar units'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        201:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUnitResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateUnitRequest'
+  '/api/v1/organization/units/{unitId}':
+    put:
+      operationId: updateUnit
+      summary: 'Actualizar con versión esperada'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: unitId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationUnitResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateUnitRequest'
+  /api/v1/organization/levels:
+    get:
+      operationId: listOrganizationLevels
+      summary: 'Consultar levels'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicLevelListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+    post:
+      operationId: createLevel
+      summary: 'Registrar levels'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        201:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicLevelResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CreateLevelRequest'
+  '/api/v1/organization/levels/{levelId}':
+    put:
+      operationId: updateLevel
+      summary: 'Actualizar con versión esperada'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: levelId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AcademicLevelResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UpdateLevelRequest'
+  /api/v1/organization/identity-candidates:
+    get:
+      operationId: listIdentityCandidates
+      summary: 'Consultar identidades activas para confirmar empleado'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/IdentityCandidateListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  /api/v1/organization/advisers:
+    get:
+      operationId: searchAdvisers
+      summary: 'Buscar asesores activos confirmados sin contacto'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: q
+          in: query
+          schema:
+            type: string
+            maxLength: 100
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/InternalAdviserListResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+  '/api/v1/organization/employees/{employeeId}/positions':
+    post:
+      operationId: assignManualPosition
+      summary: 'Asignar puesto manual'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AssignPositionRequest'
+  '/api/v1/organization/employees/{employeeId}/positions/{positionId}/finish':
+    post:
+      operationId: finishManualPosition
+      summary: 'Finalizar exclusivamente puesto manual'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: positionId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/FinishPositionRequest'
+  '/api/v1/organization/employees/{employeeId}/degrees':
+    post:
+      operationId: addAcademicDegree
+      summary: 'Añadir grado propio o administrado'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AddDegreeRequest'
+  '/api/v1/organization/employees/{employeeId}/degrees/{degreeId}':
+    delete:
+      operationId: removeAcademicDegree
+      summary: 'Retirar grado propio o administrado'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: degreeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpectedVersionRequest'
+  '/api/v1/organization/employees/{employeeId}/profile-sync':
+    post:
+      operationId: synchronizeEmployeeProfile
+      summary: 'Aplicar la última proyección Microsoft verificada, sin aceptar jobTitle del cliente'
+      tags:
+        - Organization
+      parameters:
+        -
+          $ref: './management.yaml#/components/parameters/CorrelationId'
+        -
+          name: employeeId
+          in: path
+          required: true
+          schema:
+            type: string
+            pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        -
+          name: X-XSRF-TOKEN
+          in: header
+          required: true
+          schema:
+            type: string
+          description: 'Token CSRF de la misma sesión.'
+      responses:
+        200:
+          description: 'Operación autorizada completada.'
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/OrganizationEmployeeResponse'
+        401:
+          $ref: './management.yaml#/components/responses/Problem'
+        403:
+          $ref: './management.yaml#/components/responses/Problem'
+        409:
+          $ref: './management.yaml#/components/responses/Problem'
+        419:
+          $ref: './management.yaml#/components/responses/Problem'
+        422:
+          $ref: './management.yaml#/components/responses/Problem'
+        default:
+          $ref: './management.yaml#/components/responses/Problem'
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ExpectedVersionRequest'
 components:
   securitySchemes:
     session:
       type: apiKey
       in: cookie
       name: laravel_session
-      description: Nombre del ambiente local APP_NAME=Laravel. Configurar SESSION_COOKIE para otros ambientes y actualizar contrato.
+      description: 'Nombre del ambiente local APP_NAME=Laravel. Configurar SESSION_COOKIE para otros ambientes y actualizar contrato.'
   schemas:
     MeResponse:
       type: object
       additionalProperties: false
-      required: [data]
+      required:
+        - data
       properties:
         data:
           $ref: '#/components/schemas/Identity'
     Identity:
       type: object
       additionalProperties: false
-      required: [id, displayName, email, status, roles, permissions, scopes, sessionExpiresAt]
+      required:
+        - id
+        - displayName
+        - email
+        - status
+        - roles
+        - permissions
+        - scopes
+        - sessionExpiresAt
       properties:
         id:
           type: string
@@ -104,12 +1096,18 @@ components:
           type: string
           maxLength: 255
         email:
-          type: [string, 'null']
+          type:
+            - string
+            - 'null'
           format: email
           maxLength: 254
         status:
           type: string
-          enum: [PENDIENTE, ACTIVA, SUSPENDIDA, DESACTIVADA]
+          enum:
+            - PENDIENTE
+            - ACTIVA
+            - SUSPENDIDA
+            - DESACTIVADA
         roles:
           type: array
           items:
@@ -125,3 +1123,833 @@ components:
         sessionExpiresAt:
           type: string
           format: date-time
+    PermissionGrant:
+      type: object
+      additionalProperties: false
+      required:
+        - permissionId
+        - code
+        - scope
+      properties:
+        permissionId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 160
+        scope:
+          type: string
+          enum:
+            - SELF
+            - GLOBAL
+    Permission:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - code
+        - allowedScopes
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 160
+        allowedScopes:
+          type: array
+          items:
+            type: string
+            enum:
+              - SELF
+              - GLOBAL
+    Role:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - code
+        - name
+        - version
+        - permissions
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 100
+        name:
+          type: string
+          maxLength: 160
+        version:
+          type: integer
+          minimum: 1
+        permissions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PermissionGrant'
+    AuthorizationIdentity:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - displayName
+        - status
+        - authorizationVersion
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum:
+            - PENDIENTE
+            - ACTIVA
+            - SUSPENDIDA
+            - DESACTIVADA
+        authorizationVersion:
+          type: integer
+          minimum: 1
+    IdentityCandidate:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - displayName
+        - status
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        displayName:
+          type: string
+          maxLength: 255
+        status:
+          type: string
+          enum:
+            - PENDIENTE
+            - ACTIVA
+            - SUSPENDIDA
+            - DESACTIVADA
+    AssignedRole:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - code
+        - expiresAt
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 100
+        expiresAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    RoleChange:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - roleId
+        - action
+        - occurredAt
+        - authorizationVersion
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        roleId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        action:
+          type: string
+          enum:
+            - GRANTED
+            - REVOKED
+        occurredAt:
+          type: string
+          format: date-time
+        authorizationVersion:
+          type: integer
+          minimum: 1
+    RoleAssignments:
+      type: object
+      additionalProperties: false
+      required:
+        - identityId
+        - authorizationVersion
+        - roles
+        - history
+      properties:
+        identityId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        authorizationVersion:
+          type: integer
+          minimum: 1
+        roles:
+          type: array
+          items:
+            $ref: '#/components/schemas/AssignedRole'
+        history:
+          type: array
+          items:
+            $ref: '#/components/schemas/RoleChange'
+    CreateRoleRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - name
+      properties:
+        code:
+          type: string
+          maxLength: 100
+          pattern: '^[A-Z][A-Z0-9_]*$'
+        name:
+          type: string
+          maxLength: 160
+    ReplaceRolePermissionsRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - permissions
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        permissions:
+          type: array
+          items:
+            type: object
+            additionalProperties: false
+            required:
+              - permissionId
+              - scope
+            properties:
+              permissionId:
+                type: string
+                pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+              scope:
+                type: string
+                enum:
+                  - SELF
+                  - GLOBAL
+          maxItems: 100
+    RoleAssignmentRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedAuthorizationVersion
+      properties:
+        expectedAuthorizationVersion:
+          type: integer
+          minimum: 1
+        expiresAt:
+          type:
+            - string
+            - 'null'
+          format: date-time
+    OrganizationUnit:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - parentId
+        - code
+        - name
+        - kind
+        - active
+        - version
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        parentId:
+          type:
+            - string
+            - 'null'
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 60
+        name:
+          type: string
+          maxLength: 180
+        kind:
+          type: string
+          maxLength: 40
+        active:
+          type: boolean
+        version:
+          type: integer
+          minimum: 1
+    AcademicLevel:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - code
+        - name
+        - rank
+        - version
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 40
+        name:
+          type: string
+          maxLength: 100
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 65535
+        version:
+          type: integer
+          minimum: 1
+    PositionAssignment:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - unitId
+        - unitName
+        - name
+        - source
+        - sourceOrder
+        - startsOn
+        - endsOn
+        - active
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        unitId:
+          type:
+            - string
+            - 'null'
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        unitName:
+          type:
+            - string
+            - 'null'
+          maxLength: 180
+        name:
+          type: string
+          maxLength: 180
+        source:
+          type: string
+          enum:
+            - MICROSOFT_JOBTITLE
+            - MANUAL
+            - MIGRACION
+        sourceOrder:
+          type:
+            - integer
+            - 'null'
+          minimum: 1
+        startsOn:
+          type: string
+          format: date
+        endsOn:
+          type:
+            - string
+            - 'null'
+          format: date
+        active:
+          type: boolean
+    AcademicDegree:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - levelId
+        - levelName
+        - program
+        - abbreviation
+        - obtainedOn
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        levelId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        levelName:
+          type: string
+          maxLength: 100
+        program:
+          type: string
+          maxLength: 255
+        abbreviation:
+          type:
+            - string
+            - 'null'
+          maxLength: 45
+        obtainedOn:
+          type:
+            - string
+            - 'null'
+          format: date
+    ExpectedVersionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+    OrganizationEmployee:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - identityId
+        - employeeNumber
+        - givenNames
+        - firstSurname
+        - secondSurname
+        - isAdviser
+        - email
+        - status
+        - version
+        - profileVersion
+        - positions
+        - degrees
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        identityId:
+          type:
+            - string
+            - 'null'
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        employeeNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 40
+        givenNames:
+          type: string
+          maxLength: 160
+        firstSurname:
+          type: string
+          maxLength: 120
+        secondSurname:
+          type:
+            - string
+            - 'null'
+          maxLength: 120
+        isAdviser:
+          type: boolean
+        email:
+          type:
+            - string
+            - 'null'
+          format: email
+        status:
+          type: string
+          enum:
+            - ACTIVO
+            - EN_LICENCIA
+            - INACTIVO
+            - ARCHIVADO
+        version:
+          type: integer
+          minimum: 1
+        profileVersion:
+          type: integer
+          minimum: 0
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionAssignment'
+        degrees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicDegree'
+    InternalAdviser:
+      type: object
+      additionalProperties: false
+      required:
+        - id
+        - displayName
+        - positions
+        - degrees
+      properties:
+        id:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        displayName:
+          type: string
+          maxLength: 402
+        positions:
+          type: array
+          items:
+            $ref: '#/components/schemas/PositionAssignment'
+        degrees:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicDegree'
+    CreateEmployeeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - identityId
+        - givenNames
+        - firstSurname
+        - isAdviser
+      properties:
+        identityId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        employeeNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 40
+        givenNames:
+          type: string
+          maxLength: 160
+        firstSurname:
+          type: string
+          maxLength: 120
+        secondSurname:
+          type:
+            - string
+            - 'null'
+          maxLength: 120
+        isAdviser:
+          type: boolean
+    UpdateEmployeeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - givenNames
+        - firstSurname
+        - isAdviser
+        - status
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        employeeNumber:
+          type:
+            - string
+            - 'null'
+          maxLength: 40
+        givenNames:
+          type: string
+          maxLength: 160
+        firstSurname:
+          type: string
+          maxLength: 120
+        secondSurname:
+          type:
+            - string
+            - 'null'
+          maxLength: 120
+        isAdviser:
+          type: boolean
+        status:
+          type: string
+          enum:
+            - ACTIVO
+            - EN_LICENCIA
+            - INACTIVO
+            - ARCHIVADO
+    CreateUnitRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - name
+        - kind
+        - active
+      properties:
+        parentId:
+          type:
+            - string
+            - 'null'
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 60
+          pattern: '^[A-Z0-9_\-]+$'
+        name:
+          type: string
+          maxLength: 180
+        kind:
+          type: string
+          maxLength: 40
+        active:
+          type: boolean
+    UpdateUnitRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - code
+        - name
+        - kind
+        - active
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        parentId:
+          type:
+            - string
+            - 'null'
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        code:
+          type: string
+          maxLength: 60
+          pattern: '^[A-Z0-9_\-]+$'
+        name:
+          type: string
+          maxLength: 180
+        kind:
+          type: string
+          maxLength: 40
+        active:
+          type: boolean
+    CreateLevelRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - code
+        - name
+        - rank
+      properties:
+        code:
+          type: string
+          maxLength: 40
+          pattern: '^[A-Z0-9_\-]+$'
+        name:
+          type: string
+          maxLength: 100
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 65535
+    UpdateLevelRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - code
+        - name
+        - rank
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        code:
+          type: string
+          maxLength: 40
+          pattern: '^[A-Z0-9_\-]+$'
+        name:
+          type: string
+          maxLength: 100
+        rank:
+          type: integer
+          minimum: 1
+          maximum: 65535
+    AssignPositionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - unitId
+        - name
+        - startsOn
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        unitId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        name:
+          type: string
+          maxLength: 180
+        startsOn:
+          type: string
+          format: date
+    FinishPositionRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - endsOn
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        endsOn:
+          type: string
+          format: date
+    AddDegreeRequest:
+      type: object
+      additionalProperties: false
+      required:
+        - expectedVersion
+        - levelId
+        - program
+      properties:
+        expectedVersion:
+          type: integer
+          minimum: 1
+        levelId:
+          type: string
+          pattern: '^[0-9A-HJKMNP-TV-Z]{26}$'
+        program:
+          type: string
+          maxLength: 255
+        abbreviation:
+          type:
+            - string
+            - 'null'
+          maxLength: 45
+        obtainedOn:
+          type:
+            - string
+            - 'null'
+          format: date
+    RoleListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Role'
+    PermissionListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/Permission'
+    AuthorizationIdentityListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuthorizationIdentity'
+    IdentityCandidateListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/IdentityCandidate'
+    OrganizationEmployeeListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationEmployee'
+    OrganizationUnitListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/OrganizationUnit'
+    AcademicLevelListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/AcademicLevel'
+    InternalAdviserListResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          type: array
+          items:
+            $ref: '#/components/schemas/InternalAdviser'
+    RoleResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/Role'
+    RoleAssignmentsResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/RoleAssignments'
+    OrganizationEmployeeResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationEmployee'
+    OrganizationUnitResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/OrganizationUnit'
+    AcademicLevelResponse:
+      type: object
+      additionalProperties: false
+      required:
+        - data
+      properties:
+        data:
+          $ref: '#/components/schemas/AcademicLevel'

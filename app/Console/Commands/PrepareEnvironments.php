@@ -62,10 +62,18 @@ class PrepareEnvironments extends Command
                     if ($role === 'migrator') {
                         $admin->exec('GRANT CREATE, ALTER, DROP, INDEX, REFERENCES, SELECT, INSERT, UPDATE, DELETE ON `'.$database.'`.* TO '.$account);
                     } else {
-                        foreach (['iam_identidades', 'iam_cuentas_externas', 'compartido_mensajes_salida', 'compartido_bandeja_entrada', 'compartido_archivos_almacenados', 'sessions', 'cache', 'cache_locks', 'jobs', 'job_batches', 'failed_jobs'] as $table) {
-                            $admin->exec('GRANT SELECT, INSERT, UPDATE, DELETE ON `'.$database.'`.`'.$table.'` TO '.$account);
+                        $privileges = json_decode(File::get(database_path('privileges.json')), true, flags: JSON_THROW_ON_ERROR);
+                        $existingTables = $admin->query('SHOW TABLES FROM `'.$database.'`')->fetchAll(PDO::FETCH_COLUMN);
+                        foreach ($privileges['runtimeWritable'] as $table) {
+                            if (in_array($table, $existingTables, true)) {
+                                $admin->exec('GRANT SELECT, INSERT, UPDATE, DELETE ON `'.$database.'`.`'.$table.'` TO '.$account);
+                            }
                         }
-                        $admin->exec('GRANT SELECT, INSERT ON `'.$database.'`.compartido_registros_auditoria TO '.$account);
+                        foreach ($privileges['appendOnly'] as $table) {
+                            if (in_array($table, $existingTables, true)) {
+                                $admin->exec('GRANT SELECT, INSERT ON `'.$database.'`.`'.$table.'` TO '.$account);
+                            }
+                        }
                     }
                     $values = [
                         'APP_ENV' => $environment, 'APP_DEBUG' => $environment === 'local' ? 'true' : 'false',

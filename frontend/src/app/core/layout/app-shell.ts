@@ -1,15 +1,20 @@
 import { Component, DestroyRef, HostListener, inject, signal } from '@angular/core';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { DOCUMENT } from '@angular/core';
 import { AuthFacade } from '../auth/auth.facade';
 
 @Component({
   selector: 'app-shell',
+  imports: [RouterLink],
   template: `
     <section aria-labelledby="dashboard-title">
       <h2 id="dashboard-title">Tu sesión institucional</h2>
       @if (auth.identity(); as identity) {
+        <nav aria-label="Servicios habilitados">
+          @if (identity.permissions.includes('iam.roles.consultar') || identity.permissions.includes('iam.roles.gestionar')) { <a routerLink="/iam">Administración IAM</a> }
+          @if (identity.permissions.some(organizationPermission)) { <a routerLink="/organization">Organization</a> }
+        </nav>
         <p>Bienvenido, {{ identity.displayName }}.</p>
         <p>Tu cuenta está activa. Los servicios aparecerán aquí conforme se habiliten.</p>
       } @else {
@@ -23,6 +28,7 @@ import { AuthFacade } from '../auth/auth.facade';
   `,
 })
 export class AppShell {
+  protected readonly organizationPermission = (permission: string): boolean => permission.startsWith('organization.') && permission.endsWith('.consultar');
   protected readonly auth = inject(AuthFacade);
   private readonly router = inject(Router);
   private readonly document = inject(DOCUMENT);

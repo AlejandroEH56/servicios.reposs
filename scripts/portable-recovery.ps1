@@ -116,8 +116,13 @@ try {
  $sql=''
  foreach($role in @('runtime','migrator','operator')){$sql+="CREATE USER 'sr_container_"+$role+"'@'%' IDENTIFIED BY '"+$credentials.$role+"';"}
  $sql+="GRANT CREATE, ALTER, DROP, INDEX, REFERENCES, SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.* TO 'sr_container_migrator'@'%';"
- foreach($table in @('iam_identidades','iam_cuentas_externas','compartido_mensajes_salida','compartido_bandeja_entrada','compartido_archivos_almacenados','sessions','cache','cache_locks','jobs','job_batches','failed_jobs')){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}
- $sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_runtime'@'%';GRANT SELECT, UPDATE ON servicios_moderno_stage.iam_identidades TO 'sr_container_operator'@'%';GRANT SELECT ON servicios_moderno_stage.iam_cuentas_externas TO 'sr_container_operator'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_operator'@'%';"
+ $privileges=Get-Content -LiteralPath (Join-Path $projectRoot 'database/privileges.json') -Raw|ConvertFrom-Json
+ [byte[]]$tableNames=Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes('SHOW TABLES FROM servicios_moderno_stage;'))
+ $existingTables=[Text.Encoding]::UTF8.GetString($tableNames) -split '\s+'
+ foreach($table in $privileges.runtimeWritable){if($existingTables -contains $table){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}}
+ foreach($table in $privileges.appendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
+ foreach($table in $privileges.operatorWritable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
+ foreach($table in $privileges.operatorReadOnly){if($existingTables -contains $table){$sql+="GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  [void](Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes($sql)))
  $runtime=[IO.File]::ReadAllText((Join-Path $root 'container-runtime.env'))
  $runtime=Set-PrivateEnvironmentValue $runtime 'CLAMAV_HOST' 'antivirus';$runtime=Set-PrivateEnvironmentValue $runtime 'OTEL_ENABLED' 'false'

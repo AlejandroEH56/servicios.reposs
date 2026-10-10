@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Modules\IAM\Application\AuthorizationDirectory;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Carbon;
@@ -18,7 +19,7 @@ class IdentityResource extends JsonResource
         return [
             'id' => $this->resource->getAuthIdentifier(), 'displayName' => $this->resource->name,
             'email' => $this->resource->email, 'status' => $this->resource->estado->value,
-            'roles' => [], 'permissions' => [], 'scopes' => [],
+            ...app(AuthorizationDirectory::class)->effective($this->resource->getAuthIdentifier()),
             'sessionExpiresAt' => Carbon::createFromTimestamp(min(
                 $request->session()->get('iam_authenticated_at') + config('modernization.sessions.absolute_seconds'),
                 $request->session()->get('iam_authenticated_at') + config('modernization.sessions.group_freshness_seconds'),

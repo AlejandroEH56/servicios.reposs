@@ -4,6 +4,7 @@ use App\Http\Middleware\CorrelationId;
 use App\Http\Middleware\OperationalTelemetry;
 use App\Http\Middleware\RequireCsrfToken;
 use Illuminate\Auth\AuthenticationException;
+use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
@@ -37,6 +38,7 @@ return Application::configure(basePath: dirname(__DIR__))
             }
 
             $status = match (true) {
+                $exception instanceof UniqueConstraintViolationException => 409,
                 $exception instanceof ValidationException => 422,
                 $exception instanceof AuthenticationException => 401,
                 $exception instanceof HttpExceptionInterface => $exception->getStatusCode(),

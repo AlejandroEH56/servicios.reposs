@@ -10,5 +10,7 @@ final readonly class VerifiedIdentity
         public string $name,
         public ?string $email,
         public ?string $principalName,
+        public ?string $jobTitle = null,
+        public bool $profileAvailable = false,
     ) {}
 }
