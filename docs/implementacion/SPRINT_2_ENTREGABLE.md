@@ -50,3 +50,5 @@ MySQL DDL no constituye una transacción reversible completa. Antes de migrar un
 8. Respaldar las cinco imágenes exactas, SQL/storage/AV/TLS/perfiles cifrados; restaurar en volúmenes nuevos y conservar la clave privada por separado. Custodiar el nuevo conjunto fuera del disco local.
 
 Resultados y estado real de estos pasos se registran en `artifacts/SPRINT_2_VALIDACION_20261010.json` y `artifacts/SPRINT_2_RESULTADOS_20261010.md`, excluidos de Git. No transferir el GO del Sprint 1 a un SHA diferente. El criterio funcional de salida incluye la matriz aceptada, pruebas allow/deny y la conciliación IAM/empleado piloto; mientras falte una evidencia requerida, el cierre se informa pendiente.
+
+El responsable confirmó el 2026-10-10 resultados correctos del ensayo real solicitado: login nuevo con su cuenta habitual, consulta de roles/asignaciones en Administración IAM, registro de su empleado piloto y coincidencia de puestos Microsoft con el perfil institucional. La confirmación no incluye datos personales ni tokens. La cuenta de ensayo no fue elevada durante el bootstrap.
