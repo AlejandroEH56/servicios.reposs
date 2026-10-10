@@ -33,7 +33,8 @@ test('TLS verifica cadena y hostname y health está disponible', async () => {
 
 test('sesión HTTPS y CSRF negativo en servidor real', async () => {
   const login = await request('/login');
-  assert.equal(login.status, 200);
+  assert.equal(login.status, 302);
+  assert.equal(new URL(login.headers.location, origin).pathname, '/portal/login');
   const cookie = login.headers['set-cookie'].find(value => value.startsWith('laravel_session='));
   assert.ok(cookie);
   assert.match(cookie, /; secure/i);

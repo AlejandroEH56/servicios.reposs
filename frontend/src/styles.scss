@@ -1,1 +1,26 @@
-/* You can add global styles to this file, and also import other style files */
+body {
+  margin: 0;
+}
+a {
+  color: #175a78;
+}
+button,
+.button {
+  display: inline-block;
+  padding: 0.8rem 1.2rem;
+  border: 0;
+  border-radius: 0.35rem;
+  background: #175a78;
+  color: white;
+  font: inherit;
+  cursor: pointer;
+}
+button:disabled {
+  opacity: 0.65;
+  cursor: wait;
+}
+a:focus-visible,
+button:focus-visible {
+  outline: 3px solid #b95409;
+  outline-offset: 4px;
+}

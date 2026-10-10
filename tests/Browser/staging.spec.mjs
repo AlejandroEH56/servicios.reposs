@@ -6,7 +6,7 @@ test('Angular se sirve por el mismo origen TLS que la API', async ({ page }) => 
   const response = await page.goto('/portal/');
   expect(response.status()).toBe(200);
   await expect(page.getByRole('heading', { name: 'Servicios', exact: true })).toBeVisible();
-  await expect(page.getByRole('link', { name: 'Ingresar con Microsoft' })).toHaveAttribute('href', '/auth/microsoft');
+  await expect(page.getByRole('link', { name: 'Ingresar con Microsoft' })).toHaveAttribute('href', '/auth/entra/login');
   expect(new URL(page.url()).origin).toBe(origin);
 });
 
