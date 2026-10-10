@@ -56,7 +56,7 @@ if($Action -eq 'Backup') {
  if($usage -gt $MaximumGiB*1GB){throw 'Backup capacity reached; review retention before creating another snapshot.'}
  Set-PrivateDirectory $directory
  $streams=[ordered]@{}
- $streams['images.age']=Invoke-PrivatePipeline $dockerPath @('image','save','servicios-backend:local','servicios-mysql:local','servicios-proxy:local','servicios-antivirus:local') $age @('-r',$recipient) (Join-Path $directory 'images.age')
+ $streams['images.age']=Invoke-PrivatePipeline $dockerPath @('image','save','servicios-backend:local','servicios-mysql:local','servicios-proxy:local','servicios-antivirus:local','servicios-collector:local') $age @('-r',$recipient) (Join-Path $directory 'images.age')
  $streams['database.age']=Invoke-PrivatePipeline $dockerPath ($compose+@('exec','-T','mysql','bash','-c',$dump)) $age @('-r',$recipient) (Join-Path $directory 'database.age') -CanonicalSql
  foreach($entry in @(@('storage.age','backend','/srv/app/storage/app/private'),@('antivirus.age','antivirus','/var/lib/clamav'),@('tls.age','proxy','/data'))){$streams[$entry[0]]=Invoke-PrivatePipeline $dockerPath ($compose+@('exec','-T',$entry[1],'tar','-cf','-','-C',$entry[2],'.')) $age @('-r',$recipient) (Join-Path $directory $entry[0])}
  [byte[]]$files=Invoke-DockerBytes ($compose+@('exec','-T','--workdir','/srv/app/storage/app/private','backend','php','-r',$inventory))
@@ -69,7 +69,7 @@ if($Action -eq 'Backup') {
  [byte[]]$secretBytes=$secrets.ToArray();$secrets.Dispose()
  [void](Invoke-PrivateBytes $age @('-r',$recipient,'-o',(Join-Path $directory 'secrets.age')) $secretBytes)
  $images=[ordered]@{}
- foreach($image in @('servicios-backend:local','servicios-mysql:local','servicios-proxy:local','servicios-antivirus:local')){$id=Invoke-DockerBytes @('image','inspect','--format','{{.Id}}',$image);$images[$image]=[Text.Encoding]::UTF8.GetString($id).Trim()}
+ foreach($image in @('servicios-backend:local','servicios-mysql:local','servicios-proxy:local','servicios-antivirus:local','servicios-collector:local')){$id=Invoke-DockerBytes @('image','inspect','--format','{{.Id}}',$image);$images[$image]=[Text.Encoding]::UTF8.GetString($id).Trim()}
  $encrypted=[ordered]@{}
  foreach($file in Get-ChildItem -LiteralPath $directory -File){$encrypted[$file.Name]=[ordered]@{sha256=(Get-FileHash -LiteralPath $file.FullName -Algorithm SHA256).Hash.ToLowerInvariant();bytes=$file.Length}}
  $manifest=[ordered]@{snapshot=$Snapshot;createdAt=$started.ToString('o');commit=(& git -C $projectRoot rev-parse HEAD).Trim();workingTreeDirty=[bool](& git -C $projectRoot status --porcelain);format='age X25519 v1; streaming';scope='Portable recovery of current foundation; no DPAPI dependency';streams=$streams;storageInventorySha256=(Get-Digest $files);secretsSha256=(Get-Digest $secretBytes);encryptedFiles=$encrypted;images=$images;retentionDays=$RetentionDays;maximumSnapshots=$MaximumSnapshots;maximumGiB=$MaximumGiB;rpoHours=24;rtoHours=4;completed=$true}

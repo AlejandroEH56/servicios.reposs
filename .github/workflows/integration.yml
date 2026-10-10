@@ -88,7 +88,7 @@ jobs:
           chmod 777 artifacts
           docker build --target test -f docker/backend.Dockerfile -t servicios-tests:${GITHUB_SHA} .
           docker run --rm --network none -e APP_ENV=testing -v "$PWD/artifacts:/srv/app/artifacts" servicios-tests:${GITHUB_SHA} php vendor/bin/phpunit --log-junit artifacts/linux.xml
-          docker compose --env-file docker/environment.example build --provenance=mode=max backend proxy mysql antivirus
+          docker compose --env-file docker/environment.example build --provenance=mode=max backend proxy mysql antivirus collector
       - name: Start private topology and migrate
         run: |
           docker compose --env-file docker/environment.example up -d mysql
@@ -170,15 +170,13 @@ jobs:
           docker run --rm --network none -v "$PWD:/src:ro" semgrep/semgrep@sha256:529ee8a277ec8adc5b534d7c74eea0a47e9de21d62852b6ba7ac6ba9566845c3 semgrep scan --oss-only --timeout 15 --max-memory 256 --jobs 2 --config /src/.semgrep.yaml --metrics=off --error --json /src/app /src/frontend/src > artifacts/sast.json
       - name: Image SBOM and vulnerability gate
         run: |
-          for name in backend proxy mysql antivirus; do
+          for name in backend proxy mysql antivirus collector; do
             docker build --provenance=mode=max -f docker/$name.Dockerfile -t servicios-$name:${GITHUB_SHA} .
           done
-          docker pull otel/opentelemetry-collector-contrib@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
           [[ "$(date -u +%F)" < 2026-11-08 ]] || { echo 'MySQL classification review expired'; exit 1; }
           result=0
           for name in backend proxy mysql antivirus collector; do
             image="servicios-$name:${GITHUB_SHA}"
-            if [ "$name" = collector ]; then image="otel/opentelemetry-collector-contrib@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1"; fi
             docker save -o artifacts/$name.tar "$image"
             .tools/quality/syft docker-archive:artifacts/$name.tar -o syft-json=artifacts/$name-sbom.json -o cyclonedx-json=artifacts/$name-cyclonedx.json
             args=()

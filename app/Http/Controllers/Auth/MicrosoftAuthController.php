@@ -7,6 +7,7 @@ use App\Modules\IAM\Application\EntraAuthenticator;
 use App\Modules\IAM\Application\IdentityProvisioner;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -64,11 +65,15 @@ class MicrosoftAuthController extends Controller
         }
     }
 
-    public function logout(Request $request): RedirectResponse
+    public function logout(Request $request): RedirectResponse|Response
     {
         Auth::logout();
         $request->session()->invalidate();
         $request->session()->regenerateToken();
+
+        if ($request->is('auth/entra/logout') || $request->expectsJson()) {
+            return response()->noContent()->withHeaders(['Cache-Control' => 'no-store, private']);
+        }
 
         return redirect()->route('login');
     }

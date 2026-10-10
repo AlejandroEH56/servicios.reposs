@@ -161,6 +161,51 @@ PHP);
         file_put_contents($this->root.'/artifacts/private-file-recovery-fixture.json', json_encode($result, JSON_PRETTY_PRINT | JSON_THROW_ON_ERROR));
     }
 
+    public function test_collector_receives_redacts_and_exports_all_three_correlated_signals(): void
+    {
+        $probe = $this->php(<<<'PHP'
+use Illuminate\Support\Facades\Http;
+$trace=bin2hex(random_bytes(16));$span=bin2hex(random_bytes(8));$time=sprintf('%.0f',microtime(true)*1000000000);
+$attributes=[['key'=>'http.request.header.authorization','value'=>['stringValue'=>'synthetic-value']],['key'=>'user.email','value'=>['stringValue'=>'synthetic-value']]];
+$record=['traceId'=>$trace,'spanId'=>$span,'attributes'=>$attributes];
+$scope=['scope'=>['name'=>'servicios.collector.probe']];
+$payloads=[
+ 'traces'=>['resourceSpans'=>[['scopeSpans'=>[array_merge($scope,['spans'=>[array_merge($record,['name'=>'collector-probe','startTimeUnixNano'=>$time,'endTimeUnixNano'=>$time])]])]]]],
+ 'logs'=>['resourceLogs'=>[['scopeLogs'=>[array_merge($scope,['logRecords'=>[array_merge($record,['timeUnixNano'=>$time,'body'=>['stringValue'=>'collector-probe']])]])]]]],
+ 'metrics'=>['resourceMetrics'=>[['scopeMetrics'=>[array_merge($scope,['metrics'=>[['name'=>'collector_probe','gauge'=>['dataPoints'=>[['timeUnixNano'=>$time,'asDouble'=>1.0,'attributes'=>$attributes,'exemplars'=>[['timeUnixNano'=>$time,'asDouble'=>1.0,'traceId'=>$trace,'spanId'=>$span]]]]]]]])]]]],
+];
+$accepted=[];foreach($payloads as $signal=>$payload){$accepted[$signal]=Http::timeout(10)->post('http://172.30.0.3:4318/v1/'.$signal,$payload)->status()===200;}
+echo json_encode(['traceId'=>$trace,'accepted'=>$accepted]);
+PHP);
+        $this->assertSame(['traces' => true, 'logs' => true, 'metrics' => true], $probe['accepted']);
+        $this->assertMatchesRegularExpression('/^[a-f0-9]{32}$/', $probe['traceId']);
+        $inspection = <<<'PHP'
+<?php
+$trace='@@TRACE@@';$seen=['traces'=>false,'logs'=>false,'metrics'=>false];$redacted=true;
+for($attempt=0;$attempt<40;$attempt++){
+ $file=fopen('/var/otel/signals.json','r');
+ if($file!==false){while(($line=fgets($file))!==false){$data=json_decode($line,true);if(!is_array($data)){continue;}
+ foreach(['traces'=>['resourceSpans','scopeSpans','spans'],'logs'=>['resourceLogs','scopeLogs','logRecords'],'metrics'=>['resourceMetrics','scopeMetrics','metrics']] as $signal=>$keys){
+  foreach($data[$keys[0]]??[] as $resource){foreach($resource[$keys[1]]??[] as $scope){foreach($scope[$keys[2]]??[] as $record){
+   $items=$signal==='metrics'?($record['gauge']['dataPoints']??[]):[$record];
+   foreach($items as $item){$matches=$signal==='metrics'?in_array($trace,array_column($item['exemplars']??[],'traceId'),true):($item['traceId']??null)===$trace;
+    if($matches){$seen[$signal]=true;foreach($item['attributes']??[] as $attribute){if(in_array($attribute['key']??'', ['http.request.header.authorization','user.email'],true)){$redacted=false;}}}
+   }
+  }}}
+ }
+ }fclose($file);}
+ if(!in_array(false,$seen,true)){break;}usleep(250000);
+}
+echo json_encode(['seen'=>$seen,'redacted'=>$redacted]);
+PHP;
+        $inspection = str_replace('@@TRACE@@', $probe['traceId'], $inspection);
+        $result = json_decode($this->composeOperation([
+            'run', '--rm', '--no-deps', '--volume', 'servicios_stage_otel_data:/var/otel:ro', '--entrypoint', 'php', 'backend',
+        ], $inspection), true, flags: JSON_THROW_ON_ERROR);
+        $this->assertSame(['traces' => true, 'logs' => true, 'metrics' => true], $result['seen']);
+        $this->assertTrue($result['redacted']);
+    }
+
     /** @return array<string,mixed> */
     private function php(string $code): array
     {

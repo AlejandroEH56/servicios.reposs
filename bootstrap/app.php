@@ -2,10 +2,12 @@
 
 use App\Http\Middleware\CorrelationId;
 use App\Http\Middleware\OperationalTelemetry;
+use App\Http\Middleware\RequireCsrfToken;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Foundation\Application;
 use Illuminate\Foundation\Configuration\Exceptions;
 use Illuminate\Foundation\Configuration\Middleware;
+use Illuminate\Foundation\Http\Middleware\PreventRequestForgery;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
@@ -20,16 +22,17 @@ return Application::configure(basePath: dirname(__DIR__))
         },
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        $middleware->web(replace: [PreventRequestForgery::class => RequireCsrfToken::class]);
         $middleware->append(CorrelationId::class);
         $middleware->append(OperationalTelemetry::class);
         $middleware->trustProxies(at: ['127.0.0.1', '::1', '172.30.0.2'], headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(
-            fn (Request $request) => $request->is('api/*', 'health/*') || $request->expectsJson(),
+            fn (Request $request) => $request->is('api/*', 'health/*', 'auth/entra/logout') || $request->expectsJson(),
         );
         $exceptions->render(function (Throwable $exception, Request $request) {
-            if (! $request->is('api/*', 'health/*')) {
+            if (! $request->is('api/*', 'health/*', 'auth/entra/logout')) {
                 return null;
             }
 
@@ -48,6 +51,7 @@ return Application::configure(basePath: dirname(__DIR__))
                 409 => ['STATE_CONFLICT', 'Conflicto de estado'],
                 413 => ['FILE_TOO_LARGE', 'Archivo demasiado grande'],
                 415 => ['UNSUPPORTED_MEDIA_TYPE', 'Tipo de contenido no soportado'],
+                419 => ['CSRF_TOKEN_MISMATCH', 'La sesión de seguridad no es válida'],
                 422 => ['VALIDATION_ERROR', 'La solicitud no es válida'],
                 429 => ['RATE_LIMITED', 'Demasiadas solicitudes'],
                 503 => ['DEPENDENCY_UNAVAILABLE', 'Servicio no disponible'],

@@ -124,7 +124,10 @@ services:
     volumes: [clamav_data:/var/lib/clamav]
     networks: [internal]
   collector:
-    image: otel/opentelemetry-collector-contrib@sha256:fd328de2552466ad78385e1b1289c3f2402b1c45f265b252aab1955b42845ac1
+    build:
+      context: .
+      dockerfile: docker/collector.Dockerfile
+    image: servicios-collector:${RELEASE_SHA:-local}
     restart: unless-stopped
     command: [--config=/etc/otelcol-contrib/config.yaml]
     volumes:
