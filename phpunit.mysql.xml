@@ -5,6 +5,8 @@
             <directory>tests/Integration</directory>
             <file>tests/Feature/MicrosoftAuthenticationTest.php</file>
             <file>tests/Feature/SprintOneSessionTest.php</file>
+            <file>tests/Feature/SprintTwoAuthorizationTest.php</file>
+            <file>tests/Feature/SprintTwoOrganizationTest.php</file>
             <file>tests/Feature/IdentifierBoundaryTest.php</file>
             <file>tests/Feature/OutboxTest.php</file>
             <file>tests/Feature/IdentityContactTest.php</file>

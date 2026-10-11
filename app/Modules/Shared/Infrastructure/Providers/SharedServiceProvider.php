@@ -2,6 +2,7 @@
 
 namespace App\Modules\Shared\Infrastructure\Providers;
 
+use App\Modules\Organization\Application\ProfileProjector;
 use App\Modules\Shared\Application\Ports\ReadinessCheck;
 use App\Modules\Shared\Application\Ports\VirusScanner;
 use App\Modules\Shared\Infrastructure\Health\ReadinessProbe;
@@ -26,6 +27,9 @@ class SharedServiceProvider extends ServiceProvider
         $this->app->bind(ReadinessCheck::class, ReadinessProbe::class);
         $this->app->bind(OutboxProcessor::class, function () {
             return new OutboxProcessor([
+                'iam.profile-synchronized.v1' => ['organization.profile' => function (array $event): void {
+                    $this->app->make(ProfileProjector::class)->handle($event);
+                }],
                 'iam.identity-linked.v1' => ['audit.identity-linked' => function (array $event): void {
                     DB::table('compartido_registros_auditoria')->insert([
                         'id' => (string) Str::ulid(), 'ocurrido_en' => now(),

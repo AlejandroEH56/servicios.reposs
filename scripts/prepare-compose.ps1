@@ -63,12 +63,12 @@ $sql += "GRANT CREATE, ALTER, DROP, INDEX, REFERENCES, SELECT, INSERT, UPDATE, D
 $sql += "CREATE USER IF NOT EXISTS 'sr_container_operator'@'%' IDENTIFIED BY '" + $credentials.operator + "';`n"
 [IO.File]::WriteAllText((Join-Path $privateRoot 'initialize-users.sql'), $sql, (New-Object Text.UTF8Encoding($false)))
 $sql = ''
-foreach ($table in @('iam_identidades','iam_cuentas_externas','compartido_mensajes_salida','compartido_bandeja_entrada','compartido_archivos_almacenados','sessions','cache','cache_locks','jobs','job_batches','failed_jobs')) {
+$privileges = Get-Content -LiteralPath (Join-Path $projectRoot 'database/privileges.json') -Raw | ConvertFrom-Json
+foreach ($table in $privileges.runtimeWritable) {
     $sql += 'GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.' + $table + " TO 'sr_container_runtime'@'%';`n"
 }
-$sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_runtime'@'%';`n"
-$sql += "GRANT SELECT, UPDATE ON servicios_moderno_stage.iam_identidades TO 'sr_container_operator'@'%';`n"
-$sql += "GRANT SELECT ON servicios_moderno_stage.iam_cuentas_externas TO 'sr_container_operator'@'%';`n"
-$sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_operator'@'%';`n"
+foreach ($table in $privileges.appendOnly) { $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`nGRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
+foreach ($table in $privileges.operatorWritable) { $sql += "GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
+foreach ($table in $privileges.operatorReadOnly) { $sql += "GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
 [IO.File]::WriteAllText((Join-Path $privateRoot 'grant-runtime.sql'), $sql, (New-Object Text.UTF8Encoding($false)))
 Write-Host 'PASS: archivos privados de Compose preparados; no se modificaron las bases existentes.'

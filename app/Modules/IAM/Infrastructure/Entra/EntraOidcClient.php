@@ -54,7 +54,7 @@ class EntraOidcClient implements EntraAuthenticator
         if (! in_array($group, $member['value'] ?? [], true)) {
             throw new RuntimeException('IAM_GROUP_DENIED');
         }
-        $profile = $graph->get('https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName')->throw()->json();
+        $profile = $graph->get('https://graph.microsoft.com/v1.0/me?$select=id,displayName,mail,userPrincipalName,jobTitle')->throw()->json();
         if (strtolower((string) ($profile['id'] ?? '')) !== strtolower($claims['oid'])) {
             throw new RuntimeException('IAM_GRAPH_ID_MISMATCH');
         }
@@ -67,6 +67,9 @@ class EntraOidcClient implements EntraAuthenticator
             strtolower($tenant), strtolower($claims['oid']),
             mb_substr(is_string($name) ? $name : 'Cuenta institucional', 0, 255),
             $email, is_string($profile['userPrincipalName'] ?? null) ? mb_substr($profile['userPrincipalName'], 0, 254) : null,
+            is_string($profile['jobTitle'] ?? null) ? $profile['jobTitle'] : null,
+            array_key_exists('jobTitle', $profile) && ($profile['jobTitle'] === null
+                || (is_string($profile['jobTitle']) && mb_strlen($profile['jobTitle']) <= 1000)),
         );
     }
 

@@ -1,0 +1,13 @@
+{
+  "runtimeWritable": [
+    "iam_identidades", "iam_cuentas_externas", "iam_roles", "iam_permisos",
+    "iam_identidad_roles", "iam_rol_permisos", "iam_controles",
+    "organizacion_empleados", "organizacion_unidades", "organizacion_asignaciones_puesto",
+    "organizacion_niveles_academicos", "organizacion_grados_academicos", "organizacion_controles",
+    "compartido_mensajes_salida", "compartido_bandeja_entrada", "compartido_archivos_almacenados",
+    "sessions", "cache", "cache_locks", "jobs", "job_batches", "failed_jobs"
+  ],
+  "appendOnly": ["compartido_registros_auditoria", "iam_historial_roles"],
+  "operatorWritable": ["iam_identidades", "iam_identidad_roles", "iam_controles"],
+  "operatorReadOnly": ["iam_cuentas_externas", "iam_roles", "iam_permisos", "iam_rol_permisos"]
+}
