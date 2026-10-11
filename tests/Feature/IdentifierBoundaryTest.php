@@ -29,14 +29,14 @@ class IdentifierBoundaryTest extends TestCase
 
     public function test_future_catalog_requires_conversion_before_module_or_route_is_enabled(): void
     {
-        Schema::create('organizacion_niveles_academicos', fn (Blueprint $table) => $table->id());
+        Schema::create('residencias_modalidades', fn (Blueprint $table) => $table->id());
         try {
             $this->artisan('modernization:verify-identifiers')->assertSuccessful();
-            $this->artisan('modernization:verify-identifiers', ['--enable-module' => ['organization']])->assertFailed();
-            Route::post('/api/v1/organization/levels', fn () => response()->noContent());
+            $this->artisan('modernization:verify-identifiers', ['--enable-module' => ['residencies']])->assertFailed();
+            Route::post('/api/v1/residencies/modalities', fn () => response()->noContent());
             $this->artisan('modernization:verify-identifiers')->assertFailed();
         } finally {
-            Schema::drop('organizacion_niveles_academicos');
+            Schema::drop('residencias_modalidades');
         }
     }
 
@@ -45,27 +45,27 @@ class IdentifierBoundaryTest extends TestCase
         if (Schema::getConnection()->getDriverName() === 'mysql') {
             $this->markTestSkipped('MySQL rejects mismatched FK types at DDL creation; exercised with SQLite.');
         }
-        Schema::create('organizacion_niveles_academicos', fn (Blueprint $table) => $table->char('id', 26)->primary());
+        Schema::create('residencias_modalidades', fn (Blueprint $table) => $table->char('id', 26)->primary());
         Schema::create('organization_fk_probe', function (Blueprint $table): void {
             $table->char('id', 26)->primary();
             $table->unsignedBigInteger('level_id');
-            $table->foreign('level_id')->references('id')->on('organizacion_niveles_academicos');
+            $table->foreign('level_id')->references('id')->on('residencias_modalidades');
         });
         try {
-            $this->artisan('modernization:verify-identifiers', ['--enable-module' => ['organization']])->assertFailed();
+            $this->artisan('modernization:verify-identifiers', ['--enable-module' => ['residencies']])->assertFailed();
         } finally {
             Schema::drop('organization_fk_probe');
-            Schema::drop('organizacion_niveles_academicos');
+            Schema::drop('residencias_modalidades');
         }
     }
 
     public function test_future_catalog_exception_only_permits_numeric_identity(): void
     {
-        Schema::create('organizacion_niveles_academicos', fn (Blueprint $table) => $table->json('id'));
+        Schema::create('residencias_modalidades', fn (Blueprint $table) => $table->json('id'));
         try {
             $this->artisan('modernization:verify-identifiers')->assertFailed();
         } finally {
-            Schema::drop('organizacion_niveles_academicos');
+            Schema::drop('residencias_modalidades');
         }
     }
 

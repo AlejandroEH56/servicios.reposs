@@ -1,8 +1,11 @@
 import { Routes } from '@angular/router';
 import { anonymousGuard, authGuard, authMatchGuard } from './core/guards/auth.guard';
+import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'session' },
+  { path: 'iam', canActivate: [permissionGuard], data: { permissions: ['iam.roles.consultar', 'iam.roles.gestionar'] }, loadComponent: () => import('./features/iam/iam').then(m => m.Iam) },
+  { path: 'organization', canActivate: [permissionGuard], data: { permissions: ['organization.empleados.consultar', 'organization.asesores.consultar', 'organization.unidades.consultar', 'organization.niveles.consultar'] }, loadComponent: () => import('./features/organization/organization').then(m => m.Organization) },
   {
     path: 'login',
     canActivate: [anonymousGuard],

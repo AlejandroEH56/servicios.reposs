@@ -116,8 +116,13 @@ try {
  $sql=''
  foreach($role in @('runtime','migrator','operator')){$sql+="CREATE USER 'sr_container_"+$role+"'@'%' IDENTIFIED BY '"+$credentials.$role+"';"}
  $sql+="GRANT CREATE, ALTER, DROP, INDEX, REFERENCES, SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.* TO 'sr_container_migrator'@'%';"
- foreach($table in @('iam_identidades','iam_cuentas_externas','compartido_mensajes_salida','compartido_bandeja_entrada','compartido_archivos_almacenados','sessions','cache','cache_locks','jobs','job_batches','failed_jobs')){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}
- $sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_runtime'@'%';GRANT SELECT, UPDATE ON servicios_moderno_stage.iam_identidades TO 'sr_container_operator'@'%';GRANT SELECT ON servicios_moderno_stage.iam_cuentas_externas TO 'sr_container_operator'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.compartido_registros_auditoria TO 'sr_container_operator'@'%';"
+ $privileges=Get-Content -LiteralPath (Join-Path $projectRoot 'database/privileges.json') -Raw|ConvertFrom-Json
+ [byte[]]$tableNames=Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes('SHOW TABLES FROM servicios_moderno_stage;'))
+ $existingTables=[Text.Encoding]::UTF8.GetString($tableNames) -split '\s+'
+ foreach($table in $privileges.runtimeWritable){if($existingTables -contains $table){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}}
+ foreach($table in $privileges.appendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
+ foreach($table in $privileges.operatorWritable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
+ foreach($table in $privileges.operatorReadOnly){if($existingTables -contains $table){$sql+="GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  [void](Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes($sql)))
  $runtime=[IO.File]::ReadAllText((Join-Path $root 'container-runtime.env'))
  $runtime=Set-PrivateEnvironmentValue $runtime 'CLAMAV_HOST' 'antivirus';$runtime=Set-PrivateEnvironmentValue $runtime 'OTEL_ENABLED' 'false'
@@ -127,10 +132,18 @@ try {
  [void](Invoke-DockerBytes @('run','-d','--name',$av,'--label',('servicios.recovery='+$Snapshot),'--network',$network,'--network-alias','antivirus','--mount',('type=volume,source='+$volumes.antivirus+',target=/var/lib/clamav'),'servicios-antivirus:local'));$containers+=$av
  [void](Invoke-DockerBytes @('run','-d','--name',$proxy,'--label',('servicios.recovery='+$Snapshot),'--network',$network,'--env','SITE_ADDRESS=https://localhost:8443','--env','TLS_DIRECTIVE=tls internal','--env','CANONICAL_ORIGIN=https://localhost:8443','--mount',('type=volume,source='+$volumes.tls+',target=/data'),'servicios-proxy:local'));$containers+=$proxy
  $bootstrap='require "vendor/autoload.php";$app=require "bootstrap/app.php";$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();'
- $permissionProbe=$bootstrap+'$pdo=Illuminate\Support\Facades\DB::connection()->getPdo();$pdo->query("SELECT COUNT(*) FROM iam_identidades")->fetchColumn();$denied=0;foreach(["CREATE TABLE runtime_forbidden_probe(id INT)","UPDATE compartido_registros_auditoria SET accion=accion WHERE 1=0","DELETE FROM compartido_registros_auditoria WHERE 1=0"] as $sql){try{Illuminate\Support\Facades\DB::statement($sql);}catch(PDOException $e){if(in_array($e->errorInfo[1],[1142,1044],true)){$denied++;}else{throw $e;}}}echo json_encode(["denied"=>$denied]);'
- $permissions=Invoke-DockerBytes @('exec',$backend,'php','-r',$permissionProbe);$result.runtimeDdlDenied=([Text.Encoding]::UTF8.GetString($permissions)|ConvertFrom-Json).denied -eq 3;$result.auditMutationDenied=$result.runtimeDdlDenied
+ $permissionProbe=$bootstrap+'$pdo=Illuminate\Support\Facades\DB::connection()->getPdo();$pdo->query("SELECT COUNT(*) FROM iam_identidades")->fetchColumn();$statements=["CREATE TABLE runtime_forbidden_probe(id INT)","UPDATE compartido_registros_auditoria SET accion=accion WHERE 1=0","DELETE FROM compartido_registros_auditoria WHERE 1=0"];$hasHistory=Illuminate\Support\Facades\Schema::hasTable("iam_historial_roles");if($hasHistory){$statements[]="UPDATE iam_historial_roles SET accion=accion WHERE 1=0";$statements[]="DELETE FROM iam_historial_roles WHERE 1=0";}$denied=0;foreach($statements as $sql){try{Illuminate\Support\Facades\DB::statement($sql);}catch(PDOException $e){if(in_array($e->errorInfo[1],[1142,1044],true)){$denied++;}else{throw $e;}}}echo json_encode(["denied"=>$denied,"expected"=>count($statements),"hasRoleHistory"=>$hasHistory]);'
+ $permissions=Invoke-DockerBytes @('exec',$backend,'php','-r',$permissionProbe);$runtimePermissions=[Text.Encoding]::UTF8.GetString($permissions)|ConvertFrom-Json;$result.runtimeDdlDenied=$runtimePermissions.denied -eq $runtimePermissions.expected;$result.auditMutationDenied=$result.runtimeDdlDenied
+ $result.roleHistoryPresent=$runtimePermissions.hasRoleHistory;$result.runtimeRoleHistoryMutationDenied=($runtimePermissions.hasRoleHistory -and $result.runtimeDdlDenied)
  $operatorProbe=Invoke-DockerBytes @('run','--rm','--network',$network,'--env-file',(Join-Path $root 'container-operator.env'),'--entrypoint','php','servicios-backend:local','-r',$permissionProbe)
- $result.operatorDdlDenied=([Text.Encoding]::UTF8.GetString($operatorProbe)|ConvertFrom-Json).denied -eq 3
+ $operatorPermissions=[Text.Encoding]::UTF8.GetString($operatorProbe)|ConvertFrom-Json;$result.operatorDdlDenied=$operatorPermissions.denied -eq $operatorPermissions.expected
+ $result.operatorRoleHistoryMutationDenied=($operatorPermissions.hasRoleHistory -and $result.operatorDdlDenied)
+ if($runtimePermissions.hasRoleHistory){
+  $organizationProbe=Invoke-DockerBytes @('exec',$backend,'php','artisan','modernization:verify-identifiers','--enable-module=organization','--no-interaction')
+  $organizationResult=[Text.Encoding]::UTF8.GetString($organizationProbe)|ConvertFrom-Json
+  $result.organizationIdentifiersRecovered=($organizationResult.violations -eq 0 -and $organizationResult.enabledModules -contains 'organization')
+  if(-not $result.organizationIdentifiersRecovered){throw 'Recovered Organization identifier boundary failed.'}
+ }
  $address=Invoke-DockerBytes @('inspect','--format','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',$proxy);$ip=[Text.Encoding]::UTF8.GetString($address).Trim()
  if($ip -notmatch '^\d{1,3}(\.\d{1,3}){3}$'){throw 'Recovery proxy address unavailable.'}
  $http='<?php $curl=curl_init("https://localhost:8443/health/ready");curl_setopt_array($curl,[CURLOPT_RETURNTRANSFER=>true,CURLOPT_CAINFO=>"/tmp/recovery-ca.crt",CURLOPT_RESOLVE=>["localhost:8443:@@IP@@"],CURLOPT_TIMEOUT=>10]);$body=curl_exec($curl);echo json_encode(["status"=>curl_getinfo($curl,CURLINFO_RESPONSE_CODE),"tls"=>curl_errno($curl)===0,"curlErrno"=>curl_errno($curl)]);'

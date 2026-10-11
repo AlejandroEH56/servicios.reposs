@@ -1,6 +1,15 @@
 body {
   margin: 0;
 }
+fieldset { margin: 1.5rem 0; padding: 1.5rem; border: 1px solid #bacbd4; border-radius: .5rem; background: white; }
+legend { font-weight: 650; padding: 0 .5rem; }
+label { display: block; margin: .8rem 0; }
+input:not([type='checkbox']), select { display: block; width: min(100%, 30rem); box-sizing: border-box; padding: .65rem; font: inherit; color: inherit; background: white; border: 1px solid #829baa; border-radius: .3rem; }
+form { margin-bottom: 1.5rem; }
+nav { display: flex; gap: 1.5rem; flex-wrap: wrap; margin: 1.5rem 0; }
+li { margin: .75rem 0; }
+button + button { margin-left: .5rem; }
+input:focus-visible, select:focus-visible { outline: 3px solid #b95409; outline-offset: 2px; }
 a {
   color: #175a78;
 }

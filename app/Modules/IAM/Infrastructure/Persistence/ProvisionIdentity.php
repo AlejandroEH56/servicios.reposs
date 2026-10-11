@@ -47,6 +47,27 @@ class ProvisionIdentity implements IdentityProvisioner
                     'nombre_principal' => $identity->principalName, 'actualizado_en' => now(),
                 ]);
             }
+            if ($identity->profileAvailable) {
+                $previous = $account && $account->instantanea_atributos
+                    ? json_decode($account->instantanea_atributos, true, flags: JSON_THROW_ON_ERROR) : [];
+                $attributes = ['jobTitle' => $identity->jobTitle, 'displayName' => $identity->name, 'email' => $identity->email];
+                if (array_intersect_key($previous, $attributes) !== $attributes) {
+                    $profileVersion = ($previous['profileVersion'] ?? 0) + 1;
+                    DB::table('iam_cuentas_externas')->where($key)->update([
+                        'instantanea_atributos' => json_encode($attributes + ['profileVersion' => $profileVersion], JSON_THROW_ON_ERROR),
+                        'actualizado_en' => now(),
+                    ]);
+                    $eventId = (string) Str::ulid();
+                    DB::table('compartido_mensajes_salida')->insert([
+                        'id' => $eventId, 'nombre_contexto' => 'IAM', 'tipo_agregado' => 'Identity',
+                        'id_agregado' => $user->id, 'tipo_evento' => 'iam.profile-synchronized.v1',
+                        'contenido' => json_encode(['eventId' => $eventId, 'type' => 'iam.profile-synchronized.v1',
+                            'version' => 1, 'aggregateId' => $user->id, 'aggregateVersion' => $profileVersion,
+                            'occurredAt' => now()->toISOString(), 'actor' => $user->id, 'correlationId' => $correlationId], JSON_THROW_ON_ERROR),
+                        'ocurrido_en' => now(), 'disponible_en' => now(), 'estado' => 'PENDING',
+                    ]);
+                }
+            }
             DB::table('compartido_registros_auditoria')->insert([
                 'id' => (string) Str::ulid(), 'ocurrido_en' => now(),
                 'id_identidad_actor' => $user->id, 'nombre_contexto' => 'IAM', 'accion' => 'LOGIN_GRANTED',
