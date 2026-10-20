@@ -18,12 +18,12 @@ try {
  $expected=if($Action -eq 'Enable'){'200'}else{'404'}
  $actual=''
  for($attempt=0;$attempt -lt 30;$attempt++) {
-  $actual=& curl.exe --silent --cacert (Join-Path $projectRoot 'artifacts/docker-tls/root.crt') --output NUL --write-out '%{http_code}' --max-time 3 'https://localhost:8443/api/v1/public/notices'
+  $actual=& curl.exe --silent --ssl-revoke-best-effort --cacert (Join-Path $projectRoot 'artifacts/docker-tls/root.crt') --output NUL --write-out '%{http_code}' --max-time 3 'https://localhost:8443/api/v1/public/notices'
   if($actual -eq $expected){break}
   Start-Sleep -Milliseconds 500
  }
  if($actual -ne $expected){throw 'Publications route did not reach expected state.'}
- $result=[ordered]@{action=$Action;publicStatus=[int]$actual;expectedStatus=[int]$expected;tlsVerified=$true;seconds=([DateTime]::UtcNow-$started).TotalSeconds;dataDestruction=$false;legacyBackendConfigured=$false;environment='local staging'}
+ $result=[ordered]@{action=$Action;publicStatus=[int]$actual;expectedStatus=[int]$expected;tlsVerified=$true;developmentCaRevocation='best effort for missing/offline CRL; chain and hostname verified';seconds=([DateTime]::UtcNow-$started).TotalSeconds;dataDestruction=$false;legacyBackendConfigured=$false;environment='local staging'}
  $name='sprint3-route-'+$Action.ToLowerInvariant()+'-'+[DateTime]::UtcNow.ToString('yyyyMMddTHHmmssZ')+'.json'
  [IO.File]::WriteAllText((Join-Path $projectRoot ('artifacts/'+$name)),($result|ConvertTo-Json),(New-Object Text.UTF8Encoding($false)))
  Write-Output ('PASS Publications route '+$Action+'; HTTPS status '+$actual+'; persistent data preserved.')
