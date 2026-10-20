@@ -7,8 +7,9 @@ $personal = [
 ];
 
 return [
-    'matrix_version' => 'sprint-2-20261010-approved',
+    'matrix_version' => 'sprint-3-20261019-approved',
     'permissions' => [
+        'publicaciones.administrar' => ['GLOBAL'],
         'iam.roles.consultar' => ['GLOBAL'],
         'iam.roles.gestionar' => ['GLOBAL'],
         'organization.empleados.consultar' => ['SELF', 'GLOBAL'],
@@ -21,6 +22,7 @@ return [
         'organization.asesores.consultar' => ['GLOBAL'],
     ],
     'roles' => [
+        'ADMIN_PUBLICACIONES' => ['publicaciones.administrar' => 'GLOBAL'],
         'ADMIN_IAM' => ['iam.roles.consultar' => 'GLOBAL', 'iam.roles.gestionar' => 'GLOBAL'],
         'ADMIN_ORGANIZACION' => [
             'organization.empleados.consultar' => 'GLOBAL',
@@ -37,7 +39,7 @@ return [
         'LABORATORISTA' => $personal,
         'INVENTARIO_RESPONSABLE' => $personal,
         'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL'],
-        'DRPSS_ADMIN' => $personal + ['organization.asesores.consultar' => 'GLOBAL'],
+        'DRPSS_ADMIN' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'publicaciones.administrar' => 'GLOBAL'],
         'RESIDENTE' => [],
     ],
 ];

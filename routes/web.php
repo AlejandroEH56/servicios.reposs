@@ -2,12 +2,17 @@
 
 use App\Http\Controllers\Api\MeController;
 use App\Http\Controllers\Auth\MicrosoftAuthController;
+use App\Http\Controllers\PortalController;
 use App\Http\Controllers\SharedFileController;
 use App\Http\Middleware\RequireActiveIdentity;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
 Route::view('/', 'welcome');
+Route::get('/portal/{path?}', PortalController::class)->where('path', '.*')->name('portal');
+Route::get('/avisos', fn () => redirect('/portal/notices'))->name('notices.strangler');
+Route::get('/reposs/avisos', fn () => redirect('/portal/notices'))->name('notices.legacy');
+Route::get('/reposs/bolsa-trabajo', fn () => redirect('/portal/notices?type=EMPLEO'))->name('notices.employment');
 Route::get('/login', fn (Request $request) => redirect(
     $request->session()->has('errors') ? '/portal/access-denied' : '/portal/login'
 ))->name('login');

@@ -4,10 +4,12 @@ namespace App\Modules\Shared\Infrastructure\Providers;
 
 use App\Modules\Organization\Application\ProfileProjector;
 use App\Modules\Shared\Application\Ports\ReadinessCheck;
+use App\Modules\Shared\Application\Ports\ScannedFiles;
 use App\Modules\Shared\Application\Ports\VirusScanner;
 use App\Modules\Shared\Infrastructure\Health\ReadinessProbe;
 use App\Modules\Shared\Infrastructure\Outbox\OutboxProcessor;
 use App\Modules\Shared\Infrastructure\Storage\ClamAvScanner;
+use App\Modules\Shared\Infrastructure\Storage\PrivateFileStore;
 use App\Modules\Shared\Infrastructure\Telemetry\OperationalTelemetry;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\ServiceProvider;
@@ -20,6 +22,7 @@ class SharedServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
+        $this->app->bind(ScannedFiles::class, PrivateFileStore::class);
         $this->app->bind(VirusScanner::class,
             ClamAvScanner::class);
         $this->app->singleton(OperationalTelemetry::class,

@@ -13,10 +13,18 @@
         X-Content-Type-Options nosniff
         Referrer-Policy strict-origin-when-cross-origin
     }
-    handle_path /portal/* {
+    @portalAssets path_regexp portalAssets ^/portal/.*\.(js|css|ico|png|svg|woff2|woff|ttf|map)$
+    handle @portalAssets {
+        uri strip_prefix /portal
         root * /srv/frontend
-        try_files {path} /index.html
         file_server
+    }
+    handle /portal/* {
+        root * /srv/app/public
+        rewrite * /index.php
+        php_fastcgi backend:9000 {
+            trusted_proxies private_ranges
+        }
     }
     handle {
         root * /srv/app/public

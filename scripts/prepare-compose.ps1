@@ -49,7 +49,7 @@ foreach ($role in @('runtime', 'migrator', 'operator')) {
     $existingFile = Join-Path $privateRoot ('container-' + $role + '.env')
     if (Test-Path -LiteralPath $existingFile) {
         $existing = [IO.File]::ReadAllText($existingFile)
-        foreach ($key in @('APP_KEY','APP_PREVIOUS_KEYS')) {
+        foreach ($key in @('APP_KEY','APP_PREVIOUS_KEYS','PUBLICATIONS_PUBLIC_ENABLED')) {
             $match = [regex]::Match($existing, '(?m)^' + $key + '="?([^"\r\n]+)"?\r?$')
             if ($match.Success) { $content = Set-EnvironmentValue $content $key $match.Groups[1].Value }
         }

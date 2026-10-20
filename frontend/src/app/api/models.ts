@@ -22,6 +22,13 @@ export type { IdentityCandidateListResponse } from './models/identity-candidate-
 export type { InternalAdviser } from './models/internal-adviser';
 export type { InternalAdviserListResponse } from './models/internal-adviser-list-response';
 export type { MeResponse } from './models/me-response';
+export type { Notice } from './models/notice';
+export type { NoticeCommand } from './models/notice-command';
+export type { NoticeImage } from './models/notice-image';
+export type { NoticePage } from './models/notice-page';
+export type { NoticeResponse } from './models/notice-response';
+export type { NoticeTransition } from './models/notice-transition';
+export type { NoticeWindow } from './models/notice-window';
 export type { OrganizationEmployee } from './models/organization-employee';
 export type { OrganizationEmployeeListResponse } from './models/organization-employee-list-response';
 export type { OrganizationEmployeeResponse } from './models/organization-employee-response';
@@ -41,6 +48,7 @@ export type { RoleAssignmentsResponse } from './models/role-assignments-response
 export type { RoleChange } from './models/role-change';
 export type { RoleListResponse } from './models/role-list-response';
 export type { RoleResponse } from './models/role-response';
+export type { StagedNoticeImage } from './models/staged-notice-image';
 export type { UpdateEmployeeRequest } from './models/update-employee-request';
 export type { UpdateLevelRequest } from './models/update-level-request';
 export type { UpdateUnitRequest } from './models/update-unit-request';

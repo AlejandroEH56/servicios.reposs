@@ -4,6 +4,7 @@ namespace App\Modules\Shared\Infrastructure\Storage;
 
 use App\Models\User;
 use App\Modules\IAM\Domain\IdentityState;
+use App\Modules\Shared\Application\Ports\ScannedFiles;
 use App\Modules\Shared\Application\Ports\VirusScanner;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -11,7 +12,7 @@ use Illuminate\Support\Str;
 use RuntimeException;
 use Throwable;
 
-class PrivateFileStore
+class PrivateFileStore implements ScannedFiles
 {
     public function __construct(private VirusScanner $scanner) {}
 
@@ -74,11 +75,24 @@ class PrivateFileStore
         if (! $row || $row->clave_objeto !== 'clean/'.$id || $row->disco !== 'local') {
             throw new RuntimeException('FILE_ACCESS_DENIED');
         }
+        $result = $this->bytes($id);
+        $this->audit($id, $actor, 'FILE_DOWNLOADED');
+
+        return $result;
+    }
+
+    /** Internal storage port; callers must authorize the owning resource before reading bytes.
+     * @return array{content: string, mime: string} */
+    public function bytes(string $id): array
+    {
+        $row = DB::table('compartido_archivos_almacenados')->where('id', $id)->where('estado_escaneo', 'LIMPIO')->whereNull('eliminado_en')->first();
+        if (! $row || ! Str::isUlid($id) || $row->clave_objeto !== 'clean/'.$id || $row->disco !== 'local') {
+            throw new RuntimeException('FILE_ACCESS_DENIED');
+        }
         $content = Storage::disk('local')->get($row->clave_objeto);
         if (! is_string($content) || strlen($content) !== (int) $row->tamano_bytes || ! hash_equals($row->sha256, hash('sha256', $content))) {
             throw new RuntimeException('FILE_INTEGRITY_REJECTED');
         }
-        $this->audit($id, $actor, 'FILE_DOWNLOADED');
 
         return ['content' => $content, 'mime' => $row->tipo_mime];
     }

@@ -27,7 +27,7 @@ class VerifyIdentifiers extends Command
     public function handle(): int
     {
         $enabled = $this->option('enable-module');
-        $prefixes = ['organization' => ['organization', 'organizacion'], 'residencies' => ['residencies', 'residencias'],
+        $prefixes = ['publications' => ['publications', 'publicaciones'], 'organization' => ['organization', 'organizacion'], 'residencies' => ['residencies', 'residencias'],
             'planning' => ['planning', 'planificacion'], 'inventory' => ['inventory', 'inventario']];
         foreach ($enabled as $module) {
             if (! array_key_exists($module, $prefixes)) {

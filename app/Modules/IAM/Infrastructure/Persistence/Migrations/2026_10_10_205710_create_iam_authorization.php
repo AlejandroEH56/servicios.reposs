@@ -101,7 +101,7 @@ return new class extends Migration
         });
         DB::table('iam_controles')->insert(['id' => (string) Str::ulid(), 'codigo' => 'RBAC']);
         foreach (config('authorization.permissions') as $code => $scopes) {
-            DB::table('iam_permisos')->insert(['id' => (string) Str::ulid(), 'codigo' => $code, 'descripcion' => $code, 'creado_en' => now()]);
+            DB::table('iam_permisos')->insertOrIgnore(['id' => (string) Str::ulid(), 'codigo' => $code, 'descripcion' => $code, 'creado_en' => now()]);
         }
         $permissions = DB::table('iam_permisos')->pluck('id', 'codigo');
         foreach (config('authorization.roles') as $code => $grants) {
