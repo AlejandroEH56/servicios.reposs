@@ -12,6 +12,8 @@ import { AuthFacade } from '../auth/auth.facade';
       <h2 id="dashboard-title">Tu sesión institucional</h2>
       @if (auth.identity(); as identity) {
         <nav aria-label="Servicios habilitados">
+          <a routerLink="/notices">Avisos públicos</a>
+          @if (identity.permissions.includes('publicaciones.administrar')) { <a routerLink="/publications">Publicaciones</a> }
           @if (identity.permissions.includes('iam.roles.consultar') || identity.permissions.includes('iam.roles.gestionar')) { <a routerLink="/iam">Administración IAM</a> }
           @if (identity.permissions.some(organizationPermission)) { <a routerLink="/organization">Organization</a> }
         </nav>

@@ -45,6 +45,16 @@ Cada sprint entrega un slice demostrable con API, UI, dominio, persistencia, aut
 - Riesgos: XSS almacenado, MIME/imagen maliciosa, vigencias y cache público.
 - Salida: ruta strangler en producción para avisos, CSP/Trusted Types y rollback probado.
 
+Ejecución iniciada el 2026-10-19. La base del Sprint 2 ya está integrada en `main` mediante PR 5. El responsable aceptó `publicaciones.administrar` GLOBAL para DRPSS_ADMIN y ADMIN_PUBLICACIONES, con asignación explícita y auditada del nuevo rol a su cuenta habitual; el grupo Microsoft no concede estos permisos. Confirmó despliegue y ensayo local por ahora: no se declara completado el criterio de ruta productiva institucional.
+
+El slice implementa `/api/v1/public/notices` y administración `/api/v1/publications/notices`, cursor cifrado ligado a filtros, If-Match y claves de idempotencia por actor/operación. Los avisos usan texto plano, enlaces HTTPS y vigencias UTC comprobadas en listado, detalle e imágenes. El tipo API RESIDENCIAS se traduce a RESIDENCIA del baseline; no se migran datos históricos. La adopción rechaza tablas de publicaciones pobladas que requieran conciliación.
+
+Las imágenes requieren permiso, CSRF, MIME real JPEG/PNG/WebP, máximo 2 MB de entrada, 4096 píxeles por lado y cuatro millones de píxeles. Se escanean antes de decodificarse con GD y se reescriben como PNG, eliminando metadatos y payloads ajenos a los píxeles; el almacenamiento privado vuelve a escanear y verifica integridad. La vinculación sólo admite imágenes propias preparadas, no vencidas, limpias y de uso único. Cada descarga pública vuelve a comprobar el vínculo y la vigencia, sin caché. Las preparaciones sin vincular vencen a las 24 horas; no se activa destrucción automática de archivos.
+
+El portal entrega HTML desde Laravel con nonce diferente por respuesta para scripts/estilos, CSP y Trusted Types en enforcement, y Angular aplica el nonce a estilos dinámicos. Caddy sirve assets y remite también `/portal/index.html` al controlador para impedir una entrada HTML sin política. Las rutas `/avisos` y `/reposs/avisos` dirigen al nuevo listado; `/reposs/bolsa-trabajo` conserva el filtro de empleo. El entorno de ensayo no tiene backend legacy activo ni datos históricos: no se promete una reversión a un escritor legacy.
+
+`scripts/set-publications-route.ps1 -Action Disable|Enable` retira/restablece las lecturas públicas sin borrar avisos; al deshabilitar devuelve 404, conservando la administración. La reversión completa de versión usa el conjunto cifrado previo y la recuperación aislada. Runtime conserva DDL separado y no puede editar auditoría/historial. Los resultados concretos, candidato, checks y recuperación se registran en `artifacts/SPRINT_3_RESULTADOS_20261019.md` y `artifacts/SPRINT_3_VALIDACION_20261019.json` sin datos personales ni secretos.
+
 ### Sprint 4 — Catálogos y semestres de planificación
 
 - Casos de uso: mantener carreras, especialidades, asignaturas, retículas, grupos, laboratorios, semestres y días inhábiles.

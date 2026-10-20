@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.2.0
+  version: 0.3.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -20,7 +20,28 @@ tags:
   -
     name: Organization
     description: 'Empleados confirmados, puestos, grados y estructura organizacional.'
+  -
+    name: Publications
+    description: 'Avisos, vigencias e imágenes privadas escaneadas.'
 paths:
+  /api/v1/public/notices:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1public~1notices
+  /api/v1/public/notices/{notice}:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1public~1notices~1{notice}
+  /api/v1/publications/notices:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1publications~1notices
+  /api/v1/publications/notices/{notice}:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1publications~1notices~1{notice}
+  /api/v1/publications/notices/{notice}/publish:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1publications~1notices~1{notice}~1publish
+  /api/v1/publications/notices/{notice}/withdraw:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1publications~1notices~1{notice}~1withdraw
+  /api/v1/files/staged:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1files~1staged
+  /api/v1/files/{file}/download:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1files~1{file}~1download
+  /api/v1/public/notices/{notice}/images/{file}:
+    $ref: ./publications.yaml#/paths/~1api~1v1~1public~1notices~1{notice}~1images~1{file}
   /sanctum/csrf-cookie:
     get:
       operationId: prepareCsrf

@@ -1,0 +1,4 @@
+{
+    "preset": "laravel",
+    "exclude": [".tools", "artifacts", "frontend", "node_modules", "public/portal"]
+}

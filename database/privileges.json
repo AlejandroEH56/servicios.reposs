@@ -1,5 +1,7 @@
 {
   "runtimeWritable": [
+    "publicaciones_avisos", "publicaciones_recursos_aviso", "publicaciones_imagenes_preparadas",
+    "publicaciones_claves_idempotencia", "publicaciones_cargas_idempotentes",
     "iam_identidades", "iam_cuentas_externas", "iam_roles", "iam_permisos",
     "iam_identidad_roles", "iam_rol_permisos", "iam_controles",
     "organizacion_empleados", "organizacion_unidades", "organizacion_asignaciones_puesto",

@@ -5,6 +5,8 @@ namespace Tests\Integration;
 use App\Models\User;
 use App\Modules\IAM\Application\AuthorizationAdministration;
 use App\Modules\Organization\Application\OrganizationDirectory;
+use App\Modules\Publications\Application\DTO\NoticeInput;
+use App\Modules\Publications\Application\NoticeService;
 use App\Modules\Shared\Infrastructure\Outbox\OutboxProcessor;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -17,6 +19,50 @@ use Tests\TestCase;
 
 class MySqlFoundationTest extends TestCase
 {
+    public function test_publication_row_and_idempotency_locks_serialize_writers_and_preserve_versions(): void
+    {
+        $actor = User::factory()->create();
+        $role = DB::table('iam_roles')->where('codigo', 'ADMIN_PUBLICACIONES')->value('id');
+        DB::table('iam_identidad_roles')->insert(['id_identidad' => $actor->id, 'id_rol' => $role,
+            'id_identidad_otorgante' => $actor->id, 'otorgado_en' => now()]);
+        $service = app(NoticeService::class);
+        $input = new NoticeInput('EMPLEO', 'Concurrent notice', 'Fixture', '', null, null, null, null);
+        $key = (string) Str::uuid();
+        $notice = $service->command('create', null, $input, null, $key, $actor->id, (string) Str::uuid());
+        config(['database.connections.publication_contender' => config('database.connections.mysql')]);
+        DB::purge('publication_contender');
+        DB::connection('publication_contender')->statement('SET SESSION innodb_lock_wait_timeout = 1');
+        foreach (['publicaciones_avisos', 'publicaciones_claves_idempotencia'] as $table) {
+            $primary = DB::connection('mysql');
+            $primary->beginTransaction();
+            try {
+                $primary->table($table)->lockForUpdate()->first();
+                DB::setDefaultConnection('publication_contender');
+                try {
+                    $service->command($table === 'publicaciones_avisos' ? 'update' : 'create', $table === 'publicaciones_avisos' ? $notice['id'] : null,
+                        $input, $table === 'publicaciones_avisos' ? 1 : null, $table === 'publicaciones_avisos' ? null : $key, $actor->id, (string) Str::uuid());
+                    $this->fail('Concurrent Publications write bypassed its row lock.');
+                } catch (QueryException $exception) {
+                    $this->assertSame(1205, $exception->errorInfo[1] ?? null);
+                }
+            } finally {
+                DB::setDefaultConnection('mysql');
+                $primary->rollBack();
+            }
+        }
+        DB::disconnect('publication_contender');
+        $this->assertDatabaseCount('publicaciones_avisos', 1);
+        $this->assertSame($notice, $service->command('create', null, $input, null, $key, $actor->id, (string) Str::uuid()));
+        $updated = $service->command('update', $notice['id'], $input, 1, null, $actor->id, (string) Str::uuid());
+        $this->assertSame(2, $updated['version']);
+        try {
+            $service->command('update', $notice['id'], $input, 1, null, $actor->id, (string) Str::uuid());
+            $this->fail('Stale Publications version was accepted.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+    }
+
     protected function setUp(): void
     {
         parent::setUp();

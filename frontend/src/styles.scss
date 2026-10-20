@@ -33,3 +33,5 @@ button:focus-visible {
   outline: 3px solid #b95409;
   outline-offset: 4px;
 }
+ .notice-image { display: block; max-width: 100%; height: auto; margin-block: 1rem; }
+ .notice-copy { white-space: pre-wrap; overflow-wrap: anywhere; }

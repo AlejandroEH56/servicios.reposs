@@ -3,6 +3,7 @@
 use App\Http\Middleware\CorrelationId;
 use App\Http\Middleware\OperationalTelemetry;
 use App\Http\Middleware\RequireCsrfToken;
+use App\Http\Middleware\SecurityHeaders;
 use Illuminate\Auth\AuthenticationException;
 use Illuminate\Database\UniqueConstraintViolationException;
 use Illuminate\Foundation\Application;
@@ -25,6 +26,7 @@ return Application::configure(basePath: dirname(__DIR__))
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->web(replace: [PreventRequestForgery::class => RequireCsrfToken::class]);
         $middleware->append(CorrelationId::class);
+        $middleware->append(SecurityHeaders::class);
         $middleware->append(OperationalTelemetry::class);
         $middleware->trustProxies(at: ['127.0.0.1', '::1', '172.30.0.2'], headers: Request::HEADER_X_FORWARDED_FOR | Request::HEADER_X_FORWARDED_PROTO | Request::HEADER_X_FORWARDED_PORT);
     })
