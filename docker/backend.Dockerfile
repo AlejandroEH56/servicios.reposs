@@ -12,6 +12,13 @@ RUN apk upgrade --no-cache \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo_mysql mbstring intl zip opcache gd \
     && apk del .build-deps
+RUN test "$(apk --print-arch)" = x86_64 \
+    && wget -O /tmp/curl.apk https://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/curl-8.23.0-r0.apk \
+    && wget -O /tmp/libcurl.apk https://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/libcurl-8.23.0-r0.apk \
+    && printf '%s\n' '992fc37eda1cba79263c7850599ac94e19fd4dceec9cfdebef710256e04d60a4  /tmp/curl.apk' '8a7602f4625610c858a4583d9a731cb236a60f9fd0dd972b32dbb63a4eb94f1f  /tmp/libcurl.apk' | sha256sum -c - \
+    && apk add --no-network /tmp/curl.apk /tmp/libcurl.apk \
+    && rm /tmp/curl.apk /tmp/libcurl.apk \
+    && php -r 'exit(curl_version()["version"] === "8.23.0" ? 0 : 1);'
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /srv/app
 FROM base AS test
