@@ -46,7 +46,7 @@ test('editor de semestre envía CSRF, idempotencia y versiones de transición', 
     return route.fulfill({ status: path.endsWith('/semesters') ? 201 : 200, json: { data: current } });
   });
   await page.goto('/portal/academic-planning');
-  await page.getByLabel('Catálogo', { exact: true }).selectOption('semesters');
+  await page.getByRole('combobox', { name: 'Catálogo', exact: true }).selectOption('semesters');
   await page.getByLabel('Código', { exact: true }).fill('2026-2');
   await page.getByLabel('Nombre', { exact: true }).fill('Agosto a diciembre');
   await page.getByLabel('Fecha de inicio', { exact: true }).fill('2026-08-01');
