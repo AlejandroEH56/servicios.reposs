@@ -1,6 +1,20 @@
 # Narrow Oracle FIPS-channel false matches. Evidence: docs/implementacion/TRIAGE_IMAGEN_MYSQL.md.
 # Review expires 2026-11-08; CI enforces expiry. No severity or ecosystem is excluded.
 ignore:
+  - vulnerability: ELSA-2026-500448
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS release 2 changelog already includes CVE-2026-84782; erratum targets epoch 10 security_validation FIPS channel.
+    package:
+      name: ^openssl$
+      version: 1:3.5.8-2.0.1.el9_8
+      type: rpm
+  - vulnerability: ELSA-2026-500448
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS release 2 changelog already includes CVE-2026-84782; erratum targets epoch 10 security_validation FIPS channel.
+    package:
+      name: ^openssl-libs$
+      version: 1:3.5.8-2.0.1.el9_8
+      type: rpm
   - vulnerability: ELSA-2026-50075
     namespace: oracle:distro:oraclelinux:9
     reason: FIPS epoch 10 channel mismatch; non-FIPS OpenSSL 3.5.8 contains January 2026 fixes.

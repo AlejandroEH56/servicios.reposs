@@ -5,7 +5,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
-FROM php:8.4.26-fpm-alpine@sha256:78cd8de9970a9cd6ff4d98860a94eb5bf37dd2d5776b4785562dbfad01c29d5a AS base
+FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS base
 RUN apk upgrade --no-cache \
     && apk add --no-cache icu-libs libzip oniguruma tzdata unzip ca-certificates libpng libjpeg-turbo libwebp \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
@@ -15,6 +15,7 @@ RUN apk upgrade --no-cache \
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /srv/app
 FROM base AS test
+RUN printf 'memory_limit=256M\n' > /usr/local/etc/php/conf.d/test-memory.ini
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --no-scripts
 COPY . .
