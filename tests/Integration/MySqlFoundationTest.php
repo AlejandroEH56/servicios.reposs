@@ -3,6 +3,7 @@
 namespace Tests\Integration;
 
 use App\Models\User;
+use App\Modules\AcademicPlanning\Application\PlanningDirectory;
 use App\Modules\IAM\Application\AuthorizationAdministration;
 use App\Modules\Organization\Application\OrganizationDirectory;
 use App\Modules\Publications\Application\DTO\NoticeInput;
@@ -19,6 +20,68 @@ use Tests\TestCase;
 
 class MySqlFoundationTest extends TestCase
 {
+    public function test_populated_planning_baseline_is_preserved_and_requires_reconciliation(): void
+    {
+        $this->artisan('db:wipe', ['--force' => true])->assertSuccessful();
+        $sql = file_get_contents(database_path('mysql/001_create_servicios_moderno.sql'));
+        $sql = preg_replace('/CREATE DATABASE `servicios_moderno`.*?;\s*USE `servicios_moderno`;/s', '', $sql, 1, $replacements);
+        $this->assertSame(1, $replacements);
+        $this->assertSame('servicios_moderno_test', DB::connection()->getDatabaseName());
+        DB::unprepared($sql);
+        DB::table('planificacion_carreras')->insert(['id' => (string) Str::ulid(), 'codigo' => 'CONSERVAR', 'nombre' => 'Baseline con datos', 'activo' => true]);
+        try {
+            $this->artisan('migrate', ['--force' => true])->run();
+            $this->fail('Populated Planning baseline was silently adopted.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('Populated Planning baseline', $exception->getMessage());
+        }
+        $this->assertDatabaseHas('planificacion_carreras', ['codigo' => 'CONSERVAR', 'nombre' => 'Baseline con datos']);
+        $this->assertFalse(Schema::hasColumn('planificacion_carreras', 'version'));
+    }
+
+    public function test_planning_writer_lock_serializes_activation_and_idempotent_creation(): void
+    {
+        $actor = User::factory()->create();
+        DB::table('iam_identidad_roles')->insert(['id_identidad' => $actor->id,
+            'id_rol' => DB::table('iam_roles')->where('codigo', 'ADMIN_PLANIFICACION')->value('id'),
+            'id_identidad_otorgante' => $actor->id, 'otorgado_en' => now()]);
+        $service = app(PlanningDirectory::class);
+        $input = ['code' => '2026-2', 'name' => 'Semestre de ensayo', 'startsOn' => '2026-08-01', 'endsOn' => '2026-12-18'];
+        $key = (string) Str::uuid();
+        $first = $service->execute('semesters', 'create', null, $input, null, $key, $actor->id, (string) Str::uuid());
+        $this->assertSame($first, $service->execute('semesters', 'create', null, $input, null, $key, $actor->id, (string) Str::uuid()));
+        $input['code'] = '2027-1';
+        $second = $service->execute('semesters', 'create', null, $input, null, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+        config(['database.connections.planning_contender' => config('database.connections.mysql')]);
+        DB::purge('planning_contender');
+        DB::connection('planning_contender')->statement('SET SESSION innodb_lock_wait_timeout = 1');
+        $primary = DB::connection('mysql');
+        $primary->beginTransaction();
+        try {
+            $primary->table('planificacion_controles')->where('codigo', 'WRITER')->lockForUpdate()->first();
+            DB::setDefaultConnection('planning_contender');
+            try {
+                $service->execute('semesters', 'activate', $second['id'], [], 1, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+                $this->fail('Concurrent activation bypassed the Planning writer lock.');
+            } catch (QueryException $exception) {
+                $this->assertSame(1205, $exception->errorInfo[1] ?? null);
+            }
+        } finally {
+            DB::setDefaultConnection('mysql');
+            $primary->rollBack();
+            DB::disconnect('planning_contender');
+        }
+        $service->execute('semesters', 'activate', $first['id'], [], 1, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+        try {
+            $service->execute('semesters', 'activate', $second['id'], [], 1, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+            $this->fail('A second active semester was accepted.');
+        } catch (HttpException $exception) {
+            $this->assertSame(409, $exception->getStatusCode());
+        }
+        $this->assertSame(1, DB::table('planificacion_semestres')->where('estado', 'ACTIVO')->count());
+        $this->assertSame(3, DB::table('compartido_registros_auditoria')->where('nombre_contexto', 'AcademicPlanning')->count());
+    }
+
     public function test_publication_row_and_idempotency_locks_serialize_writers_and_preserve_versions(): void
     {
         $actor = User::factory()->create();

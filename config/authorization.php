@@ -7,8 +7,10 @@ $personal = [
 ];
 
 return [
-    'matrix_version' => 'sprint-3-20261019-approved',
+    'matrix_version' => 'sprint-4-20261022-approved',
     'permissions' => [
+        'planning.manage' => ['GLOBAL'],
+        'planning.catalogs.manage' => ['GLOBAL'],
         'publicaciones.administrar' => ['GLOBAL'],
         'iam.roles.consultar' => ['GLOBAL'],
         'iam.roles.gestionar' => ['GLOBAL'],
@@ -22,6 +24,7 @@ return [
         'organization.asesores.consultar' => ['GLOBAL'],
     ],
     'roles' => [
+        'ADMIN_PLANIFICACION' => ['planning.manage' => 'GLOBAL', 'planning.catalogs.manage' => 'GLOBAL'],
         'ADMIN_PUBLICACIONES' => ['publicaciones.administrar' => 'GLOBAL'],
         'ADMIN_IAM' => ['iam.roles.consultar' => 'GLOBAL', 'iam.roles.gestionar' => 'GLOBAL'],
         'ADMIN_ORGANIZACION' => [

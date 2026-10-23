@@ -64,6 +64,16 @@ El portal entrega HTML desde Laravel con nonce diferente por respuesta para scri
 - Riesgos: IDs/referencias legacy, más de un semestre activo, responsables Organization faltantes.
 - Salida: catálogos y semestres reconciliados; una sola fuente de escritura definida.
 
+Ejecución del Sprint 4 iniciada el 2026-10-22 sobre el candidato validado del Sprint 3. El responsable aprobó ADMIN_PLANIFICACION con `planning.manage` y `planning.catalogs.manage` GLOBAL y la asignación explícita/auditada a su cuenta habitual. Todas las identidades institucionales activas pueden consultar; el grupo Microsoft y los puestos no conceden administración. Se mantiene el alcance de despliegue/ensayo local autorizado; el destino productivo no condiciona esta implementación.
+
+AcademicPlanning es la única fuente de escritura de sus catálogos, semestres, laboratorios y días inhábiles en los ambientes modernos; no se activa sincronización ni un escritor legacy paralelo. El alcance es migración funcional con datos nuevos. La adopción verifica primero que el baseline Planning esté vacío; si contiene datos, rechaza la operación y requiere conciliación. El catálogo de tipos de día inhábil y su FK pasan a ULID antes de habilitar las rutas, conforme al ADR-012; no se altera el DDL histórico de referencia.
+
+Las rutas son `/api/v1/academic-planning/catalogs/{catalog}` (`careers`, `specialties`, `subjects`, `curricula`, `groups`, `holiday-types`), `/semesters`, `/laboratories`, `/holidays` y `/responsibles`. El último selector exige `planning.manage` y expone sólo referencia/nombre de empleados activos de Organization. Se validan referencias activas, pertenencia especialidad–carrera, capacidad y fechas/intervalos; las horas de días inhábiles son RFC3339 y se guardan en UTC. La retícula sin especialidad conserva unicidad. No se borra físicamente; la desactivación de un padre con dependencias activas se rechaza.
+
+Los semestres se crean PLANIFICADO. Transiciones explícitas: PLANIFICADO→ACTIVO, ACTIVO→CERRADO y PLANIFICADO/CERRADO→ARCHIVADO. Para activar otro se cierra antes el actual; no se sustituye automáticamente ni se reabre un cerrado/archivado. Una restricción única en la base y un bloqueo transaccional del escritor protegen la unicidad bajo concurrencia. PATCH recibe el formulario completo y exige If-Match; altas/transiciones exigen clave idempotente por actor/operación, con expiración de 24 h sin reutilización silenciosa. Cada cambio se audita y reautoriza en la transacción.
+
+La UI `/portal/academic-planning` usa cliente generado OpenAPI, consulta paginada, edición con conflicto visible y selectores de referencias. Horarios y disponibilidad quedan para el Sprint 5. Los resultados del candidato y las pruebas se conservarán en `artifacts/SPRINT_4_RESULTADOS_20261022.md` y `artifacts/SPRINT_4_VALIDACION_20261022.json`; el cierre exige además el piloto real y la recuperación del conjunto definitivo.
+
 ### Sprint 5 — Horarios y disponibilidad
 
 - Casos de uso: publicar horario, impedir solapamiento y calcular disponibilidad por laboratorio/intervalo.
