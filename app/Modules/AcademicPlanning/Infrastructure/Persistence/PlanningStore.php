@@ -219,6 +219,10 @@ class PlanningStore implements PlanningDirectory
         if (! $inactive) {
             return;
         }
+        if ($kind === 'laboratories') {
+            abort_if(DB::table('planificacion_horarios as h')->join('planificacion_semestres as s', 's.id', '=', 'h.id_semestre')
+                ->where('h.id_laboratorio', $id)->where('h.activo', true)->where('s.estado', 'ACTIVO')->exists(), 409);
+        }
         $dependencies = match ($kind) {
             'careers' => ['specialties' => 'id_carrera', 'curricula' => 'id_carrera', 'groups' => 'id_carrera', 'laboratories' => 'id_carrera'],
             'specialties' => ['curricula' => 'id_especialidad'], 'subjects' => ['curricula' => 'id_asignatura'],

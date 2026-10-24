@@ -1,12 +1,17 @@
 <?php
 
 use App\Http\Middleware\RequireActiveIdentity;
+use App\Modules\AcademicPlanning\Presentation\Http\Controllers\Api\V1\PlanningCalendarController;
 use App\Modules\AcademicPlanning\Presentation\Http\Controllers\Api\V1\PlanningController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:120,1'])->prefix('api/v1/academic-planning')->group(function (): void {
     Route::pattern('catalog', 'careers|specialties|subjects|curricula|groups|holiday-types');
     Route::get('responsibles', [PlanningController::class, 'responsibles'])->name('planning.responsibles');
+    Route::get('laboratories/{laboratory}/schedules', [PlanningCalendarController::class, 'schedules'])->whereUlid('laboratory')->name('planning.schedules.index');
+    Route::post('laboratories/{laboratory}/schedules', [PlanningCalendarController::class, 'publish'])->whereUlid('laboratory')->name('planning.schedules.publish');
+    Route::patch('laboratories/{laboratory}/schedules/{schedule}', [PlanningCalendarController::class, 'publish'])->whereUlid(['laboratory', 'schedule'])->name('planning.schedules.update');
+    Route::get('laboratories/{laboratory}/availability', [PlanningCalendarController::class, 'availability'])->whereUlid('laboratory')->name('planning.availability');
     foreach (['catalogs/{catalog}' => null, 'semesters' => 'semesters', 'laboratories' => 'laboratories', 'holidays' => 'holidays'] as $path => $kind) {
         Route::get($path, [PlanningController::class, 'read'])->defaults('kind', $kind)->name('planning.'.($kind ?? 'catalogs').'.index');
         Route::get($path.'/{record}', [PlanningController::class, 'read'])->whereUlid('record')->defaults('kind', $kind)->name('planning.'.($kind ?? 'catalogs').'.show');

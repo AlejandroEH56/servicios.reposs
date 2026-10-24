@@ -85,6 +85,16 @@ El gate del 22 de octubre exigió actualizar el parche PHP a 8.4.27 en Windows/C
 - Riesgos: timezone, rangos de fechas, lock gaps, paridad con reglas legacy.
 - Salida: golden master de disponibilidad y pruebas concurrentes contra MySQL.
 
+Ejecución del Sprint 5 iniciada el 2026-10-23 desde `main` con las PR 7 y 8 integradas. Se conserva la matriz aprobada: ADMIN_PLANIFICACION usa `planning.manage` GLOBAL para publicar, editar, retirar y rehabilitar franjas; las identidades institucionales activas consultan. No se agregan roles ni asignaciones automáticas.
+
+Las franjas son semanales, ISO lunes=1 a domingo=7, con precisión de minutos y zona `America/Mexico_City`. Se conserva el límite legacy 07:00–20:00 y las fechas inclusivas del semestre, tomadas de `MisReglas::horaNoRestringida`, `validarFechaConPeriodo` y `ConversionHoras`. Publicar/editar requiere laboratorio y semestre ACTIVO. Las franjas usan intervalos `[inicio, fin)`: se admiten adyacencias y se rechazan solapamientos activos; la retirada es lógica y exige If-Match, conservando versión y auditoría. Las altas requieren idempotencia de 24 h por actor/laboratorio. El bloqueo WRITER de Planning cubre también estos cambios, y la consulta toma bloqueo compartido durante su lectura consistente.
+
+La API añade GET/POST `/api/v1/academic-planning/laboratories/{laboratory}/schedules`, PATCH `.../schedules/{schedule}` y GET `.../availability`. La disponibilidad intersecta las franjas publicadas del semestre activo con el intervalo consultado y resta los días inhábiles UTC globales o del laboratorio. Sin franja publicada no se presupone apertura. Se limita a 31 días, 200 franjas activas por laboratorio/semestre y 1000 intervalos inhábiles coincidentes; se falla de forma explícita al superar los límites, sin devolver disponibilidad parcial engañosa. La respuesta identifica su base `PLANNING_CALENDAR` y `reservation=false`; las ocupaciones/decisiones de solicitudes se incorporarán mediante sus ports en Sprints 9/10.
+
+La migración adopta sólo `planificacion_horarios` vacío y conserva los catálogos/piloto del Sprint 4; añade versión, fecha de modificación e índice compuesto de consulta. AcademicPlanning continúa como único escritor. La pantalla `/portal/academic-planning/calendar` comparte el contrato y el cliente generado, conserva la clave al reintentar altas y recarga las referencias tras un conflicto de versión. La consulta explica que no reserva el laboratorio.
+
+El golden master versionado está en `tests/Unit/availability-golden.json`: apertura legacy, ausencia de franjas, adyacencias, límites exactos, festivos parciales/solapados, fin de semestre, offsets históricos e intervalos con microsegundos. Dos procesos MySQL reales compiten por el mismo intervalo y repiten una publicación con la misma clave; sólo se admite una fila y un evento de auditoría. El cierre exige también piloto real, controles CI, medición de lectura para decidir sobre proyecciones y recuperación del conjunto definitivo. Evidencias: `artifacts/SPRINT_5_RESULTADOS_20261023.md` y `artifacts/SPRINT_5_VALIDACION_20261023.json`.
+
 ### Sprint 6 — Residencia: perfil, empresa y proyecto
 
 - Casos de uso: completar perfil, buscar/registrar empresa global, agregar contactos, crear proyecto y asignar asesores.

@@ -9,6 +9,7 @@
             <file>tests/Feature/SprintTwoOrganizationTest.php</file>
             <file>tests/Feature/SprintThreePublicationsTest.php</file>
             <file>tests/Feature/SprintFourPlanningTest.php</file>
+            <file>tests/Feature/SprintFiveCalendarTest.php</file>
             <file>tests/Feature/IdentifierBoundaryTest.php</file>
             <file>tests/Feature/OutboxTest.php</file>
             <file>tests/Feature/IdentityContactTest.php</file>

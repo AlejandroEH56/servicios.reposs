@@ -3,6 +3,7 @@
 namespace Tests\Integration;
 
 use App\Models\User;
+use App\Modules\AcademicPlanning\Application\LaboratoryCalendar;
 use App\Modules\AcademicPlanning\Application\PlanningDirectory;
 use App\Modules\IAM\Application\AuthorizationAdministration;
 use App\Modules\Organization\Application\OrganizationDirectory;
@@ -15,11 +16,129 @@ use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use PDO;
 use PDOException;
+use PHPUnit\Framework\Attributes\DataProvider;
 use Symfony\Component\HttpKernel\Exception\HttpException;
+use Symfony\Component\Process\Process;
 use Tests\TestCase;
 
 class MySqlFoundationTest extends TestCase
 {
+    /** @return array{string, string, string} */
+    private function calendarFixture(): array
+    {
+        $actor = User::factory()->create();
+        DB::table('iam_identidad_roles')->insert(['id_identidad' => $actor->id,
+            'id_rol' => DB::table('iam_roles')->where('codigo', 'ADMIN_PLANIFICACION')->value('id'),
+            'id_identidad_otorgante' => $actor->id, 'otorgado_en' => now()]);
+        $service = app(PlanningDirectory::class);
+        $semester = $service->execute('semesters', 'create', null, ['code' => 'RACE', 'name' => 'Race fixture', 'startsOn' => '2026-10-01', 'endsOn' => '2026-11-30'], null, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+        $service->execute('semesters', 'activate', $semester['id'], [], 1, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+        $lab = $service->execute('laboratories', 'create', null, ['code' => 'RACE', 'name' => 'Race fixture', 'status' => 'ACTIVO', 'capacity' => 20], null, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+
+        return [$actor->id, $semester['id'], $lab['id']];
+    }
+
+    /** @return array<string, array{bool}> */
+    public static function scheduleRaceModes(): array
+    {
+        return ['different keys compete for the same interval' => [false], 'same key retries one publication' => [true]];
+    }
+
+    #[DataProvider('scheduleRaceModes')]
+    public function test_schedule_publishers_serialize_conflicts_and_retries(bool $sameKey): void
+    {
+        [$actor, $semester, $laboratory] = $this->calendarFixture();
+        $connection = config('database.connections.mysql');
+        $environment = ['APP_ENV' => 'testing', 'APP_KEY' => config('app.key'), 'DB_CONNECTION' => 'mysql', 'DB_DATABASE' => 'servicios_moderno_test',
+            'DB_HOST' => (string) $connection['host'], 'DB_PORT' => (string) $connection['port'], 'DB_USERNAME' => $connection['username'], 'DB_PASSWORD' => $connection['password'],
+            'DB_URL' => '', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array', 'QUEUE_CONNECTION' => 'sync', 'OTEL_ENABLED' => 'false',
+            'SCHEDULE_ACTOR' => $actor, 'SCHEDULE_SEMESTER' => $semester, 'SCHEDULE_LAB' => $laboratory];
+        $code = <<<'PHP'
+require 'vendor/autoload.php';
+$app = require 'bootstrap/app.php';
+$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+if (Illuminate\Support\Facades\DB::connection()->getDatabaseName() !== 'servicios_moderno_test' || !$app->environment('testing')) { exit(2); }
+echo "READY\n"; fflush(STDOUT);
+try {
+    $record = $app->make(App\Modules\AcademicPlanning\Application\LaboratoryCalendar::class)->publish(getenv('SCHEDULE_LAB'), null,
+        ['semesterId'=>getenv('SCHEDULE_SEMESTER'),'weekday'=>1,'startsAtLocal'=>'07:00','endsAtLocal'=>'10:00'], null,
+        getenv('SCHEDULE_KEY'), getenv('SCHEDULE_ACTOR'), (string) Illuminate\Support\Str::uuid());
+    echo json_encode(['status'=>201,'id'=>$record['id']],JSON_THROW_ON_ERROR);
+} catch (Symfony\Component\HttpKernel\Exception\HttpException $exception) {
+    echo json_encode(['status'=>$exception->getStatusCode()],JSON_THROW_ON_ERROR);
+} catch (Throwable $exception) {
+    echo json_encode(['status'=>'ERROR','class'=>get_class($exception)],JSON_THROW_ON_ERROR); exit(1);
+}
+PHP;
+        $key = (string) Str::uuid();
+        $processes = [];
+        $primary = DB::connection('mysql');
+        $primary->beginTransaction();
+        try {
+            $primary->table('planificacion_controles')->where('codigo', 'WRITER')->lockForUpdate()->first();
+            foreach ([$key, $sameKey ? $key : (string) Str::uuid()] as $requestKey) {
+                $process = new Process([PHP_BINARY, '-r', $code], base_path(), $environment + ['SCHEDULE_KEY' => $requestKey], timeout: 30);
+                $process->start();
+                $processes[] = $process;
+            }
+            $deadline = microtime(true) + 20;
+            do {
+                $ready = count(array_filter($processes, fn (Process $process): bool => str_contains($process->getOutput(), 'READY')));
+                if ($ready === 2) {
+                    break;
+                }
+                usleep(10000);
+            } while (microtime(true) < $deadline);
+            $this->assertSame(2, $ready, 'Both publishers must reach the barrier.');
+            foreach ($processes as $process) {
+                $this->assertTrue($process->isRunning(), 'Writer bypassed the held transaction lock.');
+            }
+            $primary->rollBack();
+            $statuses = [];
+            $ids = [];
+            foreach ($processes as $process) {
+                $this->assertSame(0, $process->wait(), 'Concurrent publisher did not complete successfully.');
+                $lines = preg_split('/\R/', trim($process->getOutput()));
+                $result = json_decode(end($lines), true, flags: JSON_THROW_ON_ERROR);
+                $statuses[] = $result['status'];
+                if (isset($result['id'])) {
+                    $ids[] = $result['id'];
+                }
+            }
+            sort($statuses);
+            $this->assertSame($sameKey ? [201, 201] : [201, 409], $statuses);
+            $this->assertCount(1, array_unique($ids));
+            $this->assertDatabaseCount('planificacion_horarios', 1);
+            $this->assertSame(1, DB::table('compartido_registros_auditoria')->where('tipo_sujeto', 'schedules')->count());
+        } finally {
+            if ($primary->transactionLevel() > 0) {
+                $primary->rollBack();
+            }
+            foreach ($processes as $process) {
+                if ($process->isRunning()) {
+                    $process->stop();
+                }
+            }
+        }
+    }
+
+    public function test_schedule_adoption_rejects_populated_tables_before_changing_any_data(): void
+    {
+        [$actor, $semester, $laboratory] = $this->calendarFixture();
+        $record = app(LaboratoryCalendar::class)->publish($laboratory, null,
+            ['semesterId' => $semester, 'weekday' => 1, 'startsAtLocal' => '07:00', 'endsAtLocal' => '10:00'], null, (string) Str::uuid(), $actor, (string) Str::uuid());
+        $indexes = Schema::getIndexes('planificacion_horarios');
+        $migration = require app_path('Modules/AcademicPlanning/Infrastructure/Persistence/Migrations/2026_10_24_053814_activate_planning_schedules.php');
+        try {
+            $migration->up();
+            $this->fail('Populated schedules were silently adopted.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('Populated schedule baseline', $exception->getMessage());
+        }
+        $this->assertSame($indexes, Schema::getIndexes('planificacion_horarios'));
+        $this->assertDatabaseHas('planificacion_horarios', ['id' => $record['id'], 'version' => 1, 'activo' => true]);
+    }
+
     public function test_populated_planning_baseline_is_preserved_and_requires_reconciliation(): void
     {
         $this->artisan('db:wipe', ['--force' => true])->assertSuccessful();
