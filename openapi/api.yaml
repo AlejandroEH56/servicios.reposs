@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.5.0
+  version: 0.6.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -26,7 +26,60 @@ tags:
   -
     name: AcademicPlanning
     description: 'Catálogos, semestres, laboratorios y días inhábiles.'
+  -
+    name: Residencies
+    description: 'Expedientes, empresas globales, proyectos y asesores con alcance local.'
 paths:
+  /api/v1/residencies/projects/{parent}/external-advisers/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{parent}~1external-advisers~1{record}
+  /api/v1/residencies/projects/{parent}/external-advisers:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{parent}~1external-advisers
+  /api/v1/residencies/projects/{parent}/internal-advisers/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{parent}~1internal-advisers~1{record}
+  /api/v1/residencies/projects/{parent}/internal-advisers:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{parent}~1internal-advisers
+  /api/v1/residencies/companies/{parent}/contacts/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1companies~1{parent}~1contacts~1{record}
+  /api/v1/residencies/companies/{parent}/contacts:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1companies~1{parent}~1contacts
+  /api/v1/residencies/projects/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}
+  /api/v1/residencies/projects:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects
+  /api/v1/residencies/companies/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1companies~1{record}
+  /api/v1/residencies/companies:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1companies
+  /api/v1/residencies/residents/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1residents~1{record}
+  /api/v1/residencies/residents:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1residents
+  /api/v1/residencies/periods/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1periods~1{record}
+  /api/v1/residencies/periods:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1periods
+  /api/v1/residencies/programs/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1programs~1{record}
+  /api/v1/residencies/programs:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1programs
+  /api/v1/residencies/catalogs/business-lines/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1business-lines~1{record}
+  /api/v1/residencies/catalogs/business-lines:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1business-lines
+  /api/v1/residencies/catalogs/sectors/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1sectors~1{record}
+  /api/v1/residencies/catalogs/sectors:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1sectors
+  /api/v1/residencies/catalogs/modalities/{record}:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1modalities~1{record}
+  /api/v1/residencies/catalogs/modalities:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1catalogs~1modalities
+  /api/v1/residencies/adviser-candidates:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1adviser-candidates
+  /api/v1/residencies/identity-candidates:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1identity-candidates
+  /api/v1/residencies/me:
+    $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1me
   /api/v1/academic-planning/laboratories/{laboratory}/schedules:
     $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories~1{laboratory}~1schedules
   /api/v1/academic-planning/laboratories/{laboratory}/schedules/{schedule}:
