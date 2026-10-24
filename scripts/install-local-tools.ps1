@@ -2,23 +2,25 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $toolsRoot = Join-Path $projectRoot '.tools'
 New-Item -ItemType Directory -Force $toolsRoot | Out-Null
-$phpArchive = Join-Path $toolsRoot 'php-8.4.26.zip'
-$phpHash = 'da68394f9193b7f6b89d0c76861a4034ae10efee7fd55a7255d8118c2acf70d7'
+$phpArchive = Join-Path $toolsRoot 'php-8.4.27.zip'
+$phpHash = '93bd8a815a52156606fb906d0573437908c61f96e2cc52c03a51e36a41bf5236'
 if (-not (Test-Path $phpArchive)) {
-    Invoke-WebRequest 'https://www.php.net/~windows/releases/php-8.4.26-nts-Win32-vs17-x64.zip' -OutFile $phpArchive
+    Invoke-WebRequest 'https://downloads.php.net/~windows/releases/php-8.4.27-nts-Win32-vs17-x64.zip' -OutFile $phpArchive
 }
 if ((Get-FileHash $phpArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $phpHash) {
     throw 'Checksum PHP incorrecto. No se ejecutó el binario.'
 }
 $phpRoot = Join-Path $toolsRoot 'php'
-if (-not (Test-Path (Join-Path $phpRoot 'php.exe'))) {
-    Expand-Archive -LiteralPath $phpArchive -DestinationPath $phpRoot
+$installedPhp = Join-Path $phpRoot 'php.exe'
+$installedVersion = if (Test-Path -LiteralPath $installedPhp) { & $installedPhp -n -r 'echo PHP_VERSION;' } else { '' }
+if ($installedVersion -ne '8.4.27') {
+    Expand-Archive -LiteralPath $phpArchive -DestinationPath $phpRoot -Force
 }
 $iniFile = Join-Path $phpRoot 'php.ini'
 if (-not (Test-Path $iniFile)) {
     $ini = Get-Content (Join-Path $phpRoot 'php.ini-development') -Raw
     $ini = $ini.Replace(';extension_dir = "ext"', 'extension_dir = "ext"')
-    foreach ($extension in @('curl', 'fileinfo', 'mbstring', 'openssl', 'pdo_mysql', 'pdo_sqlite', 'sqlite3', 'zip', 'intl')) {
+    foreach ($extension in @('curl', 'fileinfo', 'mbstring', 'openssl', 'pdo_mysql', 'pdo_sqlite', 'sqlite3', 'zip', 'intl', 'gd')) {
         $ini = $ini.Replace(';extension=' + $extension, 'extension=' + $extension)
     }
     Set-Content -LiteralPath $iniFile -Value $ini

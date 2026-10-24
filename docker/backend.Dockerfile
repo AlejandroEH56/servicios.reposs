@@ -5,16 +5,24 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
-FROM php:8.4.26-fpm-alpine@sha256:78cd8de9970a9cd6ff4d98860a94eb5bf37dd2d5776b4785562dbfad01c29d5a AS base
+FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS base
 RUN apk upgrade --no-cache \
     && apk add --no-cache icu-libs libzip oniguruma tzdata unzip ca-certificates libpng libjpeg-turbo libwebp \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
     && docker-php-ext-install pdo_mysql mbstring intl zip opcache gd \
     && apk del .build-deps
+RUN test "$(apk --print-arch)" = x86_64 \
+    && wget -O /tmp/curl.apk https://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/curl-8.23.0-r0.apk \
+    && wget -O /tmp/libcurl.apk https://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/libcurl-8.23.0-r0.apk \
+    && printf '%s\n' '992fc37eda1cba79263c7850599ac94e19fd4dceec9cfdebef710256e04d60a4  /tmp/curl.apk' '8a7602f4625610c858a4583d9a731cb236a60f9fd0dd972b32dbb63a4eb94f1f  /tmp/libcurl.apk' | sha256sum -c - \
+    && apk add --no-network /tmp/curl.apk /tmp/libcurl.apk \
+    && rm /tmp/curl.apk /tmp/libcurl.apk \
+    && php -r 'exit(curl_version()["version"] === "8.23.0" ? 0 : 1);'
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /srv/app
 FROM base AS test
+RUN printf 'memory_limit=256M\n' > /usr/local/etc/php/conf.d/test-memory.ini
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --no-scripts
 COPY . .

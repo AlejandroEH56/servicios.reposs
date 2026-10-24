@@ -14,6 +14,16 @@ class OrganizationStore implements OrganizationDirectory
 {
     public function __construct(private IdentityDirectory $identities, private AuthorizationDirectory $authorization, private ProfileProjector $profiles) {}
 
+    public function responsibleCandidates(string $search): array
+    {
+        $pattern = '%'.strtr($search, ['!' => '!!', '%' => '!%', '_' => '!_']).'%';
+
+        return DB::table('organizacion_empleados')->where('estado', 'ACTIVO')
+            ->when($search !== '', fn (Builder $query) => $query->whereRaw("nombres LIKE ? ESCAPE '!'", [$pattern]))
+            ->orderBy('nombres')->orderBy('id')->limit(100)->get(['id', 'nombres', 'primer_apellido', 'segundo_apellido'])
+            ->map(fn (object $row) => ['id' => $row->id, 'displayName' => trim($row->nombres.' '.$row->primer_apellido.' '.($row->segundo_apellido ?? ''))])->all();
+    }
+
     public function identityCandidates(string $search): array
     {
         return $this->identities->search($search);

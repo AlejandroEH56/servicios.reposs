@@ -28,7 +28,7 @@ class VerifyIdentifiers extends Command
     {
         $enabled = $this->option('enable-module');
         $prefixes = ['publications' => ['publications', 'publicaciones'], 'organization' => ['organization', 'organizacion'], 'residencies' => ['residencies', 'residencias'],
-            'planning' => ['planning', 'planificacion'], 'inventory' => ['inventory', 'inventario']];
+            'planning' => ['academic-planning', 'planning', 'planificacion'], 'inventory' => ['inventory', 'inventario']];
         foreach ($enabled as $module) {
             if (! array_key_exists($module, $prefixes)) {
                 $this->error('Unknown domain module.');

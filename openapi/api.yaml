@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.3.0
+  version: 0.4.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -23,7 +23,34 @@ tags:
   -
     name: Publications
     description: 'Avisos, vigencias e imágenes privadas escaneadas.'
+  -
+    name: AcademicPlanning
+    description: 'Catálogos, semestres, laboratorios y días inhábiles.'
 paths:
+  /api/v1/academic-planning/responsibles:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1responsibles
+  /api/v1/academic-planning/catalogs/{catalog}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1catalogs~1{catalog}
+  /api/v1/academic-planning/catalogs/{catalog}/{record}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1catalogs~1{catalog}~1{record}
+  /api/v1/academic-planning/semesters:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1semesters
+  /api/v1/academic-planning/semesters/{record}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1semesters~1{record}
+  /api/v1/academic-planning/laboratories:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories
+  /api/v1/academic-planning/laboratories/{record}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories~1{record}
+  /api/v1/academic-planning/holidays:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1holidays
+  /api/v1/academic-planning/holidays/{record}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1holidays~1{record}
+  /api/v1/academic-planning/semesters/{record}/activate:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1semesters~1{record}~1activate
+  /api/v1/academic-planning/semesters/{record}/close:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1semesters~1{record}~1close
+  /api/v1/academic-planning/semesters/{record}/archive:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1semesters~1{record}~1archive
   /api/v1/public/notices:
     $ref: ./publications.yaml#/paths/~1api~1v1~1public~1notices
   /api/v1/public/notices/{notice}:

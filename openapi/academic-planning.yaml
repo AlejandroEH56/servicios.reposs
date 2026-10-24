@@ -1,0 +1,2429 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Academic Planning",
+    "version": "0.4.0",
+    "description": "Única fuente de escritura moderna; sólo sesión institucional activa. Catálogos: planning.catalogs.manage; semestres, laboratorios y días inhábiles: planning.manage. Mutaciones auditadas y reautorizadas. PATCH recibe el formulario completo. No hay borrado físico."
+  },
+  "paths": {
+    "/api/v1/academic-planning/responsibles": {
+      "get": {
+        "operationId": "listPlanningResponsibles",
+        "summary": "Seleccionar empleados activos; exige planning.manage",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningResponsibleListResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/catalogs/{catalog}": {
+      "get": {
+        "operationId": "listPlanningCatalog",
+        "summary": "Consultar planificación institucional",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "careers",
+                "specialties",
+                "subjects",
+                "curricula",
+                "groups",
+                "holiday-types"
+              ]
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPlanningCatalog",
+        "summary": "Registrar elemento de planificación",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "careers",
+                "specialties",
+                "subjects",
+                "curricula",
+                "groups",
+                "holiday-types"
+              ]
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CareersInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SpecialtiesInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubjectsInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CurriculaInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GroupsInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HolidayTypesInput"
+                  }
+                ],
+                "description": "El segmento catalog selecciona el formulario exacto; se rechazan campos de otro catálogo."
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/catalogs/{catalog}/{record}": {
+      "get": {
+        "operationId": "getPlanningCatalog",
+        "summary": "Consultar elemento",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "careers",
+                "specialties",
+                "subjects",
+                "curricula",
+                "groups",
+                "holiday-types"
+              ]
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePlanningCatalog",
+        "summary": "Guardar formulario completo con versión",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "catalog",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "enum": [
+                "careers",
+                "specialties",
+                "subjects",
+                "curricula",
+                "groups",
+                "holiday-types"
+              ]
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/CareersInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SpecialtiesInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/SubjectsInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/CurriculaInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/GroupsInput"
+                  },
+                  {
+                    "$ref": "#/components/schemas/HolidayTypesInput"
+                  }
+                ],
+                "description": "El segmento catalog selecciona el formulario exacto; se rechazan campos de otro catálogo."
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/semesters": {
+      "get": {
+        "operationId": "listPlanningSemester",
+        "summary": "Consultar planificación institucional",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPlanningSemester",
+        "summary": "Registrar elemento de planificación",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SemestersInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/semesters/{record}": {
+      "get": {
+        "operationId": "getPlanningSemester",
+        "summary": "Consultar elemento",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePlanningSemester",
+        "summary": "Guardar formulario completo con versión",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SemestersInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/laboratories": {
+      "get": {
+        "operationId": "listPlanningLaboratory",
+        "summary": "Consultar planificación institucional",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPlanningLaboratory",
+        "summary": "Registrar elemento de planificación",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoriesInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/laboratories/{record}": {
+      "get": {
+        "operationId": "getPlanningLaboratory",
+        "summary": "Consultar elemento",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePlanningLaboratory",
+        "summary": "Guardar formulario completo con versión",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoriesInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/holidays": {
+      "get": {
+        "operationId": "listPlanningHoliday",
+        "summary": "Consultar planificación institucional",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100,
+              "default": 25
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createPlanningHoliday",
+        "summary": "Registrar elemento de planificación",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidaysInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/holidays/{record}": {
+      "get": {
+        "operationId": "getPlanningHoliday",
+        "summary": "Consultar elemento",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updatePlanningHoliday",
+        "summary": "Guardar formulario completo con versión",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/HolidaysInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/semesters/{record}/activate": {
+      "post": {
+        "operationId": "activatePlanningSemester",
+        "summary": "Cambiar estado del semestre sin sustituir otro activo",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/semesters/{record}/close": {
+      "post": {
+        "operationId": "closePlanningSemester",
+        "summary": "Cambiar estado del semestre sin sustituir otro activo",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/academic-planning/semesters/{record}/archive": {
+      "post": {
+        "operationId": "archivePlanningSemester",
+        "summary": "Cambiar estado del semestre sin sustituir otro activo",
+        "tags": [
+          "AcademicPlanning"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "description": "Versión fuerte entre comillas; se rechaza una versión obsoleta con 409.",
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]*\"$"
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string"
+                },
+                "description": "Versión del recurso cuando corresponde."
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PlanningRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "default": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "CareersInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "shortName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SpecialtiesInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "careerId",
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SubjectsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "satca": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,2}-\\d{1,2}-\\d{1,2}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "CurriculaInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "careerId",
+          "subjectId",
+          "active"
+        ],
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "specialtyId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "GroupsInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "careerId",
+          "semesterId",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "HolidayTypesInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "SemestersInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "startsOn",
+          "endsOn"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "LaboratoriesInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "capacity",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "careerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "responsibleEmployeeId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVO",
+              "MANTENIMIENTO",
+              "INACTIVO",
+              "ARCHIVADO"
+            ]
+          }
+        }
+      },
+      "HolidaysInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "holidayTypeId",
+          "name",
+          "startsAt",
+          "endsAt",
+          "active"
+        ],
+        "properties": {
+          "holidayTypeId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "laboratoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "PlanningRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "kind",
+          "name",
+          "version",
+          "active"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 100
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "shortName": {
+            "anyOf": [
+              {
+                "type": "string",
+                "minLength": 1,
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "careerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "specialtyId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "subjectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "satca": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^\\d{1,2}-\\d{1,2}-\\d{1,2}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "capacity": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "responsibleEmployeeId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "holidayTypeId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "laboratoryId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "startsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "endsAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANIFICADO",
+              "ACTIVO",
+              "CERRADO",
+              "ARCHIVADO",
+              "MANTENIMIENTO",
+              "INACTIVO"
+            ]
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "careers",
+              "specialties",
+              "subjects",
+              "curricula",
+              "groups",
+              "holiday-types",
+              "semesters",
+              "laboratories",
+              "holidays"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1
+          }
+        }
+      },
+      "PlanningRecordResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlanningRecord"
+          }
+        }
+      },
+      "PlanningPage": {
+        "type": "object",
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PlanningRecord"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "PlanningPageResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/PlanningPage"
+          }
+        }
+      },
+      "PlanningResponsibleListResponse": {
+        "type": "object",
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "displayName"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "displayName": {
+                  "type": "string",
+                  "minLength": 1,
+                  "maxLength": 500
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

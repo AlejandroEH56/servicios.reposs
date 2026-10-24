@@ -1,5 +1,6 @@
 <?php
 
+use App\Modules\AcademicPlanning\Infrastructure\Providers\AcademicPlanningServiceProvider;
 use App\Modules\IAM\Infrastructure\Providers\IamServiceProvider;
 use App\Modules\Organization\Infrastructure\Providers\OrganizationServiceProvider;
 use App\Modules\Publications\Infrastructure\Providers\PublicationsServiceProvider;
@@ -12,4 +13,5 @@ return [
     SharedServiceProvider::class,
     AppServiceProvider::class,
     PublicationsServiceProvider::class,
+    AcademicPlanningServiceProvider::class,
 ];

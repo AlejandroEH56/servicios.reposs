@@ -4,6 +4,9 @@ namespace App\Modules\Organization\Application;
 
 interface OrganizationDirectory
 {
+    /** @return list<array{id: string, displayName: string}> */
+    public function responsibleCandidates(string $search): array;
+
     /** @return list<array{id: string, displayName: string, status: string}> */
     public function identityCandidates(string $search): array;
 
