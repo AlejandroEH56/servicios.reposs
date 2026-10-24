@@ -26,7 +26,7 @@ jobs:
       DB_PASSWORD: ci-test-only
       DB_DATABASE: servicios_moderno_test
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
           php-version: '8.4.27'
@@ -43,7 +43,7 @@ jobs:
   docker:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Enable containerd image store for provenance
         run: |
           sudo python3 - <<'PY'
@@ -71,7 +71,7 @@ jobs:
           extensions: pdo_sqlite, pdo_mysql, mbstring, openssl, gd
           tools: composer:2.10.3
           coverage: none
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version-file: .nvmrc
       - run: npm install --global npm@11.17.0 --ignore-scripts
@@ -129,7 +129,7 @@ jobs:
   security-contracts:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
       - name: Enable containerd image store for provenance
