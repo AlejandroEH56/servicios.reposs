@@ -60,7 +60,7 @@ test('lector de expediente ve texto plano y no obtiene editor ni contactos ajeno
   await expect(page.getByRole('heading', { name: 'Residencias profesionales', exact: true })).toBeVisible();
   await expect(page.locator('body')).toContainText('21000001'); await expect(page.locator('img')).toHaveCount(0);
   await expect(page.getByRole('button', { name: 'Guardar cambios', exact: true })).toHaveCount(0);
-  await page.getByLabel('Sección', { exact: true }).selectOption('companies');
+  await page.getByRole('combobox', { name: 'Sección', exact: true }).selectOption('companies');
   await page.getByRole('button', { name: 'Empresa de ensayo', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Empresa de ensayo/ })).toBeVisible();
   await expect(page.getByRole('heading', { name: 'Contactos de la empresa', exact: true })).toHaveCount(0);
@@ -69,7 +69,7 @@ test('lector de expediente ve texto plano y no obtiene editor ni contactos ajeno
 
 test('residente registra empresa y contacto propios con CSRF y claves idempotentes', async ({ page }) => {
   const calls = await mockResidencies(page, 'company'); await page.goto('/portal/residencies');
-  await page.getByLabel('Sección', { exact: true }).selectOption('companies');
+  await page.getByRole('combobox', { name: 'Sección', exact: true }).selectOption('companies');
   await page.getByLabel('Razón social', { exact: true }).fill('Empresa piloto Sprint 6');
   await page.getByLabel('RFC (único e inmutable)', { exact: true }).fill('XAXX010101000');
   await page.getByRole('button', { name: 'Registrar', exact: true }).click();
@@ -83,9 +83,9 @@ test('residente registra empresa y contacto propios con CSRF y claves idempotent
 
 test('asesoría usa versión del proyecto y conserva instantánea al finalizar', async ({ page }) => {
   const calls = await mockResidencies(page, 'project'); await page.goto('/portal/residencies');
-  await page.getByLabel('Sección', { exact: true }).selectOption('projects');
+  await page.getByRole('combobox', { name: 'Sección', exact: true }).selectOption('projects');
   await page.getByRole('button', { name: 'Proyecto de ensayo', exact: true }).click();
-  await page.getByLabel('Asesor', { exact: true }).selectOption(id);
+  await page.getByRole('combobox', { name: 'Asesor', exact: true }).selectOption(id);
   await page.getByRole('button', { name: 'Asignar asesor', exact: true }).click();
   await expect(page.getByRole('heading', { name: /Proyecto de ensayo · versión 2/ })).toBeVisible();
   await expect(page.locator('body')).toContainText('Instantánea institucional');
