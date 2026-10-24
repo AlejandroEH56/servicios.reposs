@@ -6,9 +6,27 @@ $personal = [
     'organization.niveles.consultar' => 'GLOBAL',
 ];
 
+$resident = [
+    'residencies.files.read' => 'SELF',
+    'residencies.profile.manage' => 'SELF',
+    'residencies.projects.manage' => 'SELF',
+    'residencies.advisers.assign' => 'SELF',
+    'residencies.companies.create' => 'SELF',
+    'residencies.companies.manage' => 'SELF',
+];
+$residenciesAdministration = array_fill_keys([...array_keys($resident), 'residencies.catalogs.manage', 'residencies.residents.enroll'], 'GLOBAL');
+
 return [
-    'matrix_version' => 'sprint-4-20261022-approved',
+    'matrix_version' => 'sprint-6-20261024-approved',
     'permissions' => [
+        'residencies.files.read' => ['SELF', 'GLOBAL'],
+        'residencies.profile.manage' => ['SELF', 'GLOBAL'],
+        'residencies.projects.manage' => ['SELF', 'GLOBAL'],
+        'residencies.advisers.assign' => ['SELF', 'GLOBAL'],
+        'residencies.companies.create' => ['SELF', 'GLOBAL'],
+        'residencies.companies.manage' => ['SELF', 'GLOBAL'],
+        'residencies.catalogs.manage' => ['GLOBAL'],
+        'residencies.residents.enroll' => ['GLOBAL'],
         'planning.manage' => ['GLOBAL'],
         'planning.catalogs.manage' => ['GLOBAL'],
         'publicaciones.administrar' => ['GLOBAL'],
@@ -24,6 +42,7 @@ return [
         'organization.asesores.consultar' => ['GLOBAL'],
     ],
     'roles' => [
+        'ADMIN_RESIDENCIAS' => $residenciesAdministration,
         'ADMIN_PLANIFICACION' => ['planning.manage' => 'GLOBAL', 'planning.catalogs.manage' => 'GLOBAL'],
         'ADMIN_PUBLICACIONES' => ['publicaciones.administrar' => 'GLOBAL'],
         'ADMIN_IAM' => ['iam.roles.consultar' => 'GLOBAL', 'iam.roles.gestionar' => 'GLOBAL'],
@@ -41,8 +60,8 @@ return [
         'DOCENTE_SOLICITANTE' => $personal,
         'LABORATORISTA' => $personal,
         'INVENTARIO_RESPONSABLE' => $personal,
-        'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL'],
-        'DRPSS_ADMIN' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'publicaciones.administrar' => 'GLOBAL'],
-        'RESIDENTE' => [],
+        'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'residencies.files.read' => 'GLOBAL'],
+        'DRPSS_ADMIN' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'publicaciones.administrar' => 'GLOBAL'] + $residenciesAdministration,
+        'RESIDENTE' => $resident,
     ],
 ];

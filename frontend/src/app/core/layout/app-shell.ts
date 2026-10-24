@@ -13,6 +13,7 @@ import { AuthFacade } from '../auth/auth.facade';
       @if (auth.identity(); as identity) {
         <nav aria-label="Servicios habilitados">
           <a routerLink="/notices">Avisos públicos</a>
+          <a routerLink="/residencies">Residencias profesionales</a>
           <a routerLink="/academic-planning">Planificación académica</a>
           <a routerLink="/academic-planning/calendar">Horarios y disponibilidad</a>
           @if (identity.permissions.includes('publicaciones.administrar')) { <a routerLink="/publications">Publicaciones</a> }

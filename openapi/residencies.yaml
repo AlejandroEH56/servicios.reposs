@@ -1,0 +1,5258 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Residencies - Sprint 6",
+    "version": "0.6.0",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "description": "Migración funcional con datos nuevos. Cada proyecto es exclusivo por residente/periodo; fechas inclusivas no se solapan entre proyectos no cancelados. Empresa global con RFC único. Sin fusión, evidencias, reportes, liberaciones ni emisión en este sprint. Mutaciones reautorizadas bajo bloqueo transaccional y auditadas. Sin borrado físico."
+  },
+  "tags": [
+    {
+      "name": "Residencies",
+      "description": "Perfil, empresa, contactos, proyectos y asesores."
+    }
+  ],
+  "paths": {
+    "/api/v1/residencies/me": {
+      "get": {
+        "operationId": "getResidencyDashboard",
+        "summary": "Consultar mi expediente y primera página de proyectos propios.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyDashboardResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/identity-candidates": {
+      "get": {
+        "operationId": "listResidencyIdentityCandidates",
+        "summary": "Identidades activas para inscripción administrativa explícita.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyCandidateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/adviser-candidates": {
+      "get": {
+        "operationId": "listResidencyAdviserCandidates",
+        "summary": "Empleados habilitados para asesoría: sólo referencias, nombres, puestos vigentes y grados. Máximo 100; usar búsqueda para afinar.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyCandidateResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/modalities": {
+      "get": {
+        "operationId": "listResidencyModality",
+        "summary": "Consultar modalities; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyModality",
+        "summary": "Registrar modalities con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/modalities/{record}": {
+      "get": {
+        "operationId": "getResidencyModality",
+        "summary": "Consultar modalities por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyModality",
+        "summary": "Editar modalities con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/sectors": {
+      "get": {
+        "operationId": "listResidencySector",
+        "summary": "Consultar sectors; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencySector",
+        "summary": "Registrar sectors con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/sectors/{record}": {
+      "get": {
+        "operationId": "getResidencySector",
+        "summary": "Consultar sectors por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencySector",
+        "summary": "Editar sectors con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/business-lines": {
+      "get": {
+        "operationId": "listResidencyBusinessLine",
+        "summary": "Consultar business-lines; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyBusinessLine",
+        "summary": "Registrar business-lines con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/catalogs/business-lines/{record}": {
+      "get": {
+        "operationId": "getResidencyBusinessLine",
+        "summary": "Consultar business-lines por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyBusinessLine",
+        "summary": "Editar business-lines con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCatalogInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/programs": {
+      "get": {
+        "operationId": "listResidencyProgram",
+        "summary": "Consultar programs; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyProgram",
+        "summary": "Registrar programs con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProgramInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/programs/{record}": {
+      "get": {
+        "operationId": "getResidencyProgram",
+        "summary": "Consultar programs por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyProgram",
+        "summary": "Editar programs con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProgramInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/periods": {
+      "get": {
+        "operationId": "listResidencyPeriod",
+        "summary": "Consultar periods; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyPeriod",
+        "summary": "Registrar periods con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyPeriodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/periods/{record}": {
+      "get": {
+        "operationId": "getResidencyPeriod",
+        "summary": "Consultar periods por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyPeriod",
+        "summary": "Editar periods con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyPeriodInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/residents": {
+      "get": {
+        "operationId": "listResidencyResident",
+        "summary": "Consultar residents; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyResident",
+        "summary": "Registrar residents con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyEnrollmentInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/residents/{record}": {
+      "get": {
+        "operationId": "getResidencyResident",
+        "summary": "Consultar residents por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyResident",
+        "summary": "Editar residents con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProfileInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/companies": {
+      "get": {
+        "operationId": "listResidencyCompany",
+        "summary": "Consultar companies; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyCompany",
+        "summary": "Registrar companies con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCompanyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/companies/{record}": {
+      "get": {
+        "operationId": "getResidencyCompany",
+        "summary": "Consultar companies por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyCompany",
+        "summary": "Editar companies con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyCompanyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects": {
+      "get": {
+        "operationId": "listResidencyProject",
+        "summary": "Consultar projects; expedientes y proyectos restringidos por ownership/alcance.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "residentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyProject",
+        "summary": "Registrar projects con permiso local y auditoría.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProjectInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}": {
+      "get": {
+        "operationId": "getResidencyProject",
+        "summary": "Consultar projects por referencia y política del servidor.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateResidencyProject",
+        "summary": "Editar projects con formulario completo; referencias de identidad y número de control inmutables.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProjectInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/companies/{parent}/contacts": {
+      "get": {
+        "operationId": "listResidencyContact",
+        "summary": "Contactos sólo para creador con permiso, administración/revisor o residente con proyecto en la empresa.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "active",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "enum": [
+                0,
+                1
+              ]
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPageResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyContact",
+        "summary": "Agregar contacto a empresa propia o administrada; no concede escritura por tener proyecto.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyContactInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/companies/{parent}/contacts/{record}": {
+      "patch": {
+        "operationId": "updateResidencyContact",
+        "summary": "Editar contacto ligado a esta empresa; snapshots de asignaciones permanecen intactos.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyContactInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{parent}/internal-advisers": {
+      "post": {
+        "operationId": "assignResidencyInternalAdviser",
+        "summary": "Asignar asesor con snapshot del servidor y fechas inclusivas dentro del proyecto. Un principal por intervalo; If-Match del proyecto.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyInternalAdviserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{parent}/internal-advisers/{record}": {
+      "patch": {
+        "operationId": "endResidencyInternalAdviser",
+        "summary": "Finalizar una asignación abierta; sólo modifica fecha de fin y mantiene la instantánea. If-Match del proyecto.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyEndAdviserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{parent}/external-advisers": {
+      "post": {
+        "operationId": "assignResidencyExternalAdviser",
+        "summary": "Asignar asesor con snapshot del servidor y fechas inclusivas dentro del proyecto. Un principal por intervalo; If-Match del proyecto.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "POST idempotente por actor, operación y padre; 24 h. Reintentos se reautorizan; clave vencida o payload diferente devuelve 409."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyExternalAdviserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{parent}/external-advisers/{record}": {
+      "patch": {
+        "operationId": "endResidencyExternalAdviser",
+        "summary": "Finalizar una asignación abierta; sólo modifica fecha de fin y mantiene la instantánea. If-Match del proyecto.",
+        "tags": [
+          "Residencies"
+        ],
+        "parameters": [
+          {
+            "name": "parent",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de la sesión, preparado en /auth/csrf."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión entre comillas. Asignar o finalizar asesor usa la versión del proyecto, no la de la asignación."
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyEndAdviserInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Resultado sin caché. ETag con versión; para asignaciones contiene la versión resultante del proyecto.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 30
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyRecordResponse"
+                }
+              }
+            }
+          },
+          "400": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "500": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "ResidencyCatalogInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "active"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResidencyProgramInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "active",
+          "modalityId"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "modalityId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "validFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyPeriodInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "startsOn",
+          "endsOn",
+          "durationMonths",
+          "status"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "durationMonths": {
+            "type": "integer",
+            "enum": [
+              4,
+              5,
+              6
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PLANIFICADO",
+              "ACTIVO",
+              "CERRADO",
+              "ARCHIVADO"
+            ]
+          }
+        }
+      },
+      "ResidencyProfileInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "programId",
+          "givenNames",
+          "firstSurname"
+        ],
+        "properties": {
+          "programId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "givenNames": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "firstSurname": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "secondSurname": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "socialSecurityNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "mobilePhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "curp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 18,
+            "pattern": "^[A-Z0-9]{18}$"
+          }
+        }
+      },
+      "ResidencyEnrollmentInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "identityId",
+          "controlNumber",
+          "programId",
+          "givenNames",
+          "firstSurname"
+        ],
+        "properties": {
+          "identityId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "controlNumber": {
+            "type": "string",
+            "maxLength": 9,
+            "pattern": "^[0-9]{8,9}$"
+          },
+          "programId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "givenNames": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "firstSurname": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "secondSurname": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "socialSecurityNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "mobilePhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "curp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 18,
+            "pattern": "^[A-Z0-9]{18}$"
+          }
+        }
+      },
+      "ResidencyCompanyInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "name",
+          "rfc",
+          "status"
+        ],
+        "properties": {
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "rfc": {
+            "type": "string",
+            "maxLength": 13,
+            "minLength": 12,
+            "description": "RFC normalizado a mayúsculas, formato y dígito verificador; Ñ se conserva. Único global, inmutable al editar; sin consulta fiscal externa ni fusión automática. Los genéricos también conservan unicidad."
+          },
+          "sectorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "businessLineId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "mission": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "postalCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 12
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 254,
+            "format": "email"
+          },
+          "fax": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ACTIVO",
+              "INACTIVO",
+              "BLOQUEADO"
+            ]
+          }
+        }
+      },
+      "ResidencyContactInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "givenNames",
+          "firstSurname",
+          "active"
+        ],
+        "properties": {
+          "givenNames": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "firstSurname": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "secondSurname": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "position": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 180
+          },
+          "degree": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 254,
+            "format": "email"
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "active": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResidencyProjectInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "residentId",
+          "periodId",
+          "companyId",
+          "programId",
+          "name",
+          "vacancies",
+          "startsOn",
+          "endsOn"
+        ],
+        "properties": {
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "periodId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "companyId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "programId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "vacancies": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyInternalAdviserInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "employeeId",
+          "roleCode",
+          "startsOn"
+        ],
+        "properties": {
+          "employeeId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "roleCode": {
+            "type": "string",
+            "enum": [
+              "PRINCIPAL",
+              "COLABORADOR"
+            ]
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyExternalAdviserInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "contactId",
+          "roleCode",
+          "startsOn"
+        ],
+        "properties": {
+          "contactId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "roleCode": {
+            "type": "string",
+            "enum": [
+              "PRINCIPAL",
+              "COLABORADOR"
+            ]
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyEndAdviserInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "endsOn"
+        ],
+        "properties": {
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "kind"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "kind": {
+            "type": "string",
+            "enum": [
+              "modalities",
+              "sectors",
+              "business-lines",
+              "programs",
+              "periods",
+              "residents",
+              "companies",
+              "contacts",
+              "projects",
+              "internal-advisers",
+              "external-advisers"
+            ]
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 40,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,39}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "programId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "givenNames": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "firstSurname": {
+            "type": "string",
+            "maxLength": 120
+          },
+          "secondSurname": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "address": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 500
+          },
+          "city": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "socialSecurityNumber": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "phone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "mobilePhone": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "curp": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 18,
+            "pattern": "^[A-Z0-9]{18}$"
+          },
+          "rfc": {
+            "type": "string",
+            "maxLength": 13,
+            "minLength": 12,
+            "description": "RFC normalizado a mayúsculas, formato y dígito verificador; Ñ se conserva. Único global, inmutable al editar; sin consulta fiscal externa ni fusión automática. Los genéricos también conservan unicidad."
+          },
+          "sectorId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "businessLineId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "mission": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 2000
+          },
+          "postalCode": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 12
+          },
+          "email": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 254
+          },
+          "fax": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 30
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "periodId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "companyId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "vacancies": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "identityId": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "controlNumber": {
+            "type": "string",
+            "maxLength": 20
+          },
+          "modalityId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "validFrom": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "validUntil": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date"
+          },
+          "durationMonths": {
+            "type": "integer",
+            "minimum": 4,
+            "maximum": 6
+          },
+          "partialReports": {
+            "type": "integer",
+            "minimum": 2,
+            "maximum": 3
+          },
+          "finalReports": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 1
+          },
+          "position": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 180
+          },
+          "degree": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          },
+          "canManage": {
+            "type": "boolean"
+          },
+          "canReadContacts": {
+            "type": "boolean"
+          },
+          "internalAdvisers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResidencyRecord"
+            },
+            "maxItems": 100
+          },
+          "externalAdvisers": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResidencyRecord"
+            },
+            "maxItems": 100
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "employeeId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "contactId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "roleCode": {
+            "type": "string",
+            "enum": [
+              "PRINCIPAL",
+              "COLABORADOR"
+            ]
+          },
+          "nameSnapshot": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "positionSnapshot": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 180
+          },
+          "degreeSnapshot": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 120
+          }
+        }
+      },
+      "ResidencyPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/ResidencyRecord"
+            },
+            "maxItems": 100
+          },
+          "nextCursor": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "maxLength": 4096
+          }
+        }
+      },
+      "ResidencyRecordResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResidencyRecord"
+          }
+        }
+      },
+      "ResidencyPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResidencyPage"
+          }
+        }
+      },
+      "ResidencyDashboardResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "resident",
+              "projects"
+            ],
+            "properties": {
+              "resident": {
+                "anyOf": [
+                  {
+                    "$ref": "#/components/schemas/ResidencyRecord"
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "projects": {
+                "$ref": "#/components/schemas/ResidencyPage"
+              }
+            }
+          }
+        }
+      },
+      "ResidencyCandidate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "displayName"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "displayName": {
+            "type": "string",
+            "maxLength": 500
+          },
+          "status": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "positions": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "name": {
+                  "type": "string",
+                  "maxLength": 180
+                }
+              },
+              "required": [
+                "id",
+                "name"
+              ]
+            }
+          },
+          "degrees": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+                },
+                "abbreviation": {
+                  "type": [
+                    "string",
+                    "null"
+                  ],
+                  "maxLength": 120
+                },
+                "program": {
+                  "type": "string",
+                  "maxLength": 255
+                },
+                "levelName": {
+                  "type": "string",
+                  "maxLength": 160
+                }
+              },
+              "required": [
+                "id"
+              ]
+            }
+          }
+        }
+      },
+      "ResidencyCandidateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResidencyCandidate"
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "type": "null"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

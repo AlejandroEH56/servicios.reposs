@@ -9,6 +9,7 @@ use App\Modules\IAM\Application\AuthorizationAdministration;
 use App\Modules\Organization\Application\OrganizationDirectory;
 use App\Modules\Publications\Application\DTO\NoticeInput;
 use App\Modules\Publications\Application\NoticeService;
+use App\Modules\Residencies\Application\ResidencyDirectory;
 use App\Modules\Shared\Infrastructure\Outbox\OutboxProcessor;
 use Illuminate\Database\QueryException;
 use Illuminate\Support\Facades\DB;
@@ -243,6 +244,111 @@ PHP;
         } catch (HttpException $exception) {
             $this->assertSame(409, $exception->getStatusCode());
         }
+    }
+
+    public static function residencyRaceModes(): array
+    {
+        return ['one project per period' => ['period'], 'inclusive overlap across periods' => ['overlap'], 'idempotent concurrent retry' => ['retry'], 'global RFC collision' => ['company']];
+    }
+
+    #[DataProvider('residencyRaceModes')]
+    public function test_residency_concurrent_creation_keeps_uniqueness_and_intervals(string $mode): void
+    {
+        $actor = User::factory()->create();
+        DB::table('iam_identidad_roles')->insert(['id_identidad' => $actor->id, 'id_rol' => DB::table('iam_roles')->where('codigo', 'ADMIN_RESIDENCIAS')->value('id'), 'id_identidad_otorgante' => $actor->id, 'otorgado_en' => now()]);
+        $service = app(ResidencyDirectory::class);
+        $create = fn (string $kind, array $body): array => $service->execute($kind, null, null, $body, null, (string) Str::uuid(), $actor->id, (string) Str::uuid());
+        $modality = $create('modalities', ['code' => 'RACE', 'name' => 'Fixture', 'active' => true]);
+        $program = $create('programs', ['code' => 'RACE', 'name' => 'Fixture', 'active' => true, 'modalityId' => $modality['id']]);
+        $period = $create('periods', ['code' => 'RACE', 'name' => 'Fixture', 'startsOn' => '2026-08-01', 'endsOn' => '2026-12-31', 'durationMonths' => 5, 'status' => 'ACTIVO']);
+        $second = $create('periods', ['code' => 'OTHER', 'name' => 'Fixture', 'startsOn' => '2026-10-01', 'endsOn' => '2027-03-31', 'durationMonths' => 6, 'status' => 'ACTIVO']);
+        $company = $create('companies', ['name' => 'Race fixture', 'rfc' => 'XAXX010101000', 'status' => 'ACTIVO']);
+        $resident = $create('residents', ['identityId' => $actor->id, 'programId' => $program['id'], 'controlNumber' => '21000001', 'givenNames' => 'Persona', 'firstSurname' => 'Ensayo']);
+        $kind = $mode === 'company' ? 'companies' : 'projects';
+        $body = $mode === 'company' ? ['name' => 'Race fixture', 'rfc' => 'XEXX010101000', 'status' => 'ACTIVO'] : ['residentId' => $resident['id'], 'periodId' => $period['id'], 'companyId' => $company['id'], 'programId' => $program['id'], 'name' => 'Race fixture', 'vacancies' => 1, 'startsOn' => '2026-10-01', 'endsOn' => '2026-12-31'];
+        $bodies = [$body, $mode === 'overlap' ? array_replace($body, ['periodId' => $second['id']]) : $body];
+        $table = $mode === 'company' ? 'residencias_empresas' : 'residencias_proyectos';
+        $beforeRows = DB::table($table)->count();
+        $beforeAudits = DB::table('compartido_registros_auditoria')->where('nombre_contexto', 'Residencies')->where('tipo_sujeto', $kind)->count();
+        $connection = config('database.connections.mysql');
+        $environment = ['APP_ENV' => 'testing', 'APP_KEY' => config('app.key'), 'DB_CONNECTION' => 'mysql', 'DB_DATABASE' => 'servicios_moderno_test', 'DB_HOST' => (string) $connection['host'], 'DB_PORT' => (string) $connection['port'], 'DB_USERNAME' => $connection['username'], 'DB_PASSWORD' => $connection['password'], 'DB_URL' => '', 'CACHE_STORE' => 'array', 'SESSION_DRIVER' => 'array', 'QUEUE_CONNECTION' => 'sync', 'OTEL_ENABLED' => 'false', 'RESIDENCY_ACTOR' => $actor->id, 'RESIDENCY_KIND' => $kind];
+        $code = <<<'PHP'
+require 'vendor/autoload.php';
+$app=require 'bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+if(Illuminate\Support\Facades\DB::connection()->getDatabaseName()!=='servicios_moderno_test' || !$app->environment('testing')){exit(2);}
+echo "READY\n";fflush(STDOUT);
+try {
+    $record=$app->make(App\Modules\Residencies\Application\ResidencyDirectory::class)->execute(getenv('RESIDENCY_KIND'),null,null,json_decode(getenv('RESIDENCY_BODY'),true,flags:JSON_THROW_ON_ERROR),null,getenv('RESIDENCY_KEY'),getenv('RESIDENCY_ACTOR'),(string)Illuminate\Support\Str::uuid());
+    echo json_encode(['status'=>201,'id'=>$record['id']],JSON_THROW_ON_ERROR);
+}catch(Symfony\Component\HttpKernel\Exception\HttpException $exception){echo json_encode(['status'=>$exception->getStatusCode()],JSON_THROW_ON_ERROR);}
+catch(Throwable $exception){echo json_encode(['status'=>'ERROR','class'=>get_class($exception)],JSON_THROW_ON_ERROR);exit(1);}
+PHP;
+        $key = (string) Str::uuid();
+        $processes = [];
+        $primary = DB::connection('mysql');
+        $primary->beginTransaction();
+        try {
+            $primary->table('residencias_controles')->where('codigo', 'WRITER')->lockForUpdate()->first();
+            foreach ($bodies as $index => $input) {
+                $process = new Process([PHP_BINARY, '-r', $code], base_path(), $environment + ['RESIDENCY_BODY' => json_encode($input, JSON_THROW_ON_ERROR), 'RESIDENCY_KEY' => $index === 0 || $mode === 'retry' ? $key : (string) Str::uuid()], timeout: 30);
+                $process->start();
+                $processes[] = $process;
+            }
+            $deadline = microtime(true) + 20;
+            do {
+                $ready = count(array_filter($processes, fn (Process $process): bool => str_contains($process->getOutput(), 'READY')));
+                if ($ready === 2) {
+                    break;
+                }
+                usleep(10000);
+            } while (microtime(true) < $deadline);
+            $this->assertSame(2, $ready);
+            foreach ($processes as $process) {
+                $this->assertTrue($process->isRunning());
+            }
+            $primary->rollBack();
+            $statuses = [];
+            $ids = [];
+            foreach ($processes as $process) {
+                $this->assertSame(0, $process->wait());
+                $lines = preg_split('/\R/', trim($process->getOutput()));
+                $result = json_decode(end($lines), true, flags: JSON_THROW_ON_ERROR);
+                $statuses[] = $result['status'];
+                if (isset($result['id'])) {
+                    $ids[] = $result['id'];
+                }
+            }
+            sort($statuses);
+            $this->assertSame($mode === 'retry' ? [201, 201] : [201, 409], $statuses);
+            $this->assertCount(1, array_unique($ids));
+            $this->assertSame($beforeRows + 1, DB::table($table)->count());
+            $this->assertSame($beforeAudits + 1, DB::table('compartido_registros_auditoria')->where('nombre_contexto', 'Residencies')->where('tipo_sujeto', $kind)->count());
+        } finally {
+            if ($primary->transactionLevel() > 0) {
+                $primary->rollBack();
+            }
+            foreach ($processes as $process) {
+                if ($process->isRunning()) {
+                    $process->stop();
+                }
+            }
+        }
+    }
+
+    public function test_residency_adoption_rejects_populated_tables_before_ddl(): void
+    {
+        $id = (string) Str::ulid();
+        DB::table('residencias_sectores')->insert(['id' => $id, 'codigo' => 'GUARD', 'nombre' => 'Guard fixture', 'activo' => true, 'version' => 1]);
+        $columns = Schema::getColumns('residencias_sectores');
+        $migration = require glob(app_path('Modules/Residencies/Infrastructure/Persistence/Migrations/*create_residencies_foundation.php'))[0];
+        try {
+            $migration->up();
+            $this->fail('Populated baseline accepted.');
+        } catch (\RuntimeException $exception) {
+            $this->assertStringContainsString('requires reconciliation', $exception->getMessage());
+        }
+        $this->assertSame($columns, Schema::getColumns('residencias_sectores'));
+        $this->assertDatabaseHas('residencias_sectores', ['id' => $id, 'codigo' => 'GUARD']);
     }
 
     protected function setUp(): void

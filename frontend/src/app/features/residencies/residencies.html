@@ -1,0 +1,116 @@
+<h2>Residencias profesionales</h2>
+<p><a routerLink="/dashboard">Volver a tu sesión</a></p>
+<p>Completa tu expediente, selecciona una empresa global y registra tu proyecto y sus asesores.</p>
+@if (notice()) { <p role="status">{{ notice() }}</p> }
+@if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (invalidLabels().length) { <ul aria-label="Campos por corregir">@for (label of invalidLabels(); track label) { <li>Revisa {{ label }}.</li> }</ul> }
+<fieldset [disabled]="work.busy()">
+  <legend>Consulta de residencia</legend>
+  <label>Sección <select [ngModel]="kind()" (ngModelChange)="changeKind($event)">@for (choice of kinds; track choice) { <option [value]="choice">{{ definitions[choice].label }}</option> }</select></label>
+  @if (kind() !== 'residents' || global('residencies.files.read')) {
+    <form (ngSubmit)="load()"><label>Buscar por nombre <input name="search" [(ngModel)]="search" maxlength="100"></label><button>Buscar</button></form>
+  }
+  <ul>@for (record of records(); track record.id) {
+    <li><button type="button" (click)="open(record)">{{ record.code ? record.code + ' · ' : '' }}{{ record.name ?? record.controlNumber }}</button> · {{ record.status ?? (record.active ? 'Activo' : 'Inactivo') }}
+      @if (record.rfc) { <span> · {{ record.rfc }}</span> } @if (record.startsOn) { <span> · {{ record.startsOn }} a {{ record.endsOn }}</span> }
+    </li>
+  } @empty { <li>No hay registros en esta consulta.</li> }</ul>
+  @if (kind() === 'residents' && !ownResident() && !global('residencies.files.read')) { <p>Tu identidad aún no está inscrita como residente. Solicita la inscripción a administración.</p> }
+  @if (nextCursor()) { <button type="button" (click)="load(true)">Cargar más registros</button> }
+  @if (canCreate()) { <button type="button" (click)="newRecord()">Nuevo registro</button> }
+</fieldset>
+@if (selected(); as record) {
+  <h3>{{ record.name }} · versión {{ record.version }} · {{ record.status ?? (record.active ? 'Activo' : 'Inactivo') }}</h3>
+  @if (record.controlNumber) { <p>Número de control: {{ record.controlNumber }} · {{ record.email }}</p> }
+  @if (record.partialReports) { <p>Plan del periodo: {{ record.partialReports }} reportes parciales y {{ record.finalReports }} final. Las entregas se habilitarán en una fase posterior.</p> }
+  @if (!canEdit()) { <dl>@for (field of fields(); track field.key) { <dt>{{ field.label }}</dt><dd>{{ label(field, record) }}</dd> }</dl> }
+}
+@if (canEdit()) {
+  <fieldset [disabled]="work.busy()">
+    <legend>{{ selected() ? 'Editar' : 'Registrar' }} · {{ definitions[kind()].label }}</legend>
+    @if (kind() === 'companies') { <p>La empresa es global. El RFC identifica un único registro y no se modifica; una colisión se rechaza, sin fusionar empresas.</p> }
+    @if (kind() === 'projects') { <p>Un proyecto por residente y periodo. Las fechas son inclusivas y deben caber en el periodo activo; dos proyectos del mismo residente no pueden compartir días.</p> }
+    @if (kind() === 'periods') { <p>Se permiten 4, 5 o 6 meses; el servidor deriva 2 o 3 reportes parciales y uno final. Con proyectos, las fechas y duración permanecen fijas. Un periodo cerrado no se reabre.</p> }
+    @if (kind() === 'residents' && !selected()) { <p>La identidad y el número de control se vinculan explícitamente y después no se editan. La inscripción no asigna roles IAM.</p> }
+    <form #recordForm="ngForm" (ngSubmit)="save(recordForm)">
+      @for (field of fields(); track field.key) {
+        <label>{{ field.label }}
+          @if (field.type === 'checkbox') { <input type="checkbox" [name]="field.key" [(ngModel)]="draft[field.key]"> }
+          @else if (field.type === 'reference') {
+            <select [name]="field.key" [ngModel]="draft[field.key]" (ngModelChange)="referenceChanged(field, $event)" [required]="!field.optional" [disabled]="disabledField(field)">
+              <option value="">{{ field.optional ? 'Sin asignar' : 'Seleccionar' }}</option>
+              @for (option of referenceData[field.key] ?? []; track option.id) { <option [value]="option.id">{{ option.name }}</option> }
+            </select>
+          } @else if (field.type === 'status') {
+            <select [name]="field.key" [(ngModel)]="draft[field.key]">
+              @if (kind() === 'periods') { <option>PLANIFICADO</option><option>ACTIVO</option><option>CERRADO</option><option>ARCHIVADO</option> }
+              @else { <option>ACTIVO</option><option>INACTIVO</option><option>BLOQUEADO</option> }
+            </select>
+          } @else if (field.type === 'textarea') { <textarea [name]="field.key" [(ngModel)]="draft[field.key]" [attr.maxlength]="field.max" [required]="!field.optional"></textarea> }
+          @else { <input [name]="field.key" [type]="field.type ?? 'text'" [(ngModel)]="draft[field.key]" [required]="!field.optional" [disabled]="disabledField(field)" [maxlength]="field.max ?? null" [min]="field.key === 'durationMonths' ? 4 : field.type === 'number' ? 1 : null" [max]="field.type === 'number' ? field.max : null" [pattern]="field.key === 'controlNumber' ? '[0-9]{8,9}' : field.key === 'code' ? '[A-Z0-9][A-Z0-9._-]{0,39}' : field.key === 'curp' ? '[A-Z0-9]{18}' : ''"> }
+        </label>
+        @if (field.reference && !disabledField(field)) {
+          <label>Buscar opciones de {{ field.label }} <input [name]="field.key + '-search'" [(ngModel)]="referenceSearch[field.key]" maxlength="100"></label>
+          <button type="button" (click)="loadReference(field)">Buscar opciones</button>
+          @if (referenceNext[field.key]) { <button type="button" (click)="loadReference(field, true)">Más opciones de {{ field.label }}</button> }
+        }
+      }
+      <button>{{ selected() ? 'Guardar cambios' : 'Registrar' }}</button>
+    </form>
+  </fieldset>
+}
+@if (kind() === 'companies' && selected(); as company) {
+  @if (company.canReadContacts) {
+    <h3>Contactos de la empresa</h3>
+    <ul>@for (contact of contacts(); track contact.id) { <li>{{ contact.name }} · {{ contact.position }} · {{ contact.active ? 'Activo' : 'Inactivo' }} @if (company.canManage) { <button type="button" (click)="editContact(contact)" [disabled]="work.busy()">Editar contacto</button> }</li> } @empty { <li>No hay contactos registrados.</li> }</ul>
+    @if (contactsNext()) { <button type="button" (click)="loadContacts(true)" [disabled]="work.busy()">Más contactos</button> }
+  }
+  @if (company.canManage) {
+    <fieldset [disabled]="work.busy() || company.status !== 'ACTIVO'"><legend>{{ contactSelected() ? 'Editar contacto' : 'Agregar contacto' }}</legend>
+      <button type="button" (click)="newContact()">Nuevo contacto</button>
+      <form (ngSubmit)="saveContact()">
+        <label>Nombres del contacto <input name="contactGivenNames" [(ngModel)]="contactDraft['givenNames']" required maxlength="160"></label>
+        <label>Primer apellido del contacto <input name="contactFirstSurname" [(ngModel)]="contactDraft['firstSurname']" required maxlength="120"></label>
+        <label>Segundo apellido del contacto <input name="contactSecondSurname" [(ngModel)]="contactDraft['secondSurname']" maxlength="120"></label>
+        <label>Puesto del contacto <input name="contactPosition" [(ngModel)]="contactDraft['position']" maxlength="180"></label>
+        <label>Grado del contacto <input name="contactDegree" [(ngModel)]="contactDraft['degree']" maxlength="120"></label>
+        <label>Correo del contacto <input type="email" name="contactEmail" [(ngModel)]="contactDraft['email']" maxlength="254"></label>
+        <label>Teléfono del contacto <input name="contactPhone" [(ngModel)]="contactDraft['phone']" maxlength="30"></label>
+        <label>Contacto activo <input type="checkbox" name="contactActive" [(ngModel)]="contactDraft['active']"></label>
+        <button>Guardar contacto</button>
+      </form>
+    </fieldset>
+  }
+}
+@if (kind() === 'projects' && selected(); as project) {
+  <h3>Historial de asesores</h3>
+  <p>Los nombres, puestos y grados se guardan como instantáneas al asignar. Editar el empleado o contacto después conserva este historial.</p>
+  @for (type of ['internal', 'external']; track type) {
+    <h4>{{ type === 'internal' ? 'Asesores internos' : 'Asesores externos' }}</h4>
+    <ul>@for (assignment of (type === 'internal' ? project.internalAdvisers : project.externalAdvisers) ?? []; track assignment.id) {
+      <li>{{ assignment.nameSnapshot }} · {{ assignment.positionSnapshot ?? 'Sin puesto' }} · {{ assignment.degreeSnapshot }} · {{ assignment.roleCode }} · {{ assignment.startsOn }} a {{ assignment.endsOn ?? 'Fin del proyecto' }}
+        @if (canAssign() && !assignment.endsOn) { <label>Fin de asignación de {{ assignment.nameSnapshot }} <input type="date" [(ngModel)]="assignmentEnds[assignment.id]" [min]="assignment.startsOn" [max]="project.endsOn" [disabled]="work.busy()"></label><button type="button" (click)="endAssignment(type === 'internal' ? 'internal' : 'external', assignment)" [disabled]="work.busy() || !assignmentEnds[assignment.id]">Finalizar asignación</button> }
+      </li>
+    } @empty { <li>Sin asignaciones.</li> }</ul>
+  }
+  @if (canAssign()) {
+    <fieldset [disabled]="work.busy()"><legend>Asignar asesor al proyecto</legend>
+      <label>Tipo de asesor <select [(ngModel)]="adviserType" (ngModelChange)="adviserReference = ''"><option value="internal">Interno</option><option value="external">Externo</option></select></label>
+      @if (adviserType === 'internal') {
+        <label>Buscar asesor interno <input [(ngModel)]="adviserSearch" maxlength="100"></label><button type="button" (click)="loadAdvisers()">Buscar asesores</button>
+        <p>Se muestran empleados activos habilitados para asesoría en Organization. La instantánea toma el primer puesto Microsoft vigente, o uno manual si no existe, y el grado principal; el puesto puede estar vacío.</p>
+      }
+      <form (ngSubmit)="assign()">
+        <label>Asesor <select name="adviserReference" [(ngModel)]="adviserReference" required><option value="">Seleccionar</option>
+          @if (adviserType === 'internal') { @for (candidate of adviserCandidates(); track candidate.id) { <option [value]="candidate.id">{{ candidate.displayName }}</option> } }
+          @else { @for (contact of projectContacts(); track contact.id) { <option [value]="contact.id">{{ contact.name }}</option> } }
+        </select></label>
+        @if (adviserType === 'external' && projectContactsNext()) { <button type="button" (click)="loadProjectContacts(true)">Más contactos para asesoría</button> }
+        <label>Rol de asesor <select name="adviserRole" [(ngModel)]="adviserRole"><option>PRINCIPAL</option><option>COLABORADOR</option></select></label>
+        <label>Inicio de asesoría <input type="date" name="adviserStart" [(ngModel)]="adviserStart" [min]="project.startsOn" [max]="project.endsOn" required></label>
+        <label>Fin de asesoría (vacío: hasta fin del proyecto) <input type="date" name="adviserEnd" [(ngModel)]="adviserEnd" [min]="adviserStart" [max]="project.endsOn"></label>
+        <button>Asignar asesor</button>
+      </form>
+    </fieldset>
+  }
+}

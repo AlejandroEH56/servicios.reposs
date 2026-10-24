@@ -67,15 +67,42 @@ class OrganizationStore implements OrganizationDirectory
 
     public function advisers(string $search): array
     {
-        return DB::table('organizacion_empleados')->where('estado', 'ACTIVO')->where('habilitado_asesoria', true)
-            ->when($search !== '', fn (Builder $query) => $query->where('nombres', 'like', '%'.$search.'%'))
-            ->orderBy('nombres')->limit(100)->pluck('id')->map(function (string $id): array {
-                $employee = $this->employee($id);
+        $pattern = '%'.strtr($search, ['!' => '!!', '%' => '!%', '_' => '!_']).'%';
+        $employees = DB::table('organizacion_empleados')->where('estado', 'ACTIVO')->where('habilitado_asesoria', true)
+            ->when($search !== '', fn (Builder $query) => $query->whereRaw("nombres LIKE ? ESCAPE '!'", [$pattern]))
+            ->orderBy('nombres')->orderBy('id')->limit(100)->get(['id', 'nombres', 'primer_apellido', 'segundo_apellido']);
+        if ($employees->isEmpty()) {
+            return [];
+        }
+        $ids = $employees->pluck('id');
+        $positions = DB::table('organizacion_asignaciones_puesto as position')->leftJoin('organizacion_unidades as unit', 'unit.id', '=', 'position.id_unidad_organizacional')
+            ->whereIn('position.id_empleado', $ids)->whereNull('position.fecha_fin')->where('position.fecha_inicio', '<=', today()->toDateString())
+            ->orderBy('position.origen_dato')->orderBy('position.orden_en_origen')->orderBy('position.creado_en')->orderBy('position.id')
+            ->get(['position.*', 'unit.nombre as unidad_nombre'])->groupBy('id_empleado');
+        $degrees = DB::table('organizacion_grados_academicos as degree')->join('organizacion_niveles_academicos as level', 'level.id', '=', 'degree.id_nivel_academico')
+            ->whereIn('degree.id_empleado', $ids)->orderByDesc('level.orden_jerarquia')->orderBy('degree.id')
+            ->get(['degree.*', 'level.nombre as nivel_nombre'])->groupBy('id_empleado');
 
-                return ['id' => $id, 'displayName' => trim($employee['givenNames'].' '.$employee['firstSurname'].' '.($employee['secondSurname'] ?? '')),
-                    'positions' => array_values(array_filter($employee['positions'], fn (array $position) => $position['active'])),
-                    'degrees' => $employee['degrees']];
-            })->all();
+        $result = [];
+        foreach ($employees as $employee) {
+            $employeePositions = [];
+            foreach ($positions->get($employee->id, []) as $position) {
+                $employeePositions[] = [
+                    'id' => $position->id, 'unitId' => $position->id_unidad_organizacional, 'unitName' => $position->unidad_nombre, 'name' => $position->nombre_puesto,
+                    'source' => $position->origen_dato, 'sourceOrder' => $position->orden_en_origen, 'startsOn' => $position->fecha_inicio, 'endsOn' => $position->fecha_fin, 'active' => true,
+                ];
+            }
+            $employeeDegrees = [];
+            foreach ($degrees->get($employee->id, []) as $degree) {
+                $employeeDegrees[] = [
+                    'id' => $degree->id, 'levelId' => $degree->id_nivel_academico, 'levelName' => $degree->nivel_nombre, 'program' => $degree->nombre_programa, 'abbreviation' => $degree->siglas, 'obtainedOn' => $degree->fecha_obtencion,
+                ];
+            }
+            $result[] = ['id' => $employee->id, 'displayName' => trim($employee->nombres.' '.$employee->primer_apellido.' '.($employee->segundo_apellido ?? '')),
+                'positions' => $employeePositions, 'degrees' => $employeeDegrees];
+        }
+
+        return $result;
     }
 
     public function units(): array

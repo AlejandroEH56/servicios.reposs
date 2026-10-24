@@ -1,5 +1,9 @@
 {
   "runtimeWritable": [
+    "residencias_modalidades", "residencias_programas_educativos", "residencias_periodos", "residencias_residentes",
+    "residencias_sectores", "residencias_ramos", "residencias_empresas", "residencias_contactos_empresa",
+    "residencias_proyectos", "residencias_asesores_internos_proyecto", "residencias_asesores_externos_proyecto",
+    "residencias_controles", "residencias_claves_idempotencia",
     "planificacion_carreras", "planificacion_especialidades", "planificacion_asignaturas", "planificacion_reticulas",
     "planificacion_grupos", "planificacion_semestres", "planificacion_laboratorios", "planificacion_tipos_dia_inhabil",
     "planificacion_dias_inhabiles", "planificacion_controles", "planificacion_claves_idempotencia", "planificacion_horarios",

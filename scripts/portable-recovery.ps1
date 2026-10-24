@@ -145,6 +145,7 @@ try {
   if(-not $result.organizationIdentifiersRecovered){throw 'Recovered Organization identifier boundary failed.'}
   $result.publicationsIdentifiersRecovered=($organizationResult.enabledModules -contains 'publications' -and $organizationResult.violations -eq 0)
   $result.planningIdentifiersRecovered=($organizationResult.enabledModules -contains 'planning' -and $organizationResult.violations -eq 0)
+  $result.residenciesIdentifiersRecovered=($organizationResult.enabledModules -contains 'residencies' -and $organizationResult.violations -eq 0)
  }
  $address=Invoke-DockerBytes @('inspect','--format','{{range .NetworkSettings.Networks}}{{.IPAddress}}{{end}}',$proxy);$ip=[Text.Encoding]::UTF8.GetString($address).Trim()
  if($ip -notmatch '^\d{1,3}(\.\d{1,3}){3}$'){throw 'Recovery proxy address unavailable.'}

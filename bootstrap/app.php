@@ -64,7 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             $correlationId = $request->attributes->get('correlationId', (string) Str::uuid());
             $headers = $exception instanceof HttpExceptionInterface ? $exception->getHeaders() : [];
 
-            return response()->json([
+            $problem = [
                 'type' => 'about:blank',
                 'title' => $title,
                 'status' => $status,
@@ -72,7 +72,14 @@ return Application::configure(basePath: dirname(__DIR__))
                 'instance' => '/'.$request->path(),
                 'code' => $code,
                 'correlationId' => $correlationId,
-            ], $status, $headers)->withHeaders([
+            ];
+            if ($exception instanceof ValidationException && $request->is('api/v1/residencies/*')) {
+                $problem['invalidFields'] = array_values(array_intersect(
+                    array_keys($exception->errors()), array_keys($exception->validator->getRules()),
+                ));
+            }
+
+            return response()->json($problem, $status, $headers)->withHeaders([
                 'Content-Type' => 'application/problem+json',
                 'X-Correlation-ID' => $correlationId,
                 'Cache-Control' => 'no-store',
