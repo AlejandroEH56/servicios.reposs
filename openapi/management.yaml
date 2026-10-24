@@ -152,3 +152,10 @@ components:
         correlationId:
           type: string
           format: uuid
+        invalidFields:
+          description: Nombres de campos declarados por el servidor que requieren corrección; no incluye valores enviados ni mensajes de validación.
+          type: array
+          maxItems: 100
+          items:
+            type: string
+            maxLength: 100

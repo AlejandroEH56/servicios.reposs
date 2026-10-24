@@ -68,10 +68,10 @@ describe('Residencias profesionales', () => {
     fixture.detectChanges();
   }
 
-  function setup(permissions: string[], self = false) {
+  function setup(permissions: string[], self = false, global = false) {
     if (self) own = resident;
     TestBed.inject(AuthFacade).refresh().subscribe();
-    http.expectOne('/api/v1/me').flush({ data: { ...activeIdentity(), permissions, scopes: permissions.map(permission => permission + ':self') } });
+    http.expectOne('/api/v1/me').flush({ data: { ...activeIdentity(), permissions, scopes: permissions.map(permission => permission + (global ? ':global' : ':self')) } });
     const fixture = TestBed.createComponent(Residencies); fixture.detectChanges(); drain(fixture); return fixture;
   }
 
@@ -85,6 +85,27 @@ describe('Residencias profesionales', () => {
     expect(fixture.nativeElement.textContent).toContain('<img src=x onerror=alert(1)>');
     expect(reads).not.toContain('identity-candidates'); expect(reads.some(path => path.endsWith('/contacts'))).toBe(false);
     fixture.destroy();
+  });
+
+  it('inscribe la identidad administrativa con CSRF y conserva el formulario al rechazar campos', () => {
+    const fixture = setup([...personal, 'residencies.residents.enroll'], false, true);
+    const component = harness(fixture);
+    component.draft = { identityId: id, controlNumber: '99009901', programId: id, givenNames: 'Persona', firstSurname: 'Piloto', curp: 'invalida' };
+    document.cookie = 'XSRF-TOKEN=residencies-unit; path=/';
+    component.save(); http.expectOne('/sanctum/csrf-cookie').flush(null);
+    http.expectOne(request => request.method === 'POST').flush({ invalidFields: ['curp', '<script>'] }, { status: 422, statusText: 'Unprocessable Content' });
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('Revisa CURP (opcional, 18 letras mayúsculas o dígitos).');
+    expect(fixture.nativeElement.textContent).not.toContain('<script>');
+    expect(component.draft['controlNumber']).toBe('99009901');
+    component.draft['curp'] = '';
+    component.save(); http.expectOne('/sanctum/csrf-cookie').flush(null);
+    const enrollment = http.expectOne(request => request.method === 'POST');
+    expect(enrollment.request.url).toBe('/api/v1/residencies/residents');
+    expect(enrollment.request.body).toEqual({ identityId: id, controlNumber: '99009901', programId: id, givenNames: 'Persona', firstSurname: 'Piloto', secondSurname: null, address: null, city: null, socialSecurityNumber: null, phone: null, mobilePhone: null, curp: null });
+    expect(enrollment.request.headers.get('X-XSRF-TOKEN')).toBe('residencies-unit');
+    enrollment.flush({ data: resident }); drain(fixture);
+    expect(component.selected()?.id).toBe(id); fixture.destroy();
   });
 
   it('edita sólo el perfil vinculado y mantiene identidad y número de control fuera del formulario', () => {

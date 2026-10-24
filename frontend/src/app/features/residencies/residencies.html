@@ -3,6 +3,7 @@
 <p>Completa tu expediente, selecciona una empresa global y registra tu proyecto y sus asesores.</p>
 @if (notice()) { <p role="status">{{ notice() }}</p> }
 @if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (invalidLabels().length) { <ul aria-label="Campos por corregir">@for (label of invalidLabels(); track label) { <li>Revisa {{ label }}.</li> }</ul> }
 <fieldset [disabled]="work.busy()">
   <legend>Consulta de residencia</legend>
   <label>Sección <select [ngModel]="kind()" (ngModelChange)="changeKind($event)">@for (choice of kinds; track choice) { <option [value]="choice">{{ definitions[choice].label }}</option> }</select></label>
@@ -31,7 +32,7 @@
     @if (kind() === 'projects') { <p>Un proyecto por residente y periodo. Las fechas son inclusivas y deben caber en el periodo activo; dos proyectos del mismo residente no pueden compartir días.</p> }
     @if (kind() === 'periods') { <p>Se permiten 4, 5 o 6 meses; el servidor deriva 2 o 3 reportes parciales y uno final. Con proyectos, las fechas y duración permanecen fijas. Un periodo cerrado no se reabre.</p> }
     @if (kind() === 'residents' && !selected()) { <p>La identidad y el número de control se vinculan explícitamente y después no se editan. La inscripción no asigna roles IAM.</p> }
-    <form (ngSubmit)="save()">
+    <form #recordForm="ngForm" (ngSubmit)="save(recordForm)">
       @for (field of fields(); track field.key) {
         <label>{{ field.label }}
           @if (field.type === 'checkbox') { <input type="checkbox" [name]="field.key" [(ngModel)]="draft[field.key]"> }
@@ -46,7 +47,7 @@
               @else { <option>ACTIVO</option><option>INACTIVO</option><option>BLOQUEADO</option> }
             </select>
           } @else if (field.type === 'textarea') { <textarea [name]="field.key" [(ngModel)]="draft[field.key]" [attr.maxlength]="field.max" [required]="!field.optional"></textarea> }
-          @else { <input [name]="field.key" [type]="field.type ?? 'text'" [(ngModel)]="draft[field.key]" [required]="!field.optional" [disabled]="disabledField(field)" [attr.maxlength]="field.max" [attr.min]="field.key === 'durationMonths' ? 4 : field.type === 'number' ? 1 : null" [attr.max]="field.type === 'number' ? field.max : null" [attr.pattern]="field.key === 'controlNumber' ? '[0-9]{8,9}' : field.key === 'code' ? '[A-Z0-9][A-Z0-9._-]{0,39}' : null"> }
+          @else { <input [name]="field.key" [type]="field.type ?? 'text'" [(ngModel)]="draft[field.key]" [required]="!field.optional" [disabled]="disabledField(field)" [maxlength]="field.max ?? null" [min]="field.key === 'durationMonths' ? 4 : field.type === 'number' ? 1 : null" [max]="field.type === 'number' ? field.max : null" [pattern]="field.key === 'controlNumber' ? '[0-9]{8,9}' : field.key === 'code' ? '[A-Z0-9][A-Z0-9._-]{0,39}' : field.key === 'curp' ? '[A-Z0-9]{18}' : ''"> }
         </label>
         @if (field.reference && !disabledField(field)) {
           <label>Buscar opciones de {{ field.label }} <input [name]="field.key + '-search'" [(ngModel)]="referenceSearch[field.key]" maxlength="100"></label>

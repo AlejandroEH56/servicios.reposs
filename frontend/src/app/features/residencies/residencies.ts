@@ -1,5 +1,5 @@
 import { Component, OnInit, computed, inject, signal } from '@angular/core';
-import { FormsModule } from '@angular/forms';
+import { FormsModule, NgForm } from '@angular/forms';
 import { RouterLink } from '@angular/router';
 import { ResidencyCandidate, ResidencyRecord } from '../../api/models';
 import { WorkspaceService } from '../../core/auth/workspace.service';
@@ -24,7 +24,7 @@ const person: Field[] = [{ key: 'givenNames', label: 'Nombres', max: 160 }, { ke
 const dates: Field[] = [{ key: 'startsOn', label: 'Fecha de inicio', type: 'date' }, { key: 'endsOn', label: 'Fecha de fin inclusiva', type: 'date' }];
 const companyFields: Field[] = [{ ...name, label: 'Razón social', max: 255 }, { key: 'rfc', label: 'RFC (único e inmutable)', max: 13, immutable: true }, { key: 'sectorId', label: 'Sector', type: 'reference', reference: 'sectors', optional: true }, { key: 'businessLineId', label: 'Ramo', type: 'reference', reference: 'business-lines', optional: true }, { key: 'mission', label: 'Misión', type: 'textarea', optional: true, max: 2000 }, { key: 'address', label: 'Domicilio', optional: true, max: 500 }, { key: 'city', label: 'Ciudad', optional: true, max: 120 }, { key: 'postalCode', label: 'Código postal', optional: true, max: 12 }, { key: 'phone', label: 'Teléfono', optional: true, max: 30 }, { key: 'email', label: 'Correo de la empresa', type: 'email', optional: true, max: 254 }, { key: 'fax', label: 'Fax', optional: true, max: 30 }, { key: 'status', label: 'Estado', type: 'status' }];
 export const residencyDefinitions: Record<ResidencyKind, { label: string; fields: Field[] }> = {
-  residents: { label: 'Expedientes de residentes', fields: [{ key: 'identityId', label: 'Identidad institucional', type: 'reference', reference: 'identities', createOnly: true }, { key: 'controlNumber', label: 'Número de control (8 o 9 dígitos)', createOnly: true, max: 9 }, program, ...person, { key: 'address', label: 'Domicilio', optional: true, max: 500 }, { key: 'city', label: 'Ciudad', optional: true, max: 120 }, { key: 'socialSecurityNumber', label: 'Número de seguro social', optional: true, max: 30 }, { key: 'phone', label: 'Teléfono', optional: true, max: 30 }, { key: 'mobilePhone', label: 'Teléfono celular', optional: true, max: 30 }, { key: 'curp', label: 'CURP', optional: true, max: 18 }] },
+  residents: { label: 'Expedientes de residentes', fields: [{ key: 'identityId', label: 'Identidad institucional', type: 'reference', reference: 'identities', createOnly: true }, { key: 'controlNumber', label: 'Número de control (8 o 9 dígitos)', createOnly: true, max: 9 }, program, ...person, { key: 'address', label: 'Domicilio', optional: true, max: 500 }, { key: 'city', label: 'Ciudad', optional: true, max: 120 }, { key: 'socialSecurityNumber', label: 'Número de seguro social', optional: true, max: 30 }, { key: 'phone', label: 'Teléfono', optional: true, max: 30 }, { key: 'mobilePhone', label: 'Teléfono celular', optional: true, max: 30 }, { key: 'curp', label: 'CURP (opcional, 18 letras mayúsculas o dígitos)', optional: true, max: 18 }] },
   companies: { label: 'Empresas globales', fields: companyFields },
   projects: { label: 'Proyectos', fields: [{ key: 'residentId', label: 'Residente', type: 'reference', reference: 'residents', immutable: true }, { key: 'periodId', label: 'Periodo de residencia', type: 'reference', reference: 'periods', immutable: true }, { key: 'companyId', label: 'Empresa', type: 'reference', reference: 'companies' }, { ...program, immutable: true }, { ...name, label: 'Nombre del proyecto', max: 255 }, { key: 'vacancies', label: 'Número de residentes/vacantes', type: 'number', max: 65535 }, ...dates] },
   modalities: { label: 'Modalidades', fields: [code, name, active] },
@@ -52,6 +52,7 @@ export class Residencies implements OnInit {
   protected readonly nextCursor = signal<string | null>(null);
   protected readonly notice = signal('');
   protected readonly fields = computed(() => this.definitions[this.kind()].fields.filter(field => !field.createOnly || !this.selected()));
+  protected readonly invalidLabels = computed(() => this.fields().filter(field => this.work.invalidFields().includes(field.key)).map(field => field.label));
   protected draft: ResidencyBody = {};
   protected search = '';
   protected referenceData: Record<string, Option[]> = {};
@@ -225,7 +226,13 @@ export class Residencies implements OnInit {
     const value = crypto.randomUUID(); this.keys.set(slot, { signature, value }); return value;
   }
 
-  protected save(): void {
+  protected save(form?: NgForm): void {
+    if (form?.invalid) {
+      form.control.markAllAsTouched();
+      this.work.invalidFields.set(Object.keys(form.controls).filter(key => form.controls[key].invalid));
+      this.work.message.set('Revisa los campos indicados antes de guardar.');
+      return;
+    }
     const body = this.body(); const kind = this.kind(); const selected = this.selected(); const key = this.key('record', kind, body);
     this.notice.set('');
     this.work.run(this.work.csrf(token => this.client.save(kind, body, selected, key, token)), response => {

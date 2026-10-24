@@ -13,6 +13,7 @@ export class WorkspaceService {
   readonly auth = inject(AuthFacade);
   readonly busy = signal(false);
   readonly message = signal('');
+  readonly invalidFields = signal<string[]>([]);
   private readonly xsrf = inject(HttpXsrfTokenExtractor);
   private readonly router = inject(Router);
   private readonly destroyRef = inject(DestroyRef);
@@ -33,9 +34,13 @@ export class WorkspaceService {
     this.pending++;
     this.busy.set(true);
     this.message.set('');
+    this.invalidFields.set([]);
     request.pipe(takeUntilDestroyed(this.destroyRef), finalize(() => this.busy.set(--this.pending > 0)))
       .subscribe({ next: accept, error: (error: unknown) => {
         const status = error instanceof HttpErrorResponse ? error.status : 0;
+        if (status === 422 && error instanceof HttpErrorResponse && Array.isArray(error.error?.invalidFields)) {
+          this.invalidFields.set(error.error.invalidFields.filter((field: unknown): field is string => typeof field === 'string'));
+        }
         const message = status === 409
           ? 'El registro cambió o existe un conflicto. Revisa los datos actualizados antes de guardar.'
           : status === 422 ? 'Revisa los campos y el alcance permitido.'

@@ -6,6 +6,11 @@ export interface ProblemDetails {
   correlationId: string;
   detail: string;
   instance: string;
+
+  /**
+   * Nombres de campos declarados por el servidor que requieren corrección; no incluye valores enviados ni mensajes de validación.
+   */
+  invalidFields?: Array<string>;
   status: number;
   title: string;
   type: 'about:blank';

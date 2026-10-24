@@ -7,6 +7,45 @@ const projectId = '01ARZ3NDEKTSV4RRFFQ69G5FAY';
 const assignmentId = '01ARZ3NDEKTSV4RRFFQ69G5FAZ';
 const personal = ['residencies.files.read', 'residencies.profile.manage', 'residencies.projects.manage', 'residencies.advisers.assign', 'residencies.companies.create', 'residencies.companies.manage'];
 
+test('administración inscribe su identidad y recibe indicaciones de campos sin perder los datos', async ({ page }) => {
+  const permissions = [...personal, 'residencies.residents.enroll'];
+  let resident = null; let attempts = 0;
+  await page.route('**/api/v1/me', route => route.fulfill({ json: { data: { id, displayName: 'Administración de ensayo', email: null, status: 'ACTIVA', roles: ['ADMIN_RESIDENCIAS'], permissions, scopes: permissions.map(permission => permission + ':global'), sessionExpiresAt: new Date(Date.now() + 300000).toISOString() } } }));
+  await page.route('**/api/v1/residencies/**', async route => {
+    const request = route.request(); const path = new URL(request.url()).pathname.replace('/api/v1/residencies/', '');
+    if (request.method() === 'POST') {
+      expect(path).toBe('residents'); expect(request.headers()['x-xsrf-token']).toBeTruthy(); expect(request.headers()['idempotency-key']).toBeTruthy();
+      const body = request.postDataJSON(); expect(body.identityId).toBe(id); expect(body.controlNumber).toBe('99009901'); expect(body.programId).toBe(id); expect(body.email).toBeUndefined();
+      attempts++;
+      if (attempts === 1) return route.fulfill({ status: 422, json: { code: 'VALIDATION_ERROR', invalidFields: ['controlNumber'] } });
+      resident = { ...body, id: companyId, kind: 'residents', version: 1, name: 'Persona Piloto', status: 'ACTIVO' };
+      return route.fulfill({ status: 201, json: { data: resident } });
+    }
+    if (path === 'me') return route.fulfill({ json: { data: { resident, projects: { items: [], nextCursor: null } } } });
+    if (path === 'identity-candidates') return route.fulfill({ json: { data: { items: [{ id, displayName: 'Administración de ensayo', status: 'ACTIVA' }], nextCursor: null } } });
+    if (path === 'programs') return route.fulfill({ json: { data: { items: [{ id, kind: 'programs', version: 1, name: 'Programa de ensayo', active: true }], nextCursor: null } } });
+    if (path === 'residents') return route.fulfill({ json: { data: { items: resident ? [resident] : [], nextCursor: null } } });
+    if (path === 'residents/' + companyId) return route.fulfill({ json: { data: resident } });
+    throw new Error('Unexpected enrollment request');
+  });
+  await page.goto('/portal/residencies');
+  await page.getByRole('combobox', { name: 'Identidad institucional', exact: true }).selectOption(id);
+  await page.getByRole('combobox', { name: 'Programa educativo', exact: true }).selectOption(id);
+  await page.getByLabel('Número de control (8 o 9 dígitos)', { exact: true }).fill('corto');
+  await page.getByLabel('Nombres', { exact: true }).fill('Persona');
+  await page.getByLabel('Primer apellido', { exact: true }).fill('Piloto');
+  await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(page.getByRole('list', { name: 'Campos por corregir' })).toContainText('Número de control'); expect(attempts).toBe(0);
+  await page.getByLabel('Número de control (8 o 9 dígitos)', { exact: true }).fill('99009901');
+  await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(page.getByRole('alert')).toContainText('Revisa los campos');
+  await expect(page.getByRole('list', { name: 'Campos por corregir' })).toContainText('Número de control');
+  await expect(page.getByLabel('Nombres', { exact: true })).toHaveValue('Persona');
+  await page.getByRole('button', { name: 'Registrar', exact: true }).click();
+  await expect(page.getByRole('heading', { name: 'Persona Piloto · versión 1 · ACTIVO', exact: true })).toBeVisible();
+  await expect(page.getByRole('list', { name: 'Campos por corregir' })).toHaveCount(0); expect(attempts).toBe(2);
+});
+
 async function mockResidencies(page, scenario) {
   const permissions = scenario === 'reader' ? ['residencies.files.read'] : personal;
   const resident = { id, kind: 'residents', version: 1, name: '<img src=x onerror=alert(1)>', givenNames: 'Persona', firstSurname: 'Piloto', controlNumber: '21000001', programId: id, status: 'ACTIVO' };

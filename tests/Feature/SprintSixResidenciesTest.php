@@ -114,6 +114,26 @@ class SprintSixResidenciesTest extends TestCase
         $this->postJson(self::ROOT.'residents', $this->profile() + ['identityId' => $this->residentUser->id, 'controlNumber' => '21000003'], $this->headers())->assertForbidden();
     }
 
+    public function test_administrator_can_enroll_own_active_identity_and_invalid_fields_never_echo_input(): void
+    {
+        $this->login($this->administrator);
+        $body = $this->profile() + ['identityId' => $this->administrator->id, 'controlNumber' => '99009901'];
+        $invalid = $this->postJson(self::ROOT.'residents', array_replace($body, [
+            'controlNumber' => 'secret-invalid-control', 'curp' => 'private-invalid-curp', 'private-input-key' => 'private-input-value',
+        ]), $this->headers());
+        $invalid->assertUnprocessable()->assertJsonPath('invalidFields', ['controlNumber', 'curp']);
+        foreach (['secret-invalid-control', 'private-invalid-curp', 'private-input-key', 'private-input-value'] as $privateValue) {
+            $this->assertStringNotContainsString($privateValue, $invalid->getContent());
+        }
+        $this->assertDatabaseMissing('residencias_residentes', ['id_identidad' => $this->administrator->id]);
+        $created = $this->postJson(self::ROOT.'residents', $body, $this->headers())
+            ->assertCreated()->assertJsonPath('data.identityId', $this->administrator->id)
+            ->assertJsonPath('data.controlNumber', '99009901')->json('data');
+        $this->getJson(self::ROOT.'me')->assertOk()->assertJsonPath('data.resident.id', $created['id']);
+        $this->patchJson(self::ROOT.'residents/'.$created['id'], array_replace($this->profile(), ['city' => 'Perfil editado']), $this->headers(1))
+            ->assertOk()->assertJsonPath('data.city', 'Perfil editado');
+    }
+
     public function test_company_rfc_normalizes_rejects_collisions_and_preserves_creator_ownership(): void
     {
         $this->login($this->residentUser);

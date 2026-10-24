@@ -116,6 +116,8 @@ POST usa idempotencia de 24 h por actor/operación/padre, reautorizada en reinte
 
 El criterio de salida exige dos procesos MySQL reales para unicidad residente/periodo, solapamiento entre periodos, reintentos simultáneos y colisión global de RFC, más conciliación del expediente piloto. Se mantiene el despliegue/ensayo local autorizado, sin importación histórica. Evidencias y cierre: `artifacts/SPRINT_6_RESULTADOS_20261024.md` y `artifacts/SPRINT_6_VALIDACION_20261024.json`. Evidencias documentales, reportes, liberaciones y emisión se conservan para Sprints 7/8.
 
+La inscripción permite vincular también la identidad activa de administración, sin restricción por dominio de correo. Ante validación fallida, el formulario conserva los datos e indica los campos que requieren corrección; Problem Details sólo devuelve nombres de campos declarados, sin valores ni mensajes sensibles. El piloto permanece pendiente hasta confirmar el alta real y los demás pasos.
+
 ### Sprint 7 — Expediente y revisión documental
 
 - Casos de uso: definir requisitos, staging/upload, enviar/reemplazar evidencia, cola de revisión, aprobar/rechazar y consultar historial.
