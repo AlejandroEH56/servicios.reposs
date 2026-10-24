@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.4.0
+  version: 0.5.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -27,6 +27,12 @@ tags:
     name: AcademicPlanning
     description: 'Catálogos, semestres, laboratorios y días inhábiles.'
 paths:
+  /api/v1/academic-planning/laboratories/{laboratory}/schedules:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories~1{laboratory}~1schedules
+  /api/v1/academic-planning/laboratories/{laboratory}/schedules/{schedule}:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories~1{laboratory}~1schedules~1{schedule}
+  /api/v1/academic-planning/laboratories/{laboratory}/availability:
+    $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1laboratories~1{laboratory}~1availability
   /api/v1/academic-planning/responsibles:
     $ref: ./academic-planning.yaml#/paths/~1api~1v1~1academic-planning~1responsibles
   /api/v1/academic-planning/catalogs/{catalog}:

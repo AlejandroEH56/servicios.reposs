@@ -29,6 +29,7 @@ const definitions: Record<PlanningKind, { label: string; fields: Field[] }> = {
   providers: [WorkspaceService, PlanningClient],
   template: `
     <h2>Planificación académica</h2>
+    <p><a routerLink="/academic-planning/calendar">Horarios y disponibilidad</a></p>
     <p><a routerLink="/dashboard">Volver a tu sesión</a></p>
     <p>Consulta los catálogos institucionales. Los cambios se guardan con control de versión.</p>
     @if (work.message()) { <p role="alert">{{ work.message() }}</p> }

@@ -2,7 +2,7 @@
   "runtimeWritable": [
     "planificacion_carreras", "planificacion_especialidades", "planificacion_asignaturas", "planificacion_reticulas",
     "planificacion_grupos", "planificacion_semestres", "planificacion_laboratorios", "planificacion_tipos_dia_inhabil",
-    "planificacion_dias_inhabiles", "planificacion_controles", "planificacion_claves_idempotencia",
+    "planificacion_dias_inhabiles", "planificacion_controles", "planificacion_claves_idempotencia", "planificacion_horarios",
     "publicaciones_avisos", "publicaciones_recursos_aviso", "publicaciones_imagenes_preparadas",
     "publicaciones_claves_idempotencia", "publicaciones_cargas_idempotentes",
     "iam_identidades", "iam_cuentas_externas", "iam_roles", "iam_permisos",

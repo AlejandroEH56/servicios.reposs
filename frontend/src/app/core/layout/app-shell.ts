@@ -14,6 +14,7 @@ import { AuthFacade } from '../auth/auth.facade';
         <nav aria-label="Servicios habilitados">
           <a routerLink="/notices">Avisos públicos</a>
           <a routerLink="/academic-planning">Planificación académica</a>
+          <a routerLink="/academic-planning/calendar">Horarios y disponibilidad</a>
           @if (identity.permissions.includes('publicaciones.administrar')) { <a routerLink="/publications">Publicaciones</a> }
           @if (identity.permissions.includes('iam.roles.consultar') || identity.permissions.includes('iam.roles.gestionar')) { <a routerLink="/iam">Administración IAM</a> }
           @if (identity.permissions.some(organizationPermission)) { <a routerLink="/organization">Organization</a> }
