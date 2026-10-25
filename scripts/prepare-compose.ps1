@@ -67,6 +67,8 @@ $privileges = Get-Content -LiteralPath (Join-Path $projectRoot 'database/privile
 foreach ($table in $privileges.runtimeWritable) {
     $sql += 'GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.' + $table + " TO 'sr_container_runtime'@'%';`n"
 }
+foreach ($table in $privileges.runtimeMutable) { $sql += "GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`n" }
+foreach ($table in $privileges.runtimeAppendOnly) { $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`n" }
 foreach ($table in $privileges.appendOnly) { $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`nGRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
 foreach ($table in $privileges.operatorWritable) { $sql += "GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
 foreach ($table in $privileges.operatorReadOnly) { $sql += "GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }

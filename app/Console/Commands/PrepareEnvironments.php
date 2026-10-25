@@ -80,6 +80,15 @@ class PrepareEnvironments extends Command
                                 }
                             }
                         }
+                        if ($role === 'runtime') {
+                            foreach (['runtimeMutable' => 'SELECT, INSERT, UPDATE', 'runtimeAppendOnly' => 'SELECT, INSERT'] as $kind => $verbs) {
+                                foreach ($privileges[$kind] as $table) {
+                                    if (in_array($table, $existingTables, true)) {
+                                        $admin->exec('GRANT '.$verbs.' ON `'.$database.'`.`'.$table.'` TO '.$account);
+                                    }
+                                }
+                            }
+                        }
                         foreach ($privileges['appendOnly'] as $table) {
                             if (in_array($table, $existingTables, true)) {
                                 $admin->exec('GRANT SELECT, INSERT ON `'.$database.'`.`'.$table.'` TO '.$account);

@@ -1,5 +1,6 @@
 {
   "runtimeWritable": [
+    "residencias_definiciones_requisito",
     "residencias_modalidades", "residencias_programas_educativos", "residencias_periodos", "residencias_residentes",
     "residencias_sectores", "residencias_ramos", "residencias_empresas", "residencias_contactos_empresa",
     "residencias_proyectos", "residencias_asesores_internos_proyecto", "residencias_asesores_externos_proyecto",
@@ -16,6 +17,8 @@
     "compartido_mensajes_salida", "compartido_bandeja_entrada", "compartido_archivos_almacenados",
     "sessions", "cache", "cache_locks", "jobs", "job_batches", "failed_jobs"
   ],
+  "runtimeMutable": ["residencias_entregas_evidencia", "residencias_archivos_preparados"],
+  "runtimeAppendOnly": ["residencias_revisiones_evidencia"],
   "appendOnly": ["compartido_registros_auditoria", "iam_historial_roles"],
   "operatorWritable": ["iam_identidades", "iam_identidad_roles", "iam_controles"],
   "operatorReadOnly": ["iam_cuentas_externas", "iam_roles", "iam_permisos", "iam_rol_permisos"]

@@ -358,6 +358,7 @@ class ResidencyStore implements ResidencyDirectory
             if ($row->id_programa !== $program->id) {
                 $this->requirePermission($actor, 'residents.enroll');
                 abort_if($this->table('projects')->where('id_residente', $row->id)->exists(), 409);
+                abort_if(DB::table('residencias_entregas_evidencia')->where('id_residente', $row->id)->exists(), 409);
             }
             $values = ['estado' => $row->estado];
         }

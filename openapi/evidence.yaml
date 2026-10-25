@@ -1,0 +1,1934 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Evidence - Sprint 7",
+    "version": "0.7.0",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "description": "Expediente y revisión documental. Historial append-only, archivos privados escaneados y preparados con vencimiento de 24 h; reserva previa para reintentos. No hay eliminación automática de documentos, cuarentena ni historial. Máximo 100 preparaciones por actor en 24 h y throttle 10/min. Reportes, liberación y emisión corresponden al Sprint 8."
+  },
+  "tags": [
+    {
+      "name": "Evidence",
+      "description": "Requisitos, evidencias privadas e historial de revisión."
+    }
+  ],
+  "paths": {
+    "/api/v1/residencies/files/staged": {
+      "post": {
+        "operationId": "stageResidencyEvidence",
+        "summary": "Preparar archivo privado vinculado a residente, requisito y proyecto opcional; 10 MB, MIME real y antivirus. La ruta de carga de Publicaciones conserva su contrato previo.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token preparado mediante /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Reintentos reautorizados, misma carga y clave durante 24 horas. Una clave reservada/en proceso, fallida, vencida o con payload distinto devuelve 409."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePreparedFileResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceStageInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/requirements": {
+      "get": {
+        "operationId": "listEvidenceRequirements",
+        "summary": "Administrar definiciones de requisitos con alcance GLOBAL.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRequirementPageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createEvidenceRequirement",
+        "summary": "Definir prerrequisito/requisito para un programa o todos; alcance residente o proyecto.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token preparado mediante /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Reintentos reautorizados, misma carga y clave durante 24 horas. Una clave reservada/en proceso, fallida, vencida o con payload distinto devuelve 409."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRequirementResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceRequirementInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/requirements/{record}": {
+      "get": {
+        "operationId": "getEvidenceRequirement",
+        "summary": "Consultar definición administrable.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRequirementResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateEvidenceRequirement",
+        "summary": "Editar definición con If-Match; alcance, programa, límites y vigencias quedan fijos tras un envío. Los snapshots históricos permanecen intactos.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token preparado mediante /sanctum/csrf-cookie."
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$"
+            },
+            "description": "Versión actual del requisito entre comillas."
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRequirementResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceRequirementInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/files/{record}/requirements": {
+      "get": {
+        "operationId": "listResidentRequirements",
+        "summary": "Requisitos y última entrega del residente. Sin projectId: alcance RESIDENTE; con projectId válido del residente: alcance PROYECTO. requirementId permite refrescar una selección de cualquier página.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "requirementId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceRequirementPageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence": {
+      "post": {
+        "operationId": "submitResidencyEvidence",
+        "summary": "Enviar o reemplazar evidencia propia/GLOBAL usando preparación propia, vigente y de un solo uso. expectedSubmissionVersion=0 para el primer envío; luego el consecutivo anterior. Una aprobación exige un proceso posterior de reapertura, fuera de este sprint.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token preparado mediante /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Reintentos reautorizados, misma carga y clave durante 24 horas. Una clave reservada/en proceso, fallida, vencida o con payload distinto devuelve 409."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceSubmissionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/review-queue": {
+      "get": {
+        "operationId": "listEvidenceReviewQueue",
+        "summary": "Cola de entregas pendientes; excluye expediente propio y archivos cargados por la identidad revisora.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "residentId",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}": {
+      "get": {
+        "operationId": "getResidencyEvidence",
+        "summary": "Consultar entrega con metadata, snapshot y capacidad de revisión comprobados.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}/history": {
+      "get": {
+        "operationId": "getEvidenceHistory",
+        "summary": "Versiones del mismo requisito/alcance y revisiones inmutables; conserva archivos reemplazados.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidencePageResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}/reviews": {
+      "post": {
+        "operationId": "reviewResidencyEvidence",
+        "summary": "Aprobar, rechazar o pedir cambios sobre ENVIADO; expectedReviewNumber protege concurrencia. Se prohíbe autorrevisión por residente o cargador; rechazo/cambios requieren observaciones. CAMBIOS_SOLICITADOS materializa RECHAZADO y conserva la decisión original.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token preparado mediante /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Reintentos reautorizados, misma carga y clave durante 24 horas. Una clave reservada/en proceso, fallida, vencida o con payload distinto devuelve 409."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/EvidenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EvidenceReviewInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}/download": {
+      "get": {
+        "operationId": "downloadResidencyEvidence",
+        "summary": "Descarga autorizada como adjunto: verifica metadata, tamaño y hash del binario, incluso para versiones reemplazadas.",
+        "tags": [
+          "Evidence"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Binario privado, Content-Disposition attachment y no-store; no expone rutas internas.",
+            "headers": {
+              "Content-Disposition": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 200
+                }
+              },
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/jpeg": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "image/png": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              },
+              "text/plain": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "EvidenceRequirementInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "code",
+          "name",
+          "stage",
+          "scope",
+          "required",
+          "displayOrder",
+          "active",
+          "allowedMimes",
+          "maxBytes"
+        ],
+        "properties": {
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,79}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "programId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "PRERREQUISITO",
+              "REQUISITO"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "RESIDENTE",
+              "PROYECTO"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "validFrom": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "allowedMimes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "text/plain"
+              ]
+            }
+          },
+          "maxBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          }
+        }
+      },
+      "EvidenceRequirementSnapshot": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "code",
+          "name",
+          "programId",
+          "stage",
+          "scope",
+          "required",
+          "displayOrder",
+          "validFrom",
+          "validUntil",
+          "active",
+          "allowedMimes",
+          "maxBytes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,79}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "programId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "PRERREQUISITO",
+              "REQUISITO"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "RESIDENTE",
+              "PROYECTO"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "validFrom": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "allowedMimes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "text/plain"
+              ]
+            }
+          },
+          "maxBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          }
+        }
+      },
+      "EvidenceRequirement": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "code",
+          "name",
+          "programId",
+          "stage",
+          "scope",
+          "required",
+          "displayOrder",
+          "validFrom",
+          "validUntil",
+          "active",
+          "allowedMimes",
+          "maxBytes"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "code": {
+            "type": "string",
+            "maxLength": 80,
+            "pattern": "^[A-Z0-9][A-Z0-9._-]{0,79}$"
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 255
+          },
+          "programId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "stage": {
+            "type": "string",
+            "enum": [
+              "PRERREQUISITO",
+              "REQUISITO"
+            ]
+          },
+          "scope": {
+            "type": "string",
+            "enum": [
+              "RESIDENTE",
+              "PROYECTO"
+            ]
+          },
+          "required": {
+            "type": "boolean"
+          },
+          "displayOrder": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "validFrom": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "validUntil": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "allowedMimes": {
+            "type": "array",
+            "minItems": 1,
+            "maxItems": 4,
+            "uniqueItems": true,
+            "items": {
+              "type": "string",
+              "enum": [
+                "application/pdf",
+                "image/jpeg",
+                "image/png",
+                "text/plain"
+              ]
+            }
+          },
+          "maxBytes": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "latestEvidence": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/EvidenceRecord"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "EvidenceStageInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "purpose",
+          "residentId",
+          "requirementId",
+          "file"
+        ],
+        "properties": {
+          "purpose": {
+            "type": "string",
+            "const": "RESIDENCY_EVIDENCE"
+          },
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "requirementId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "file": {
+            "type": "string",
+            "format": "binary"
+          }
+        }
+      },
+      "EvidencePreparedFile": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "status",
+          "residentId",
+          "projectId",
+          "requirementId",
+          "requirementVersion",
+          "originalName",
+          "mime",
+          "size",
+          "sha256",
+          "expiresAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "status": {
+            "type": "string",
+            "const": "READY"
+          },
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requirementId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "requirementVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "originalName": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "mime": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "text/plain"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "expiresAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EvidenceSubmissionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "residentId",
+          "requirementId",
+          "stagedFileId",
+          "expectedSubmissionVersion"
+        ],
+        "properties": {
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requirementId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "stagedFileId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "expectedSubmissionVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65534
+          }
+        }
+      },
+      "EvidenceReviewInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision",
+          "expectedReviewNumber"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APROBADO",
+              "RECHAZADO",
+              "CAMBIOS_SOLICITADOS"
+            ]
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "multipleOf": 0.01
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expectedReviewNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          }
+        }
+      },
+      "EvidenceReview": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "reviewNumber",
+          "previousStatus",
+          "decision",
+          "observations",
+          "grade",
+          "decidedAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "reviewNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "previousStatus": {
+            "type": "string",
+            "maxLength": 30
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APROBADO",
+              "RECHAZADO",
+              "CAMBIOS_SOLICITADOS"
+            ]
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "decidedAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "EvidenceRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "version",
+          "residentId",
+          "projectId",
+          "requirementId",
+          "submissionVersion",
+          "status",
+          "reviewNumber",
+          "requirementSnapshot",
+          "originalName",
+          "mime",
+          "size",
+          "sha256",
+          "submittedAt",
+          "replacedAt",
+          "canReview"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2147483647
+          },
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "projectId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "requirementId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$"
+          },
+          "submissionVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "ENVIADO",
+              "EN_REVISION",
+              "APROBADO",
+              "RECHAZADO",
+              "REEMPLAZADO",
+              "RETIRADO"
+            ]
+          },
+          "reviewNumber": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 2147483647
+          },
+          "requirementSnapshot": {
+            "$ref": "#/components/schemas/EvidenceRequirementSnapshot"
+          },
+          "originalName": {
+            "type": "string",
+            "maxLength": 180
+          },
+          "mime": {
+            "type": "string",
+            "enum": [
+              "application/pdf",
+              "image/jpeg",
+              "image/png",
+              "text/plain"
+            ]
+          },
+          "size": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 10485760
+          },
+          "sha256": {
+            "type": "string",
+            "pattern": "^[a-f0-9]{64}$"
+          },
+          "submittedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "replacedAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date-time"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canReview": {
+            "type": "boolean"
+          },
+          "reviews": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/EvidenceReview"
+            }
+          }
+        }
+      },
+      "EvidenceRequirementPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRequirement"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "EvidenceRequirementResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EvidenceRequirement"
+          }
+        }
+      },
+      "EvidenceRequirementPageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EvidenceRequirementPage"
+          }
+        }
+      },
+      "EvidencePage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "items",
+          "nextCursor"
+        ],
+        "properties": {
+          "items": {
+            "type": "array",
+            "maxItems": 100,
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRecord"
+            }
+          },
+          "nextCursor": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 4096
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "EvidenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EvidenceRecord"
+          }
+        }
+      },
+      "EvidencePageResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EvidencePage"
+          }
+        }
+      },
+      "EvidencePreparedFileResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/EvidencePreparedFile"
+          }
+        }
+      }
+    }
+  }
+}

@@ -97,6 +97,17 @@ class PrivateFileStore implements ScannedFiles
         return ['content' => $content, 'mime' => $row->tipo_mime];
     }
 
+    public function metadata(string $id): ?array
+    {
+        $row = DB::table('compartido_archivos_almacenados')->where('id', $id)->whereNull('eliminado_en')->first();
+        if ($row === null || ! Str::isUlid($id)) {
+            return null;
+        }
+
+        return ['id' => $row->id, 'ownerId' => $row->id_identidad_carga, 'status' => $row->estado_escaneo,
+            'mime' => $row->tipo_mime, 'size' => (int) $row->tamano_bytes, 'sha256' => $row->sha256];
+    }
+
     private function active(string $actor): void
     {
         if (! Str::isUlid($actor) || ! User::query()->whereKey($actor)->where('estado', IdentityState::Active->value)->exists()) {
