@@ -120,6 +120,8 @@ try {
  [byte[]]$tableNames=Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes('SHOW TABLES FROM servicios_moderno_stage;'))
  $existingTables=[Text.Encoding]::UTF8.GetString($tableNames) -split '\s+'
  foreach($table in $privileges.runtimeWritable){if($existingTables -contains $table){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}}
+ foreach($table in $privileges.runtimeMutable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"}}
+ foreach($table in $privileges.runtimeAppendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"}}
  foreach($table in $privileges.appendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  foreach($table in $privileges.operatorWritable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  foreach($table in $privileges.operatorReadOnly){if($existingTables -contains $table){$sql+="GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
@@ -138,6 +140,40 @@ try {
  $operatorProbe=Invoke-DockerBytes @('run','--rm','--network',$network,'--env-file',(Join-Path $root 'container-operator.env'),'--entrypoint','php','servicios-backend:local','-r',$permissionProbe)
  $operatorPermissions=[Text.Encoding]::UTF8.GetString($operatorProbe)|ConvertFrom-Json;$result.operatorDdlDenied=$operatorPermissions.denied -eq $operatorPermissions.expected
  $result.operatorRoleHistoryMutationDenied=($operatorPermissions.hasRoleHistory -and $result.operatorDdlDenied)
+ $evidenceProbe=$bootstrap+@'
+$available=interface_exists(App\Modules\Residencies\Application\EvidenceWorkflow::class) && Illuminate\Support\Facades\Schema::hasColumn('residencias_entregas_evidencia','instantanea_requisito');
+$result=['available'=>$available,'filesChecked'=>0,'metadataMatches'=>true,'reviewMutationDenied'=>false,'deliveryDeletionDenied'=>false];
+if($available){
+ $files=$app->make(App\Modules\Shared\Application\Ports\ScannedFiles::class);
+ Illuminate\Support\Facades\DB::table('residencias_entregas_evidencia')->orderBy('id')->chunk(100,function($rows)use($files,&$result){
+  foreach($rows as $row){
+   $metadata=$files->metadata($row->id_archivo);$bytes=$files->bytes($row->id_archivo);
+   if(!$metadata || $metadata['status']!=='LIMPIO' || $metadata['ownerId']!==$row->id_identidad_envio || $metadata['mime']!==$row->tipo_mime || $metadata['size']!==(int)$row->tamano_bytes || !hash_equals($metadata['sha256'],$row->sha256) || $bytes['mime']!==$row->tipo_mime || strlen($bytes['content'])!==(int)$row->tamano_bytes || !hash_equals($row->sha256,hash('sha256',$bytes['content']))){throw new RuntimeException('Recovered evidence metadata mismatch.');}
+   $result['filesChecked']++;
+  }
+ });
+ $denied=0;
+ foreach(['UPDATE residencias_revisiones_evidencia SET decision=decision WHERE 1=0','DELETE FROM residencias_revisiones_evidencia WHERE 1=0','DELETE FROM residencias_entregas_evidencia WHERE 1=0','DELETE FROM residencias_archivos_preparados WHERE 1=0'] as $statement){
+  try{Illuminate\Support\Facades\DB::statement($statement);}catch(PDOException $e){if((int)($e->errorInfo[1]??0)!==1142){throw $e;}$denied++;}
+ }
+ if($denied!==4){throw new RuntimeException('Recovered evidence privileges differ.');}
+ $result['reviewMutationDenied']=true;$result['deliveryDeletionDenied']=true;
+}
+echo json_encode($result,JSON_THROW_ON_ERROR);
+'@
+ $evidenceBytes=Invoke-DockerBytes @('exec',$backend,'php','-r',$evidenceProbe)
+ $evidenceResult=[Text.Encoding]::UTF8.GetString($evidenceBytes)|ConvertFrom-Json
+ $result.evidenceWorkflowRecovered=$evidenceResult.available
+ if($evidenceResult.available){
+  $result.evidenceFilesRecovered=$evidenceResult.filesChecked
+  $result.evidenceMetadataMatches=$evidenceResult.metadataMatches
+  $result.evidenceReviewMutationDenied=$evidenceResult.reviewMutationDenied
+  $result.evidenceDeletionDenied=$evidenceResult.deliveryDeletionDenied
+  $operatorEvidenceProbe=$bootstrap+'try{Illuminate\Support\Facades\DB::select("SELECT id FROM residencias_revisiones_evidencia LIMIT 0");echo "false";}catch(PDOException $e){if((int)($e->errorInfo[1]??0)!==1142){throw $e;}echo "true";}'
+  $operatorEvidenceBytes=Invoke-DockerBytes @('run','--rm','--network',$network,'--env-file',(Join-Path $root 'container-operator.env'),'--entrypoint','php','servicios-backend:local','-r',$operatorEvidenceProbe)
+  $result.operatorEvidenceReviewReadDenied=[Text.Encoding]::UTF8.GetString($operatorEvidenceBytes).Trim() -eq 'true'
+  if(-not $result.operatorEvidenceReviewReadDenied){throw 'Recovered operator can read evidence reviews.'}
+ }
  if($runtimePermissions.hasRoleHistory){
   $organizationProbe=Invoke-DockerBytes @('exec',$backend,'php','artisan','modernization:verify-identifiers','--enable-module=organization','--no-interaction')
   $organizationResult=[Text.Encoding]::UTF8.GetString($organizationProbe)|ConvertFrom-Json

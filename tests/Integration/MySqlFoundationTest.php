@@ -414,6 +414,12 @@ PHP;
             foreach ($privileges['runtimeWritable'] as $table) {
                 $admin->exec('GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
             }
+            foreach ($privileges['runtimeMutable'] as $table) {
+                $admin->exec('GRANT SELECT, INSERT, UPDATE ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
+            }
+            foreach ($privileges['runtimeAppendOnly'] as $table) {
+                $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
+            }
             foreach ($privileges['appendOnly'] as $table) {
                 $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
                 $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$operator);
@@ -452,6 +458,20 @@ PHP;
                 } catch (PDOException $exception) {
                     $this->assertSame(1142, $exception->errorInfo[1]);
                 }
+            }
+            foreach (['UPDATE residencias_revisiones_evidencia SET numero_revision=numero_revision WHERE 1=0', 'DELETE FROM residencias_revisiones_evidencia WHERE 1=0', 'DELETE FROM residencias_entregas_evidencia WHERE 1=0', 'DELETE FROM residencias_archivos_preparados WHERE 1=0'] as $sql) {
+                try {
+                    $limited->exec($sql);
+                    $this->fail('Evidence history or retention privilege unexpectedly granted.');
+                } catch (PDOException $exception) {
+                    $this->assertSame(1142, $exception->errorInfo[1]);
+                }
+            }
+            try {
+                $operatorConnection->query('SELECT COUNT(*) FROM residencias_revisiones_evidencia');
+                $this->fail('IAM operator obtained documentary access.');
+            } catch (PDOException $exception) {
+                $this->assertSame(1142, $exception->errorInfo[1]);
             }
             $builder->exec('DROP TABLE grants_probe');
         } finally {

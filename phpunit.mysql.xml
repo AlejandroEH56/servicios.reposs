@@ -11,6 +11,7 @@
             <file>tests/Feature/SprintFourPlanningTest.php</file>
             <file>tests/Feature/SprintFiveCalendarTest.php</file>
             <file>tests/Feature/SprintSixResidenciesTest.php</file>
+            <file>tests/Feature/SprintSevenEvidenceTest.php</file>
             <file>tests/Feature/IdentifierBoundaryTest.php</file>
             <file>tests/Feature/OutboxTest.php</file>
             <file>tests/Feature/IdentityContactTest.php</file>

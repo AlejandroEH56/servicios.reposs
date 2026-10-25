@@ -1,10 +1,24 @@
 <?php
 
 use App\Http\Middleware\RequireActiveIdentity;
+use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\EvidenceController;
 use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\ResidencyController;
 use Illuminate\Support\Facades\Route;
 
+Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:10,1'])->post('api/v1/residencies/files/staged', [EvidenceController::class, 'write'])->defaults('operation', 'stage')->name('residencies.evidence.stage');
+
 Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:120,1'])->prefix('api/v1/residencies')->name('residencies.')->group(function (): void {
+    Route::get('requirements', [EvidenceController::class, 'read'])->defaults('operation', 'definitions')->name('requirements.list');
+    Route::get('requirements/{record}', [EvidenceController::class, 'read'])->whereUlid('record')->defaults('operation', 'definitions')->name('requirements.get');
+    Route::post('requirements', [EvidenceController::class, 'write'])->defaults('operation', 'define')->name('requirements.create');
+    Route::patch('requirements/{record}', [EvidenceController::class, 'write'])->whereUlid('record')->defaults('operation', 'define')->name('requirements.update');
+    Route::get('files/{record}/requirements', [EvidenceController::class, 'read'])->whereUlid('record')->defaults('operation', 'requirements')->name('files.requirements');
+    Route::post('evidence', [EvidenceController::class, 'write'])->defaults('operation', 'submit')->name('evidence.submit');
+    Route::get('review-queue', [EvidenceController::class, 'read'])->defaults('operation', 'queue')->name('evidence.queue');
+    Route::get('evidence/{record}', [EvidenceController::class, 'read'])->whereUlid('record')->defaults('operation', 'evidence')->name('evidence.get');
+    Route::get('evidence/{record}/history', [EvidenceController::class, 'read'])->whereUlid('record')->defaults('operation', 'history')->name('evidence.history');
+    Route::get('evidence/{record}/download', [EvidenceController::class, 'download'])->whereUlid('record')->name('evidence.download');
+    Route::post('evidence/{record}/reviews', [EvidenceController::class, 'write'])->whereUlid('record')->defaults('operation', 'review')->name('evidence.review');
     foreach (['me', 'identity-candidates', 'adviser-candidates'] as $kind) {
         Route::get($kind, [ResidencyController::class, 'read'])->defaults('kind', $kind)->name($kind);
     }

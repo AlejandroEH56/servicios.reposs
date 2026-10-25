@@ -1,0 +1,102 @@
+<h2>Expediente y revisión documental</h2>
+<p><a routerLink="/dashboard">Volver a tu sesión</a> · <a routerLink="/residencies">Perfil y proyecto</a></p>
+@if (notice()) { <p role="status">{{ notice() }}</p> }
+@if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (corrections().length) { <ul aria-label="Campos por corregir">@for (label of corrections(); track label) { <li>Revisa {{ label }}.</li> }</ul> }
+<fieldset [disabled]="work.busy()"><legend>Área del expediente</legend>
+  <label>Área <select [ngModel]="view()" (ngModelChange)="changeView($event)">
+    <option value="file">Expediente del residente</option>
+    @if (work.can('residencies.requirements.manage')) { <option value="definitions">Administración de requisitos</option> }
+    @if (work.can('residencies.evidence.review')) { <option value="queue">Cola de revisión</option> }
+  </select></label>
+</fieldset>
+@if (view() === 'file') {
+  <fieldset [disabled]="work.busy()"><legend>Seleccionar expediente</legend>
+    @if (global()) {
+      <form (ngSubmit)="loadResidents()"><label>Buscar residente <input name="residentSearch" [(ngModel)]="residentSearch" maxlength="100"></label><button>Buscar residentes</button></form>
+      <label>Residente <select [(ngModel)]="residentId" (ngModelChange)="changeResident()"><option value="">Seleccionar</option>@for (row of residents(); track row.id) { <option [value]="row.id">{{ row.name }} · {{ row.controlNumber }}</option> }</select></label>
+      @if (residentNext()) { <button type="button" (click)="loadResidents(true)">Más residentes</button> }
+    } @else if (own(); as resident) { <p>{{ resident.name }} · {{ resident.controlNumber }}</p> }
+    @else { <p>Tu identidad aún no tiene un expediente de residente. Solicita la inscripción a administración.</p> }
+    @if (residentId) {
+      <label>Ámbito documental <select [(ngModel)]="projectId" (ngModelChange)="changeContext()"><option value="">Expediente del residente, sin proyecto</option>@for (project of projects(); track project.id) { <option [value]="project.id">{{ project.name }} · {{ project.status }}</option> }</select></label>
+      @if (projectNext()) { <button type="button" (click)="loadProjects(true)">Más proyectos</button> }
+    }
+  </fieldset>
+  <ul>@for (row of requirements(); track row.id) {
+    <li><button type="button" (click)="selectRequirement(row)" [disabled]="work.busy()">{{ row.code }} · {{ row.name }}</button> · {{ row.required ? 'Obligatorio' : 'Opcional' }} · {{ row.latestEvidence?.status ?? 'Sin entrega' }} @if (!row.active) { <span>· Inactivo</span> }</li>
+  } @empty { @if (residentId) { <li>No hay requisitos para este ámbito.</li> } }</ul>
+  @if (next()) { <button type="button" (click)="loadRequirements(true)" [disabled]="work.busy()">Más requisitos</button> }
+  @if (selected(); as requirement) {
+    <h3>{{ requirement.name }}</h3>
+    <p>{{ requirement.stage }} · {{ requirement.scope }} · Tipos permitidos: {{ allowedTypes(requirement) }} · Máximo {{ requirement.maxBytes / 1048576 }} MB.</p>
+    @if (requirement.canSubmit) {
+      <fieldset [disabled]="work.busy()"><legend>Enviar documento</legend>
+        <p>Selecciona un archivo, compruébalo y después envíalo. Una nueva entrega conserva el historial; los documentos aprobados requieren un proceso posterior de reapertura.</p>
+        <label>Archivo de evidencia <input type="file" [accept]="requirement.allowedMimes.join(',')" (change)="chooseFile($event)"></label>
+        @if (file) { <p>Archivo seleccionado: {{ file.name }}.</p> }
+        <button type="button" (click)="stage()" [disabled]="!file">Comprobar archivo</button>
+        @if (prepared(); as staged) { <p>Archivo comprobado: {{ staged.originalName }} · {{ staged.size }} bytes. Aún no está enviado; la comprobación vence en 24 horas.</p><button type="button" (click)="submit()">{{ requirement.latestEvidence ? 'Reemplazar evidencia' : 'Enviar evidencia' }}</button> }
+      </fieldset>
+    } @else { <p>Este requisito no admite un nuevo envío con el estado o permisos actuales.</p> }
+  }
+}
+@if (view() === 'definitions' && work.can('residencies.requirements.manage')) {
+  <fieldset [disabled]="work.busy()"><legend>Administración de requisitos</legend>
+    <form (ngSubmit)="loadDefinitions()"><label>Buscar requisito <input name="definitionSearch" [(ngModel)]="definitionSearch" maxlength="100"></label><button>Buscar requisitos</button></form>
+    <ul>@for (row of requirements(); track row.id) { <li><button type="button" (click)="openDefinition(row)">{{ row.code }} · {{ row.name }}</button> · {{ row.scope }} · {{ row.active ? 'Activo' : 'Inactivo' }}</li> }</ul>
+    @if (next()) { <button type="button" (click)="loadDefinitions(true)">Más definiciones</button> }
+    <button type="button" (click)="newDefinition()">Nuevo requisito</button>
+    <form #definitionForm="ngForm" (ngSubmit)="saveDefinition(definitionForm)">
+      <h3>{{ definition() ? 'Editar requisito' : 'Registrar requisito' }}</h3>
+      <p>Tras el primer envío quedan fijos programa, código, alcance, etapa, vigencias, tipos y tamaño. Los cambios de nombre no alteran las instantáneas anteriores.</p>
+      <label>Código <input name="code" [(ngModel)]="definitionDraft.code" pattern="[A-Z0-9][A-Z0-9._-]{0,79}" maxlength="80" required></label>
+      <label>Nombre del requisito <input name="name" [(ngModel)]="definitionDraft.name" maxlength="255" required></label>
+      <label>Programa educativo <select name="program" [(ngModel)]="definitionDraft.programId"><option [ngValue]="null">Todos los programas</option>@for (program of programs(); track program.id) { <option [value]="program.id">{{ program.name }}</option> }</select></label>
+      @if (programNext()) { <button type="button" (click)="loadPrograms(true)">Más programas</button> }
+      <label>Etapa <select name="stage" [(ngModel)]="definitionDraft.stage"><option>PRERREQUISITO</option><option>REQUISITO</option></select></label>
+      <label>Alcance <select name="scope" [(ngModel)]="definitionDraft.scope"><option>RESIDENTE</option><option>PROYECTO</option></select></label>
+      <label>Orden de visualización <input type="number" name="order" [(ngModel)]="definitionDraft.displayOrder" min="0" max="65535" step="1" required></label>
+      <label>Vigencia inicial <input type="date" name="from" [(ngModel)]="definitionDraft.validFrom"></label>
+      <label>Vigencia final <input type="date" name="until" [(ngModel)]="definitionDraft.validUntil"></label>
+      <label>Tamaño máximo en MB <input type="number" name="maximumMb" [(ngModel)]="maximumMb" min="0.00000095" max="10" step="any" required></label>
+      <fieldset><legend>Tipos permitidos</legend>@for (mime of mimes; track mime) { <label><input type="checkbox" [name]="mime" [ngModel]="definitionDraft.allowedMimes.includes(mime)" (ngModelChange)="toggleMime(mime, $event)">{{ mimeName(mime) }}</label> }</fieldset>
+      <label><input type="checkbox" name="required" [(ngModel)]="definitionDraft.required">Requisito obligatorio</label>
+      <label><input type="checkbox" name="active" [(ngModel)]="definitionDraft.active">Requisito activo</label>
+      <button>Guardar requisito</button>
+    </form>
+  </fieldset>
+}
+@if (view() === 'queue' && work.can('residencies.evidence.review')) {
+  <fieldset [disabled]="work.busy()"><legend>Cola de revisión</legend>
+    <p>Se excluyen tu propio expediente y los archivos que cargaste. Cada entrega pendiente admite una decisión; una corrección se envía como una nueva versión.</p>
+    <button type="button" (click)="loadQueue()">Actualizar cola</button>
+    <ul>@for (row of queue(); track row.id) { <li><button type="button" (click)="openReview(row)">{{ row.requirementSnapshot.name }} · {{ row.originalName }} · versión {{ row.submissionVersion }}</button></li> } @empty { <li>No hay entregas pendientes visibles para tu cuenta.</li> }</ul>
+    @if (next()) { <button type="button" (click)="loadQueue(true)">Más entregas pendientes</button> }
+  </fieldset>
+  @if (reviewTarget(); as evidence) {
+    <h3>Entrega: {{ evidence.originalName }} · {{ evidence.status }}</h3>
+    <p>{{ evidence.requirementSnapshot.name }} · versión documental {{ evidence.submissionVersion }} · {{ evidence.submittedAt }}</p>
+    <button type="button" (click)="download(evidence)" [disabled]="work.busy()">Descargar para revisión</button>
+    @if (evidence.canReview) {
+      <fieldset [disabled]="work.busy()"><legend>Decisión de revisión</legend>
+        <form #reviewForm="ngForm" (ngSubmit)="review(reviewForm)">
+          <label>Decisión <select name="decision" [(ngModel)]="decision"><option>APROBADO</option><option>RECHAZADO</option><option>CAMBIOS_SOLICITADOS</option></select></label>
+          <label>Observaciones <textarea name="observations" [(ngModel)]="observations" [required]="decision !== 'APROBADO'" maxlength="5000"></textarea></label>
+          <label>Calificación opcional <input type="number" name="grade" [(ngModel)]="grade" min="0" max="100" step="0.01"></label>
+          <button>Registrar revisión</button>
+        </form>
+      </fieldset>
+    } @else { <p>Esta entrega ya no admite revisión por tu cuenta.</p> }
+  }
+}
+@if (history().length) {
+  <h3>Historial documental</h3>
+  <ol>@for (evidence of history(); track evidence.id) {
+    <li>{{ evidence.requirementSnapshot.name }} · {{ evidence.originalName }} · versión {{ evidence.submissionVersion }} · {{ evidence.status }} · {{ evidence.submittedAt }}
+      <button type="button" (click)="download(evidence)" [disabled]="work.busy()">Descargar versión {{ evidence.submissionVersion }}</button>
+      <ul>@for (review of evidence.reviews ?? []; track review.id) { <li>Revisión {{ review.reviewNumber }}: {{ review.decision }} · {{ review.decidedAt }} · {{ review.observations ?? 'Sin observaciones' }} @if (review.grade !== null) { <span>· Calificación {{ review.grade }}</span> }</li> }</ul>
+    </li>
+  }</ol>
+  @if (historyNext()) { <button type="button" (click)="loadHistory(history()[0], true)" [disabled]="work.busy()">Más versiones del historial</button> }
+}

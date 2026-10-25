@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.6.0
+  version: 0.7.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -29,7 +29,30 @@ tags:
   -
     name: Residencies
     description: 'Expedientes, empresas globales, proyectos y asesores con alcance local.'
+  -
+    name: Evidence
+    description: 'Expediente y revisión documental.'
 paths:
+  /api/v1/residencies/files/staged:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1files~1staged
+  /api/v1/residencies/evidence/{record}/download:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}~1download
+  /api/v1/residencies/evidence/{record}/reviews:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}~1reviews
+  /api/v1/residencies/evidence/{record}/history:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}~1history
+  /api/v1/residencies/evidence/{record}:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}
+  /api/v1/residencies/review-queue:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1review-queue
+  /api/v1/residencies/evidence:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1evidence
+  /api/v1/residencies/files/{record}/requirements:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1files~1{record}~1requirements
+  /api/v1/residencies/requirements/{record}:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1requirements~1{record}
+  /api/v1/residencies/requirements:
+    $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1requirements
   /api/v1/residencies/projects/{parent}/external-advisers/{record}:
     $ref: ./residencies.yaml#/paths/~1api~1v1~1residencies~1projects~1{parent}~1external-advisers~1{record}
   /api/v1/residencies/projects/{parent}/external-advisers:
