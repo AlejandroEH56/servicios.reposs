@@ -4396,6 +4396,20 @@
             ],
             "maxLength": 18,
             "pattern": "^[A-Z0-9]{18}$"
+          },
+          "insuranceType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "IMSS",
+                  "ISSSTE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -4480,6 +4494,20 @@
             ],
             "maxLength": 18,
             "pattern": "^[A-Z0-9]{18}$"
+          },
+          "insuranceType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "IMSS",
+                  "ISSSTE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -4572,6 +4600,17 @@
               "ACTIVO",
               "INACTIVO",
               "BLOQUEADO"
+            ]
+          },
+          "mobilePhone": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 30
+              },
+              {
+                "type": "null"
+              }
             ]
           }
         }
@@ -4680,6 +4719,20 @@
           "endsOn": {
             "type": "string",
             "format": "date"
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "BANCO_PROYECTOS",
+                  "PROPUESTA_PROPIA"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },
@@ -5069,6 +5122,34 @@
               "null"
             ],
             "maxLength": 120
+          },
+          "insuranceType": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "IMSS",
+                  "ISSSTE"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "source": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": [
+                  "BANCO_PROYECTOS",
+                  "PROPUESTA_PROPIA"
+                ]
+              },
+              {
+                "type": "null"
+              }
+            ]
           }
         }
       },

@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.7.0
+  version: 0.8.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -32,7 +32,50 @@ tags:
   -
     name: Evidence
     description: 'Expediente y revisión documental.'
+  -
+    name: Completion
+    description: 'Reportes, liberación y emisión privada.'
 paths:
+  /api/v1/residencies/projects/{record}/report-plan:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1report-plan
+  /api/v1/residencies/projects/{record}/approve:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1approve
+  /api/v1/residencies/projects/{record}/reports:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1reports
+  /api/v1/residencies/projects/{record}/reports/reviews:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1reports~1reviews
+  /api/v1/residencies/reports/review-queue:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1reports~1review-queue
+  /api/v1/residencies/projects/{record}/release:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1release
+  /api/v1/residencies/projects/{record}/release/resolve:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1release~1resolve
+  /api/v1/residencies/projects/{record}/release/reopen:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1release~1reopen
+  /api/v1/residencies/projects/{record}/release/history:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1release~1history
+  /api/v1/residencies/evidence/{record}/reopen:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}~1reopen
+  /api/v1/residencies/evidence/{record}/reopen-history:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1evidence~1{record}~1reopen-history
+  /api/v1/residencies/document-signers:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1document-signers
+  /api/v1/residencies/document-templates:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1document-templates
+  /api/v1/residencies/document-templates/{record}:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1document-templates~1{record}
+  /api/v1/residencies/template-resources/staged:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1template-resources~1staged
+  /api/v1/residencies/projects/{record}/documents:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1documents
+  /api/v1/residencies/issued-documents/{record}:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1issued-documents~1{record}
+  /api/v1/residencies/issued-documents/{record}/download:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1issued-documents~1{record}~1download
+  /api/v1/residencies/issued-documents/{record}/annul:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1issued-documents~1{record}~1annul
+  /api/v1/residencies/issued-documents/{record}/retry:
+    $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1issued-documents~1{record}~1retry
   /api/v1/residencies/files/staged:
     $ref: ./evidence.yaml#/paths/~1api~1v1~1residencies~1files~1staged
   /api/v1/residencies/evidence/{record}/download:

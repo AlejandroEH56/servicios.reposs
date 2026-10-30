@@ -8,6 +8,7 @@ export interface ResidencyProjectInput {
   periodId: string;
   programId: string;
   residentId: string;
+  source?: ('BANCO_PROYECTOS' | 'PROPUESTA_PROPIA' | null);
   startsOn: string;
   vacancies: number;
 }

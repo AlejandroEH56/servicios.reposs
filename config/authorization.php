@@ -14,12 +14,22 @@ $resident = [
     'residencies.companies.create' => 'SELF',
     'residencies.companies.manage' => 'SELF',
     'residencies.evidence.submit' => 'SELF',
+    'residencies.reports.submit' => 'SELF',
 ];
-$residenciesAdministration = array_fill_keys([...array_keys($resident), 'residencies.catalogs.manage', 'residencies.residents.enroll', 'residencies.requirements.manage', 'residencies.evidence.review'], 'GLOBAL');
+$residenciesAdministration = array_fill_keys([...array_keys($resident), 'residencies.catalogs.manage', 'residencies.residents.enroll', 'residencies.requirements.manage', 'residencies.evidence.review',
+    'residencies.reports.review', 'residencies.evidence.reopen', 'residencies.release.resolve', 'residencies.release.reopen', 'residencies.templates.manage', 'residencies.documents.issue', 'residencies.documents.revoke'], 'GLOBAL');
 
 return [
-    'matrix_version' => 'sprint-7-20261024-approved',
+    'matrix_version' => 'sprint-8-20261028-approved',
     'permissions' => [
+        'residencies.reports.submit' => ['SELF', 'GLOBAL'],
+        'residencies.reports.review' => ['GLOBAL'],
+        'residencies.evidence.reopen' => ['GLOBAL'],
+        'residencies.release.resolve' => ['GLOBAL'],
+        'residencies.release.reopen' => ['GLOBAL'],
+        'residencies.templates.manage' => ['GLOBAL'],
+        'residencies.documents.issue' => ['GLOBAL'],
+        'residencies.documents.revoke' => ['GLOBAL'],
         'residencies.requirements.manage' => ['GLOBAL'],
         'residencies.evidence.submit' => ['SELF', 'GLOBAL'],
         'residencies.evidence.review' => ['GLOBAL'],
@@ -64,7 +74,8 @@ return [
         'DOCENTE_SOLICITANTE' => $personal,
         'LABORATORISTA' => $personal,
         'INVENTARIO_RESPONSABLE' => $personal,
-        'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'residencies.files.read' => 'GLOBAL', 'residencies.evidence.review' => 'GLOBAL'],
+        'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'residencies.files.read' => 'GLOBAL', 'residencies.evidence.review' => 'GLOBAL',
+            'residencies.reports.review' => 'GLOBAL', 'residencies.evidence.reopen' => 'GLOBAL'],
         'DRPSS_ADMIN' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'publicaciones.administrar' => 'GLOBAL'] + $residenciesAdministration,
         'RESIDENTE' => $resident,
     ],

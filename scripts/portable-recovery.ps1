@@ -122,6 +122,13 @@ try {
  foreach($table in $privileges.runtimeWritable){if($existingTables -contains $table){$sql+='GRANT SELECT, INSERT, UPDATE, DELETE ON servicios_moderno_stage.'+$table+" TO 'sr_container_runtime'@'%';"}}
  foreach($table in $privileges.runtimeMutable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"}}
  foreach($table in $privileges.runtimeAppendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"}}
+ foreach($entry in $privileges.runtimeColumnUpdates.PSObject.Properties){
+  $table=$entry.Name;if($existingTables -notcontains $table){continue}
+  [byte[]]$columnBytes=Invoke-DockerBytes @('exec','-i',$db,'bash','-c',$mysql) ([Text.Encoding]::UTF8.GetBytes("SELECT COLUMN_NAME FROM information_schema.COLUMNS WHERE TABLE_SCHEMA='servicios_moderno_stage' AND TABLE_NAME='$table';"))
+  $available=[Text.Encoding]::UTF8.GetString($columnBytes) -split '\s+';$allowed=@($entry.Value|Where-Object {$available -contains $_})
+  $sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';REVOKE ALL PRIVILEGES ON servicios_moderno_stage.$table FROM 'sr_container_runtime'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"
+  if($allowed.Count -gt 0){$sql+='GRANT UPDATE ('+($allowed -join ', ')+") ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';"}
+ }
  foreach($table in $privileges.appendOnly){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  foreach($table in $privileges.operatorWritable){if($existingTables -contains $table){$sql+="GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
  foreach($table in $privileges.operatorReadOnly){if($existingTables -contains $table){$sql+="GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';"}}
@@ -205,6 +212,53 @@ echo json_encode($result,JSON_THROW_ON_ERROR);
  $result.workerRecovered=$freshHeartbeat
  $avReady=$false;for($i=0;$i -lt 60;$i++){try{[void](Invoke-DockerBytes @('exec',$av,'clamdscan','--ping','1'));$avReady=$true;break}catch{Start-Sleep -Milliseconds 1000}}
  $result.antivirusRecovered=$avReady
+ $completionProbe=$bootstrap+@'
+$available=interface_exists(App\Modules\Residencies\Application\DocumentWorkflow::class)&&Illuminate\Support\Facades\Schema::hasColumn('residencias_documentos_emitidos','html_emision');
+$result=['available'=>$available,'documents'=>0,'readyFiles'=>0,'immutableColumnsDenied'=>false,'foliosConsistent'=>false,'reportLinksConsistent'=>false];
+if($available){
+ $files=$app->make(App\Modules\Shared\Application\Ports\ScannedFiles::class);
+ foreach(Illuminate\Support\Facades\DB::table('residencias_documentos_emitidos')->orderBy('id')->cursor() as $row){
+  $snapshot=json_decode($row->datos_emision,true,512,JSON_THROW_ON_ERROR);
+  if(!hash_equals($row->hash_datos_emision,hash('sha256',App\Modules\Residencies\Domain\Services\DocumentRules::canonical($snapshot)))||!hash_equals($row->hash_html,hash('sha256',$row->html_emision))){throw new RuntimeException('Recovered immutable document mismatch.');}
+  if($row->estado==='LISTO'){
+   $metadata=$files->metadata($row->id_archivo);$bytes=$files->bytes($row->id_archivo);
+   if(!$metadata||$metadata['status']!=='LIMPIO'||$metadata['ownerId']!==$row->id_identidad_emisor||$metadata['mime']!=='application/pdf'||$metadata['sha256']!==$row->sha256_archivo||$metadata['size']!==(int)$row->tamano_archivo||!hash_equals($row->sha256_archivo,hash('sha256',$bytes['content']))){throw new RuntimeException('Recovered PDF mismatch.');}
+   $result['readyFiles']++;
+  }$result['documents']++;
+ }
+ $statements=['UPDATE residencias_documentos_emitidos SET datos_emision=datos_emision WHERE 1=0','UPDATE residencias_documentos_emitidos SET html_emision=html_emision WHERE 1=0','UPDATE residencias_documentos_emitidos SET hash_datos_emision=hash_datos_emision WHERE 1=0','DELETE FROM residencias_documentos_emitidos WHERE 1=0','UPDATE residencias_plantillas_documento SET configuracion=configuracion WHERE 1=0','UPDATE residencias_historial_liberaciones SET estado_nuevo=estado_nuevo WHERE 1=0','UPDATE residencias_entregas_evidencia SET dependencias_reporte=dependencias_reporte WHERE 1=0'];
+ $denied=0;foreach($statements as $statement){try{Illuminate\Support\Facades\DB::statement($statement);}catch(PDOException $exception){if(!in_array((int)($exception->errorInfo[1]??0),[1142,1143],true)){throw $exception;}$denied++;}}
+ if($denied!==count($statements)){throw new RuntimeException('Recovered completion privileges differ.');}$result['immutableColumnsDenied']=true;
+ $invalid=Illuminate\Support\Facades\DB::table('residencias_reportes_avance as r')->join('residencias_entregas_evidencia as e','e.id','=','r.id_entrega')->where(fn($query)=>$query->whereColumn('e.id_proyecto','!=','r.id_proyecto')->orWhereColumn('e.id_requisito','!=','r.id_requisito'))->exists();
+ if($invalid){throw new RuntimeException('Recovered report link mismatch.');}$result['reportLinksConsistent']=true;
+ foreach(Illuminate\Support\Facades\DB::table('residencias_constancias')->select('anio','numero_periodo')->selectRaw('MAX(numero_consecutivo) AS maximum')->groupBy('anio','numero_periodo')->get() as $sequence){
+  $last=Illuminate\Support\Facades\DB::table('residencias_secuencias_folio')->where('anio',$sequence->anio)->where('numero_periodo',$sequence->numero_periodo)->value('ultimo_numero');
+  if((int)$last<(int)$sequence->maximum){throw new RuntimeException('Recovered folio allocator mismatch.');}
+ }$result['foliosConsistent']=true;
+}
+echo json_encode($result,JSON_THROW_ON_ERROR);
+'@
+ $completionBytes=Invoke-DockerBytes @('exec',$backend,'php','-r',$completionProbe)
+ $completionResult=[Text.Encoding]::UTF8.GetString($completionBytes)|ConvertFrom-Json
+ $result.completionWorkflowRecovered=$completionResult.available
+ if($completionResult.available){
+  $result.completionDocumentsRecovered=$completionResult.documents;$result.completionReadyFilesRecovered=$completionResult.readyFiles
+  $result.completionImmutableColumnsDenied=$completionResult.immutableColumnsDenied;$result.completionFoliosConsistent=$completionResult.foliosConsistent;$result.completionReportLinksConsistent=$completionResult.reportLinksConsistent
+  $documentWorker=$prefix+'-document-worker'
+  [void](Invoke-DockerBytes @('run','-d','--name',$documentWorker,'--label',('servicios.recovery='+$Snapshot),'--network',$network,'--env-file',(Join-Path $root 'container-runtime.env'),'--mount',('type=volume,source='+$volumes.storage+',target=/srv/app/storage/app/private'),'servicios-backend:local','php','artisan','queue:work','documents','--queue=documents','--tries=3','--timeout=120','--sleep=1','--no-interaction'));$containers+=$documentWorker
+  $workerState=Invoke-DockerBytes @('inspect','--format','{{.State.Running}}',$documentWorker)
+  $result.documentWorkerRecovered=[Text.Encoding]::UTF8.GetString($workerState).Trim() -eq 'true'
+  $documentHeartbeat=$false
+  for($i=0;$i -lt 10;$i++){
+   try{$healthBytes=Invoke-DockerBytes @('exec',$documentWorker,'php','artisan','residencies:documents-health','--no-interaction');$health=[Text.Encoding]::UTF8.GetString($healthBytes)|ConvertFrom-Json;$documentHeartbeat=$health.status -eq 'HEALTHY';if($documentHeartbeat){break}}catch{}
+   Start-Sleep -Seconds 1
+  }
+  $result.documentWorkerRecovered=$result.documentWorkerRecovered -and $documentHeartbeat
+  $operatorCompletionProbe=$bootstrap+'try{Illuminate\Support\Facades\DB::select("SELECT id FROM residencias_documentos_emitidos LIMIT 0");echo "false";}catch(PDOException $e){if((int)($e->errorInfo[1]??0)!==1142){throw $e;}echo "true";}'
+  $operatorCompletionBytes=Invoke-DockerBytes @('run','--rm','--network',$network,'--env-file',(Join-Path $root 'container-operator.env'),'--entrypoint','php','servicios-backend:local','-r',$operatorCompletionProbe)
+  $result.operatorCompletionReadDenied=[Text.Encoding]::UTF8.GetString($operatorCompletionBytes).Trim() -eq 'true'
+  if(-not($result.documentWorkerRecovered -and $result.operatorCompletionReadDenied)){throw 'Recovered document worker or operator isolation failed.'}
+ }
  if(-not($result.workerRecovered -and $result.applicationRecovered -and $result.tlsVerified -and $result.runtimeDdlDenied -and $result.operatorDdlDenied -and $result.antivirusRecovered)){throw 'Cold application/principals/scanner check failed.'}
 } finally {
  $allStopped=$true;foreach($container in $containers){try{[void](Invoke-DockerBytes @('stop','--time','30',$container))}catch{$allStopped=$false}}

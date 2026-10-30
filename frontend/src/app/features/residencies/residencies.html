@@ -42,6 +42,8 @@
               <option value="">{{ field.optional ? 'Sin asignar' : 'Seleccionar' }}</option>
               @for (option of referenceData[field.key] ?? []; track option.id) { <option [value]="option.id">{{ option.name }}</option> }
             </select>
+          } @else if(field.type==='choice'){
+            <select [name]="field.key" [(ngModel)]="draft[field.key]" [required]="!field.optional"><option value="">Sin asignar</option>@for(option of field.choices??[];track option.value){<option [value]="option.value">{{option.label}}</option>}</select>
           } @else if (field.type === 'status') {
             <select [name]="field.key" [(ngModel)]="draft[field.key]">
               @if (kind() === 'periods') { <option>PLANIFICADO</option><option>ACTIVO</option><option>CERRADO</option><option>ARCHIVADO</option> }

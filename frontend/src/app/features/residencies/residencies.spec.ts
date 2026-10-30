@@ -102,7 +102,7 @@ describe('Residencias profesionales', () => {
     component.save(); http.expectOne('/sanctum/csrf-cookie').flush(null);
     const enrollment = http.expectOne(request => request.method === 'POST');
     expect(enrollment.request.url).toBe('/api/v1/residencies/residents');
-    expect(enrollment.request.body).toEqual({ identityId: id, controlNumber: '99009901', programId: id, givenNames: 'Persona', firstSurname: 'Piloto', secondSurname: null, address: null, city: null, socialSecurityNumber: null, phone: null, mobilePhone: null, curp: null });
+    expect(enrollment.request.body).toEqual({ identityId: id, controlNumber: '99009901', programId: id, givenNames: 'Persona', firstSurname: 'Piloto', secondSurname: null, address: null, city: null, socialSecurityNumber: null, insuranceType:null, phone: null, mobilePhone: null, curp: null });
     expect(enrollment.request.headers.get('X-XSRF-TOKEN')).toBe('residencies-unit');
     enrollment.flush({ data: resident }); drain(fixture);
     expect(component.selected()?.id).toBe(id); fixture.destroy();

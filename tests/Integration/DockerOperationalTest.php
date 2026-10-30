@@ -51,6 +51,15 @@ PHP);
         $this->assertSame(4, $r['denied']);
     }
 
+    public function test_document_worker_has_enforced_timeouts_and_a_fresh_heartbeat(): void
+    {
+        $state = $this->php('echo json_encode(["pcntl"=>extension_loaded("pcntl"),"retryAfter"=>config("queue.connections.documents.retry_after"),"heartbeat"=>Illuminate\Support\Facades\Cache::get("residencies:documents:heartbeat"),"now"=>now()->timestamp],JSON_THROW_ON_ERROR);');
+        $this->assertTrue($state['pcntl']);
+        $this->assertSame(240, $state['retryAfter']);
+        $this->assertIsInt($state['heartbeat']);
+        $this->assertGreaterThanOrEqual($state['now'] - 180, $state['heartbeat']);
+    }
+
     public function test_real_scanner_clean_eicar_and_unavailable(): void
     {
         $r = $this->php(<<<'PHP'

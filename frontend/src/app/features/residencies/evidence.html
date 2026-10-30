@@ -32,13 +32,23 @@
     <p>{{ requirement.stage }} · {{ requirement.scope }} · Tipos permitidos: {{ allowedTypes(requirement) }} · Máximo {{ requirement.maxBytes / 1048576 }} MB.</p>
     @if (requirement.canSubmit) {
       <fieldset [disabled]="work.busy()"><legend>Enviar documento</legend>
-        <p>Selecciona un archivo, compruébalo y después envíalo. Una nueva entrega conserva el historial; los documentos aprobados requieren un proceso posterior de reapertura.</p>
+        <p>Selecciona un archivo, compruébalo y después envíalo. Una nueva entrega conserva el historial; los documentos aprobados requieren una reapertura por revisión.</p>
         <label>Archivo de evidencia <input type="file" [accept]="requirement.allowedMimes.join(',')" (change)="chooseFile($event)"></label>
         @if (file) { <p>Archivo seleccionado: {{ file.name }}.</p> }
         <button type="button" (click)="stage()" [disabled]="!file">Comprobar archivo</button>
         @if (prepared(); as staged) { <p>Archivo comprobado: {{ staged.originalName }} · {{ staged.size }} bytes. Aún no está enviado; la comprobación vence en 24 horas.</p><button type="button" (click)="submit()">{{ requirement.latestEvidence ? 'Reemplazar evidencia' : 'Enviar evidencia' }}</button> }
       </fieldset>
     } @else { <p>Este requisito no admite un nuevo envío con el estado o permisos actuales.</p> }
+    @if (canReopen()) {
+      <fieldset [disabled]="work.busy()"><legend>Reabrir revisión documental</legend>
+        <label>Motivo de reapertura documental <textarea [(ngModel)]="reopeningReason" maxlength="5000"></textarea></label>
+        <button type="button" (click)="reopen()" [disabled]="!reopeningReason.trim()">Reabrir evidencia</button>
+      </fieldset>
+    }
+    @if (reopenings().length) {
+      <h4>Reaperturas documentales</h4><ul>@for (row of reopenings(); track row.id) { <li>Revisión {{ row.previousReviewNumber }} · {{ row.observations }} · {{ row.occurredAt }}</li> }</ul>
+      @if (reopeningNext()) { <button type="button" (click)="loadReopenings(true)" [disabled]="work.busy()">Más reaperturas documentales</button> }
+    }
   }
 }
 @if (view() === 'definitions' && work.can('residencies.requirements.manage')) {

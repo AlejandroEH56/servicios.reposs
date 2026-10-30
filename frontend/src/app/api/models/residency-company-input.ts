@@ -8,6 +8,7 @@ export interface ResidencyCompanyInput {
   email?: (string | null);
   fax?: (string | null);
   mission?: (string | null);
+  mobilePhone?: (string | null);
   name: string;
   phone?: (string | null);
   postalCode?: (string | null);

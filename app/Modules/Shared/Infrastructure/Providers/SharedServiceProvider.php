@@ -3,6 +3,7 @@
 namespace App\Modules\Shared\Infrastructure\Providers;
 
 use App\Modules\Organization\Application\ProfileProjector;
+use App\Modules\Residencies\Application\DocumentWorkflow;
 use App\Modules\Shared\Application\Ports\ReadinessCheck;
 use App\Modules\Shared\Application\Ports\ScannedFiles;
 use App\Modules\Shared\Application\Ports\VirusScanner;
@@ -30,6 +31,14 @@ class SharedServiceProvider extends ServiceProvider
         $this->app->bind(ReadinessCheck::class, ReadinessProbe::class);
         $this->app->bind(OutboxProcessor::class, function () {
             return new OutboxProcessor([
+                'residencies.document-requested.v1' => ['residencies.render-queue' => function (array $event): void {
+                    $this->app->make(DocumentWorkflow::class)->queueRender($event['data']['documentId']);
+                }],
+                'residencies.release-changed.v1' => ['residencies.release-audit' => function (array $event): void {
+                    DB::table('compartido_registros_auditoria')->insert(['id' => (string) Str::ulid(), 'ocurrido_en' => now(),
+                        'id_identidad_actor' => $event['actor'], 'nombre_contexto' => 'Residencies', 'accion' => 'RELEASE_EVENT_DELIVERED',
+                        'tipo_sujeto' => 'Release', 'id_sujeto' => $event['aggregateId'], 'id_correlacion' => $event['correlationId']]);
+                }],
                 'iam.profile-synchronized.v1' => ['organization.profile' => function (array $event): void {
                     $this->app->make(ProfileProjector::class)->handle($event);
                 }],

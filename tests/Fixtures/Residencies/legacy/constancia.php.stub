@@ -1,0 +1,277 @@
+<!doctype html>
+<html lang="es">
+
+<head>
+    <meta charset="utf-8">
+    <title>Constancia</title>
+    <style>
+        @page {
+            margin: 22px 28px;
+        }
+
+        body {
+            font-family: "Times New Roman", Times, serif;
+            font-size: 11pt;
+            color: #000;
+        }
+
+        .center {
+            text-align: center;
+        }
+
+        .upper {
+            text-transform: uppercase;
+        }
+
+        .bold {
+            font-weight: bold;
+        }
+
+        .logos {
+            width: 100%;
+            table-layout: fixed;
+            border-collapse: separate;
+            border-spacing: 16px 0;
+            margin-bottom: 6px;
+        }
+
+        .logos td {
+            padding: 0;
+            height: 70px;
+            text-align: center;
+            vertical-align: middle;
+        }
+
+        .logos img {
+            display: inline-block;
+            height: 50px;
+            max-width: 100%;
+            vertical-align: middle;
+        }
+
+        .h1 {
+            font-size: 12pt;
+        }
+
+        .h2 {
+            font-size: 11pt;
+        }
+
+        .hConstancia {
+            font-size: 18pt;
+            letter-spacing: .5px;
+        }
+
+        .hName {
+            font-size: 16pt;
+        }
+
+        .parrafo {
+            font-size: 10.5pt;
+            line-height: 1.15;
+            text-align: justify;
+        }
+
+        /* ======== Tabla principal ======== */
+        table.main {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            margin-top: 10px;
+            font-size: 10pt;
+        }
+
+        table.main th,
+        table.main td {
+            border: 1px solid #333;
+            padding: 6px 6px;
+            vertical-align: top;
+        }
+
+        table.main thead th {
+            background: #d9d9d9;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        table.main col.c1 {
+            width: 21%;
+        }
+
+        table.main col.c2 {
+            width: 20%;
+        }
+
+        table.main col.c3 {
+            width: 33%;
+        }
+
+        table.main col.c4 {
+            width: 26%;
+        }
+
+        /* ======== Firmas ======== */
+        .firmas {
+            width: 100%;
+            margin-top: 100px;
+            border-collapse: collapse;
+        }
+
+        .firmas td {
+            width: 50%;
+            text-align: center;
+            vertical-align: top;
+            padding-top: 25px;
+        }
+
+        .firma-nombre {
+            font-weight: bold;
+            font-size: 10pt;
+        }
+
+        .firma-cargo {
+            font-size: 9pt;
+        }
+
+        /* ======== Página 2 ======== */
+        .page-break {
+            page-break-before: always;
+        }
+
+        .page2-wrap {
+            margin-top: 380px;
+        }
+
+        table.registro {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 10pt;
+            margin-top: 18px;
+        }
+
+        table.registro th {
+            border: 1px solid #333;
+            padding: 10px 8px;
+            text-align: center;
+            height: 90px;
+        }
+
+        table.registro tbody td {
+            border: 1px solid #333;
+            padding: 18px 8px;
+            text-align: center;
+            height: 180px;
+            vertical-align: middle;
+        }
+
+        table.registro thead th {
+            background: #fff;
+            font-weight: bold;
+            height: auto;
+        }
+    </style>
+</head>
+
+<body class="upper">
+
+    <!-- ======== Logos dinámicos desde BD ======== -->
+    <table class="logos">
+        <tr>
+            <?php foreach (($imagenes ?? []) as $img): ?>
+                <td>
+                    <img src="data:image/png;base64,<?= base64_encode(file_get_contents(FCPATH . $img['ruta_archivo'])) ?>" />
+                </td>
+            <?php endforeach; ?>
+        </tr>
+    </table>
+
+    <div class="center bold h1"><?= esc($tecnm ?? 'EL TECNOLÓGICO NACIONAL DE MÉXICO') ?></div>
+
+    <div class="center bold" style="margin-top:4px;">OTORGA LA PRESENTE</div>
+    <div class="center bold hConstancia" style="margin-top:2px;">CONSTANCIA</div>
+
+    <div class="center" style="margin-top:2px;">A LA:</div>
+    <div class="center bold hName" style="margin-top:2px;"><?= esc($asesor_nombre ?? '') ?></div>
+
+    <div class="parrafo" style="margin-top:8px;">
+        POR SU DESTACADA PARTICIPACIÓN COMO ASESOR(A) INTERNO(A) DE RESIDENCIA PROFESIONAL EN EL
+        <span class="bold">INSTITUTO TECNOLÓGICO SUPERIOR DE HUATUSCO</span>, DURANTE EL PERIODO ESCOLAR
+        <?= esc($periodo_texto ?? '') ?>,
+        DEL SIGUIENTE ALUMNADO:
+    </div>
+
+    <table class="main" cellspacing="0" cellpadding="0">
+        <colgroup>
+            <col class="c1">
+            <col class="c2">
+            <col class="c3">
+            <col class="c4">
+        </colgroup>
+        <thead>
+            <tr>
+                <th>NOMBRE DEL ALUMNO(A)</th>
+                <th>PROYECTO REALIZADO</th>
+                <th>PERIODO DE REALIZACIÓN</th>
+                <th>CARRERA</th>
+            </tr>
+        </thead>
+        <tbody>
+            <?php foreach (($filas ?? []) as $f): ?>
+                <tr>
+                    <td style="text-align:center; font-weight:bold;"><?= esc($f['alumno'] ?? '') ?></td>
+                    <td style="text-align:center;"><?= esc($f['proyecto'] ?? '') ?></td>
+                    <td style="text-align:center;"><?= esc($f['periodo'] ?? '') ?></td>
+                    <td style="text-align:center;"><?= esc($f['carrera'] ?? '') ?></td>
+                </tr>
+            <?php endforeach; ?>
+        </tbody>
+    </table>
+
+    <div class="center" style="margin-top:14px; font-size:10pt;">
+        <?= esc($lugar_fecha ?? '') ?>
+    </div>
+
+    <table class="firmas">
+        <tr>
+            <td>
+                <div class="firma-nombre"><?= esc($jefe_div_nombre ?? '') ?></div>
+                <div class="firma-cargo"><?= esc($jefe_div_cargo ?? '') ?></div>
+            </td>
+            <td>
+                <div class="firma-nombre"><?= esc($jefe_dpto_nombre ?? '') ?></div>
+                <div class="firma-cargo"><?= esc($jefe_dpto_cargo ?? '') ?></div>
+            </td>
+        </tr>
+    </table>
+
+    <!-- =================== PÁGINA 2 =================== -->
+    <div class="page-break"></div>
+
+    <div class="page2-wrap">
+        <div class="center bold" style="font-size:11pt;">
+            REGISTRO DE CONSTANCIAS OTORGADAS POR EL DEPTO. DE RESIDENCIAS<br>
+            PROFESIONALES Y SERVICIO SOCIAL
+        </div>
+
+        <table class="registro">
+            <thead>
+                <tr>
+                    <th style="width:25%;">FOLIO</th>
+                    <th style="width:37%;">DIVISIÓN DE CARRERA</th>
+                    <th style="width:38%;">DEPTO. DE RESIDENCIAS<br>PROFESIONALES Y SERVICIO SOCIAL</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td style="font-weight:bold;"><?= esc($folio ?? '') ?></td>
+                    <td></td>
+                    <td></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+</body>
+
+</html>
