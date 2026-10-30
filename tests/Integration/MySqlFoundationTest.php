@@ -420,6 +420,10 @@ PHP;
             foreach ($privileges['runtimeAppendOnly'] as $table) {
                 $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
             }
+            foreach ($privileges['runtimeColumnUpdates'] as $table => $columns) {
+                $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
+                $admin->exec('GRANT UPDATE (`'.implode('`, `', $columns).'`) ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
+            }
             foreach ($privileges['appendOnly'] as $table) {
                 $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$runtime);
                 $admin->exec('GRANT SELECT, INSERT ON servicios_moderno_test.`'.$table.'` TO '.$operator);
@@ -473,6 +477,21 @@ PHP;
             } catch (PDOException $exception) {
                 $this->assertSame(1142, $exception->errorInfo[1]);
             }
+            foreach (['UPDATE residencias_documentos_emitidos SET datos_emision=datos_emision WHERE 1=0',
+                'UPDATE residencias_documentos_emitidos SET html_emision=html_emision WHERE 1=0',
+                'UPDATE residencias_documentos_emitidos SET hash_datos_emision=hash_datos_emision WHERE 1=0',
+                'UPDATE residencias_entregas_evidencia SET instantanea_requisito=instantanea_requisito WHERE 1=0',
+                'UPDATE residencias_entregas_evidencia SET dependencias_reporte=dependencias_reporte WHERE 1=0',
+                'UPDATE residencias_plantillas_documento SET configuracion=configuracion WHERE 1=0',
+                'DELETE FROM residencias_documentos_emitidos WHERE 1=0', 'UPDATE residencias_historial_liberaciones SET estado_nuevo=estado_nuevo WHERE 1=0'] as $sql) {
+                try {
+                    $limited->exec($sql);
+                    $this->fail('Immutable completion field unexpectedly writable.');
+                } catch (PDOException $exception) {
+                    $this->assertContains($exception->errorInfo[1], [1142, 1143]);
+                }
+            }
+            $this->assertSame(0, $limited->exec("UPDATE residencias_documentos_emitidos SET estado='LISTO' WHERE 1=0"));
             $builder->exec('DROP TABLE grants_probe');
         } finally {
             $admin->exec('DROP USER IF EXISTS '.$runtime);

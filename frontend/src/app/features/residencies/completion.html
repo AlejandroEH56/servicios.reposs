@@ -1,0 +1,85 @@
+<section aria-labelledby="completion-title">
+  <h2 id="completion-title">Reportes, liberación y documentos</h2>
+  <nav aria-label="Residencias"><a routerLink="/residencies">Expedientes y proyectos</a> <a routerLink="/residencies/evidence">Expediente documental</a> <a routerLink="/dashboard">Inicio</a></nav>
+  <label>Área <select [ngModel]="view()" (ngModelChange)="view.set($event)"><option value="project">Avance del proyecto</option>@if(work.can('residencies.templates.manage')){<option value="templates">Administración de plantillas</option>}</select></label>
+  @if(work.message()){<p role="alert">{{work.message()}}</p>}
+  @if(corrections().length){<p role="alert">Campos por corregir: {{corrections().join(', ')}}</p>}
+  @if(notice()){<p role="status">{{notice()}}</p>}
+  @if(view()==='project'){
+    @if(enrollmentMissing()){<p>Solicita la inscripción a administración para consultar tu proyecto y sus reportes.</p>}
+    @if(global()){
+      <label>Buscar residente <input [(ngModel)]="residentSearch" maxlength="100"></label><button (click)="loadResidents()" [disabled]="work.busy()">Buscar</button>
+      <label>Residente <select [(ngModel)]="residentId" (ngModelChange)="changeResident()"><option value="">Selecciona un expediente</option>@for(row of residents();track row.id){<option [value]="row.id">{{row.givenNames}} {{row.firstSurname}} · {{row.controlNumber}}</option>}</select></label>
+      @if(residentNext()){<button (click)="loadResidents(true)" [disabled]="work.busy()">Más residentes</button>}
+    }
+    <label>Proyecto <select [(ngModel)]="projectId" (ngModelChange)="changeProject()"><option value="">Selecciona un proyecto</option>@for(row of projects();track row.id){<option [value]="row.id">{{row.name}} · {{row.status}}</option>}</select></label>
+    @if(projectNext()){<button (click)="loadProjects(true)" [disabled]="work.busy()">Más proyectos</button>}
+    @if(plan();as plan){
+      <p>Proyecto {{plan.projectStatus}} · {{plan.partialReports}} reportes parciales y un reporte final.</p>
+      <button (click)="refresh()" [disabled]="work.busy()">Actualizar expediente</button>
+      @if(!plan.initialized && work.can('residencies.reports.submit')){<button (click)="initialize()" [disabled]="work.busy()">Inicializar plan de reportes</button>}
+      @if(plan.projectStatus==='BORRADOR' && work.can('residencies.release.resolve')){<p>La aprobación requiere prerrequisitos y cobertura completa de asesores. Después se fijan los datos del proyecto.</p><button (click)="approveProject()" [disabled]="work.busy()">Aprobar proyecto</button>}
+      <h3>Plan de reportes</h3>
+      <p>El proyecto debe estar aprobado. Entrega los reportes en orden; cada parcial anterior debe estar aprobado antes del siguiente y del final.</p>
+      @if(!plan.initialized){<p>El plan aún no se ha inicializado.</p>}
+      <ul>@for(row of plan.items;track row.id){<li><button (click)="selectReport(row)" [disabled]="work.busy()">{{row.type}} {{row.sequence}} · {{row.startsOn}} a {{row.endsOn}}</button> {{row.status}} @if(row.grade!==null){· Calificación {{row.grade}}} @if(!row.dependenciesCurrent){· Requiere conciliar reportes anteriores}</li>}</ul>
+    }
+    @if(selected();as report){
+      <h3>Reporte {{report.type}} {{report.sequence}}</h3>
+      @if(report.canSubmit){<label>PDF del reporte (hasta 10 MB) <input type="file" accept="application/pdf" (change)="chooseFile($event)"></label>@if(file){<p>{{file.name}}</p>}<button (click)="stage()" [disabled]="work.busy() || !file">Comprobar PDF</button><button (click)="submit()" [disabled]="work.busy() || !prepared()">Enviar reporte</button>}
+      @if(report.canReview){<form #reviewForm="ngForm" (ngSubmit)="review(reviewForm)"><label>Decisión <select name="decision" [(ngModel)]="decision"><option value="APROBADO">Aprobar</option><option value="RECHAZADO">Rechazar</option><option value="CAMBIOS_SOLICITADOS">Solicitar cambios</option></select></label>@if(decision==='APROBADO'){<label>Calificación <input type="number" name="grade" [(ngModel)]="grade" required min="0" max="100" step="0.01"></label>}<label>Observaciones <textarea name="observations" [(ngModel)]="observations" maxlength="5000" [required]="decision!=='APROBADO'"></textarea></label><button [disabled]="work.busy() || reviewForm.invalid">Registrar revisión</button></form>}
+      @if(canReopen()){<label>Motivo de reapertura <textarea [(ngModel)]="observations" maxlength="5000"></textarea></label><button (click)="reopenReport()" [disabled]="work.busy() || !observations.trim()">Reabrir revisión</button>}
+      <h4>Versiones y revisiones</h4><ul>@for(row of history();track row.id){<li>Versión {{row.submissionVersion}} · {{row.status}} <button (click)="downloadEvidence(row)" [disabled]="work.busy()">Descargar reporte</button><ul>@for(review of row.reviews;track review.id){<li>{{review.decision}} · {{review.grade??'Sin calificación'}} · {{review.observations}}</li>}</ul></li>}</ul>
+      @if(historyNext()){<button (click)="loadHistory(true)" [disabled]="work.busy()">Más versiones</button>}
+      <h4>Reaperturas de esta versión</h4><ul>@for(row of reopenings();track row.number){<li>Revisión {{row.previousReviewNumber}} · {{row.observations}}</li>}</ul>@if(reopeningNext()){<button (click)="loadReopenings(true)" [disabled]="work.busy()">Más reaperturas</button>}
+    }
+    @if(release();as release){
+      <h3>Liberación · {{release.status}}</h3>
+      <p>Requisitos: {{release.eligibility.requirementsComplete?'completos':'pendientes'}} · Reportes: {{release.eligibility.reportsComplete?'completos':'pendientes'}} · Asesores: {{release.eligibility.advisersComplete?'completos':'pendientes'}}</p>
+      <ul>@for(row of release.eligibility.requirements;track row.requirementId){<li>{{row.name}} · {{row.state}} · {{row.valid?'Validado':'Pendiente'}}</li>}</ul>
+      @if(work.can('residencies.release.resolve') || work.can('residencies.release.reopen')){
+        <label>Motivo <textarea [(ngModel)]="releaseReason" maxlength="5000"></textarea></label>
+        @if(release.status==='PENDIENTE' && work.can('residencies.release.resolve')){<label>Decisión de liberación <select [(ngModel)]="releaseDecision"><option value="APROBADO">Aprobar liberación</option><option value="RECHAZADO">Rechazar liberación</option></select></label><label>Resolución <input [(ngModel)]="resolution" maxlength="255"></label><button (click)="decideRelease()" [disabled]="work.busy() || !releaseReason.trim() || plan()?.projectStatus!=='APROBADO' || (releaseDecision==='APROBADO' && !release.eligibility.eligible)">Resolver liberación</button>}
+        @if(release.status!=='PENDIENTE' && work.can('residencies.release.reopen')){<p>La reapertura anulará las constancias que incluyan este proyecto.</p><button (click)="decideRelease(true)" [disabled]="work.busy() || !releaseReason.trim()">Reabrir liberación</button>}
+      }
+      <h4>Historial de liberación</h4><ul>@for(row of releaseHistory();track row.id){<li>{{row.number}} · {{row.status}} · {{row.observations}}</li>}</ul>@if(releaseNext()){<button (click)="loadReleaseHistory(true)" [disabled]="work.busy()">Más resoluciones</button>}
+    }
+    @if(project();as project){
+      <h3>Documentos emitidos</h3><p>Las constancias agrupadas sólo están disponibles para administración y revisión.</p>
+      @if(work.can('residencies.documents.issue')){
+        <form #issueForm="ngForm" (ngSubmit)="issue(issueForm)">
+          <label>Formato activo <select name="template" [(ngModel)]="selectedTemplate" required><option value="">Selecciona un formato</option>@for(row of templates();track row.id){@if(row.active){<option [value]="row.id">{{typeLabels[row.type]}} · v{{row.version}}</option>}}</select></label>
+          @if(issueType()==='SOLICITUD_RESIDENCIA'){<label>Titular de la empresa <select name="recipient" [(ngModel)]="recipientContactId"><option value="">Sin titular</option>@for(row of project.externalAdvisers??[];track row.id){<option [value]="row.contactId">{{row.nameSnapshot}}</option>}</select></label>}
+          @if(issueType()==='FORMATO_REPORTE_PARCIAL'){<label>Número de reporte <input type="number" name="sequence" [(ngModel)]="reportSequence" min="1" [max]="plan()?.partialReports??3" required></label>}
+          @if(issueType()==='CONSTANCIA_ASESORIA'){
+            <label>Asesor beneficiario <select name="advisor" [(ngModel)]="adviserAssignmentId" required><option value="">Selecciona un asesor</option>@for(row of project.internalAdvisers??[];track row.id){<option [value]="row.id">{{row.nameSnapshot}}</option>}</select></label>
+            <label>Año <input type="number" name="year" [(ngModel)]="year" min="2000" max="2199" required></label><label>Semestre <select name="semester" [(ngModel)]="semester"><option [ngValue]="1">Febrero–julio</option><option [ngValue]="2">Agosto–diciembre</option></select></label>
+            <label>Inicio del intervalo <input type="date" name="startsOn" [(ngModel)]="startsOn" required></label><label>Fin del intervalo <input type="date" name="endsOn" [(ngModel)]="endsOn" required></label>
+          }
+          <button [disabled]="work.busy() || issueForm.invalid">Solicitar emisión PDF</button>
+        </form>
+      }
+      @if(work.can('residencies.documents.revoke')){<label>Motivo de anulación <textarea [(ngModel)]="annulmentReason" maxlength="5000"></textarea></label>}
+      <ul>@for(row of documents();track row.id){<li>{{typeLabels[row.type]}} · v{{row.templateVersion}} · {{row.status}} {{row.folio??''}}<button (click)="documentAction(row,'refresh')" [disabled]="work.busy()">Actualizar estado</button>@if(row.status==='LISTO'){<button (click)="downloadDocument(row)" [disabled]="work.busy()">Descargar PDF</button>}@if(row.status==='FALLIDO' && work.can('residencies.documents.issue')){<button (click)="documentAction(row,'retry')" [disabled]="work.busy()">Reintentar emisión</button>}@if(row.status!=='ANULADO' && work.can('residencies.documents.revoke')){<button (click)="documentAction(row,'annul')" [disabled]="work.busy() || !annulmentReason.trim()">Anular documento</button>}@if(row.annulmentReason){<p>{{row.annulmentReason}}</p>}</li>}</ul>
+      @if(documentNext()){<button (click)="loadDocuments(true)" [disabled]="work.busy()">Más documentos</button>}
+    }
+  }@else{
+    <h3>Plantillas y firmantes</h3><p>Los cambios crean una versión nueva. Los documentos emitidos conservan sus datos, firmantes y logotipos originales.</p>
+    <ul>@for(row of templates();track row.id){<li><button (click)="editTemplate(row)" [disabled]="work.busy()">{{typeLabels[row.type]}} · v{{row.version}} · {{row.active?'Activa':'Inactiva'}}</button></li>}</ul>
+    @if(editingTemplate();as template){
+      <h4>{{typeLabels[template.type]}}</h4><label>Buscar firmante <input [(ngModel)]="signerSearch" maxlength="100"></label><button (click)="loadSigners()" [disabled]="work.busy()">Buscar firmantes</button>
+      <form #templateForm="ngForm" (ngSubmit)="saveTemplate(templateForm)">
+        <label>Nombre <input name="name" [(ngModel)]="templateDraft.name" required maxlength="160"></label>
+        <label>Firmante de departamento <select name="departmentSigner" [(ngModel)]="templateDraft.departmentSignerId"><option value="">Sin firmante</option>@for(row of signers();track row.id){<option [value]="row.id">{{row.displayName}}</option>}</select></label>
+        <label>Cargo del departamento <input name="departmentTitle" [(ngModel)]="templateDraft.departmentTitle" required maxlength="180"></label>
+        <label>Firmante de división <select name="divisionSigner" [(ngModel)]="templateDraft.divisionSignerId"><option value="">Sin firmante</option>@for(row of signers();track row.id){<option [value]="row.id">{{row.displayName}}</option>}</select></label>
+        <label>Cargo de división <input name="divisionTitle" [(ngModel)]="templateDraft.divisionTitle" required maxlength="180"></label>
+        <label><input type="checkbox" name="active" [(ngModel)]="templateDraft.active"> Versión activa</label>
+        <p>Sin recursos nuevos se conservan los logotipos de la versión anterior o los institucionales iniciales. Los recursos nuevos reemplazan el conjunto completo, en el orden de carga.</p>
+        <label>Logotipo PNG/JPEG (512 KB, hasta 2000 × 2000 y 2 millones de píxeles) <input type="file" accept="image/png,image/jpeg" (change)="chooseResource($event)"></label>
+        <button type="button" (click)="stageResource()" [disabled]="work.busy() || !resourceFile || resourceIds().length>=6">Comprobar logotipo</button><p>{{resourceIds().length}} logotipos nuevos comprobados.</p>
+        <button [disabled]="work.busy() || templateForm.invalid">Guardar nueva versión de plantilla</button>
+      </form>
+    }
+  }
+</section>

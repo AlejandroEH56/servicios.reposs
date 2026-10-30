@@ -1,0 +1,3913 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Residencies completion - Sprint 8",
+    "version": "0.8.0",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    },
+    "description": "Reportes 2/3+1 secuenciales; calificación obligatoria al aprobar. Reaperturas e historial inmutables. Emisión asíncrona con snapshot y HTML congelados, sin datos de plantilla del cliente. Constancias agrupadas GLOBAL por asesor/programa/semestre, sólo proyectos liberados. Periodos inclusivos distribuidos en partes por días del proyecto."
+  },
+  "tags": [
+    {
+      "name": "Completion",
+      "description": "Reportes, liberación y documentos privados."
+    }
+  ],
+  "paths": {
+    "/api/v1/residencies/projects/{record}/report-plan": {
+      "get": {
+        "operationId": "getResidencyReportPlan",
+        "summary": "Consultar plan sin crear registros.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReportPlanResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "initializeResidencyReportPlan",
+        "summary": "Inicializar 2/3 parciales y un final; idempotente.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyPlanInitializedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [],
+                "properties": {}
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/approve": {
+      "post": {
+        "operationId": "approveResidencyProject",
+        "summary": "Aprobar proyecto tras prerrequisitos y cobertura de asesores; impide cambios S6.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyProjectApprovedResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyProjectApprovalInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/reports": {
+      "post": {
+        "operationId": "submitResidencyReport",
+        "summary": "Consumir PDF preparado y enlazar reporte atómicamente; precedentes aprobados vigentes.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReportResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyReportSubmissionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/reports/reviews": {
+      "post": {
+        "operationId": "reviewResidencyReport",
+        "summary": "Revisar reporte ajeno; APROBADO exige calificación 0–100, rechazo/cambios exige motivo y sin calificación.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./evidence.yaml#/components/schemas/EvidenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyReportReviewInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/reports/review-queue": {
+      "get": {
+        "operationId": "listResidencyReportQueue",
+        "summary": "Cola GLOBAL sin expediente propio ni cargas propias.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "projectId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReportQueueResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/release": {
+      "get": {
+        "operationId": "getResidencyRelease",
+        "summary": "Elegibilidad y decisión actual.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReleaseDetailResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/release/resolve": {
+      "post": {
+        "operationId": "resolveResidencyRelease",
+        "summary": "Resolver liberación con requisitos y reportes aprobados, vigentes e íntegros; versión inicial 0.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReleaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyReleaseDecisionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/release/reopen": {
+      "post": {
+        "operationId": "reopenResidencyRelease",
+        "summary": "Reabrir con motivo e historial; anula constancias que incluyan el proyecto.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReleaseResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyReleaseReopenInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/release/history": {
+      "get": {
+        "operationId": "listResidencyReleaseHistory",
+        "summary": "Historial de resoluciones y reaperturas.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReleaseHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}/reopen": {
+      "post": {
+        "operationId": "reopenResidencyEvidence",
+        "summary": "Reabrir aprobación o rechazo sin alterar la revisión anterior; bloqueado mientras haya liberación aprobada.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReopenedEvidenceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyEvidenceReopenInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/evidence/{record}/reopen-history": {
+      "get": {
+        "operationId": "listResidencyEvidenceReopenings",
+        "summary": "Historial separado de reaperturas documentales.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyReopeningHistoryResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/document-signers": {
+      "get": {
+        "operationId": "listResidencyDocumentSigners",
+        "summary": "Empleados candidatos a firmar; no identidad ni texto libre.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 100
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "./residencies.yaml#/components/schemas/ResidencyCandidateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/document-templates": {
+      "get": {
+        "operationId": "listResidencyDocumentTemplates",
+        "summary": "Última versión de cada formato; requiere templates.manage.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyDocumentTemplatesResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createResidencyTemplateVersion",
+        "summary": "Crear versión, firmantes y recursos; desactiva anteriores sin reescribirlas.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyDocumentTemplateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyTemplateVersionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/document-templates/{record}": {
+      "get": {
+        "operationId": "getResidencyDocumentTemplate",
+        "summary": "Versión inmutable del formato y recursos.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyDocumentTemplateResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/template-resources/staged": {
+      "post": {
+        "operationId": "stageResidencyTemplateResource",
+        "summary": "Preparar PNG/JPEG privado de 512 KB y 2 Mpx; antivirus, actor, 24 h y consumo único.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyTemplateResourceResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "purpose",
+                  "file"
+                ],
+                "properties": {
+                  "purpose": {
+                    "type": "string",
+                    "enum": [
+                      "TEMPLATE_RESOURCE"
+                    ]
+                  },
+                  "file": {
+                    "type": "string",
+                    "format": "binary"
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/projects/{record}/documents": {
+      "get": {
+        "operationId": "listResidencyIssuedDocuments",
+        "summary": "Documentos del proyecto; constancias agrupadas sólo GLOBAL.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "pageSize",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 100
+            }
+          },
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocumentsResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "issueResidencyDocument",
+        "summary": "Congelar snapshot/HTML y solicitar PDF por outbox. No acepta folio, datos ni HTML del cliente.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocumentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyDocumentIssueInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/issued-documents/{record}": {
+      "get": {
+        "operationId": "getResidencyIssuedDocument",
+        "summary": "Estado/hash de emisión; no expone snapshot ni HTML.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocumentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/issued-documents/{record}/download": {
+      "get": {
+        "operationId": "downloadResidencyIssuedDocument",
+        "summary": "Descargar PDF íntegro LISTO, privado y no anulado.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/issued-documents/{record}/annul": {
+      "post": {
+        "operationId": "annulResidencyIssuedDocument",
+        "summary": "Anular con motivo sin modificar snapshot, folio o PDF.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "201": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocumentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyDocumentAnnulInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/residencies/issued-documents/{record}/retry": {
+      "post": {
+        "operationId": "retryResidencyIssuedDocument",
+        "summary": "Reintentar fallo o lease vencido manteniendo ID, folio e instantánea.",
+        "tags": [
+          "Completion"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 4096
+            },
+            "description": "Token de /sanctum/csrf-cookie."
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            },
+            "description": "Actor/operación/recurso/payload durante 24 h, reautorizado en reintentos."
+          }
+        ],
+        "responses": {
+          "202": {
+            "description": "Resultado privado sin caché.",
+            "headers": {
+              "Cache-Control": {
+                "schema": {
+                  "type": "string",
+                  "maxLength": 50
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocumentResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ResidencyDocumentRetryInput"
+              }
+            }
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "securitySchemes": {
+      "session": {
+        "type": "apiKey",
+        "in": "cookie",
+        "name": "servicios_session"
+      }
+    },
+    "schemas": {
+      "ResidencyReport": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "projectId",
+          "residentId",
+          "type",
+          "sequence",
+          "requirementId",
+          "version",
+          "startsOn",
+          "endsOn",
+          "evidenceId",
+          "status",
+          "submissionVersion",
+          "reviewNumber",
+          "grade",
+          "observations",
+          "canSubmit",
+          "canReview",
+          "dependenciesCurrent"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "residentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "PARCIAL",
+              "FINAL"
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "requirementId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "evidenceId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "SIN_ENTREGA",
+              "ENVIADO",
+              "APROBADO",
+              "RECHAZADO",
+              "REEMPLAZADO",
+              "ARCHIVADO"
+            ]
+          },
+          "submissionVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65535
+          },
+          "reviewNumber": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "canSubmit": {
+            "type": "boolean"
+          },
+          "canReview": {
+            "type": "boolean"
+          },
+          "dependenciesCurrent": {
+            "type": "boolean"
+          }
+        }
+      },
+      "ResidencyReportPlanResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "projectId",
+              "projectVersion",
+              "projectStatus",
+              "partialReports",
+              "finalReports",
+              "initialized",
+              "plannedWindows",
+              "items"
+            ],
+            "properties": {
+              "projectId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "projectVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "projectStatus": {
+                "type": "string",
+                "maxLength": 30
+              },
+              "partialReports": {
+                "type": "integer",
+                "minimum": 2,
+                "maximum": 3
+              },
+              "finalReports": {
+                "type": "integer",
+                "const": 1
+              },
+              "initialized": {
+                "type": "boolean"
+              },
+              "plannedWindows": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "type",
+                    "sequence",
+                    "startsOn",
+                    "endsOn"
+                  ],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "PARCIAL",
+                        "FINAL"
+                      ]
+                    },
+                    "sequence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    },
+                    "startsOn": {
+                      "type": "string",
+                      "format": "date"
+                    },
+                    "endsOn": {
+                      "type": "string",
+                      "format": "date"
+                    }
+                  }
+                },
+                "maxItems": 4
+              },
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResidencyReport"
+                },
+                "maxItems": 4
+              }
+            }
+          }
+        }
+      },
+      "ResidencyPlanInitializedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "projectId",
+              "initialized"
+            ],
+            "properties": {
+              "projectId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "initialized": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ResidencyProjectApprovedResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "projectId",
+              "projectStatus",
+              "projectVersion"
+            ],
+            "properties": {
+              "projectId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "projectStatus": {
+                "type": "string",
+                "enum": [
+                  "APROBADO"
+                ]
+              },
+              "projectVersion": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReportResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResidencyReport"
+          }
+        }
+      },
+      "ResidencyReportQueueResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "projectId",
+                    "type",
+                    "sequence",
+                    "evidenceId",
+                    "reviewNumber",
+                    "projectName",
+                    "residentName"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "projectId": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "type": {
+                      "type": "string",
+                      "enum": [
+                        "PARCIAL",
+                        "FINAL"
+                      ]
+                    },
+                    "sequence": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    },
+                    "evidenceId": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "reviewNumber": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 4294967295
+                    },
+                    "projectName": {
+                      "type": "string",
+                      "maxLength": 255
+                    },
+                    "residentName": {
+                      "type": "string",
+                      "maxLength": 400
+                    }
+                  }
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReleaseResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "projectId",
+              "projectStatus",
+              "version",
+              "status",
+              "resolution",
+              "observations",
+              "resolvedAt"
+            ],
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                    "minLength": 26,
+                    "maxLength": 26
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "projectId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "projectStatus": {
+                "type": "string",
+                "maxLength": 30
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDIENTE",
+                  "APROBADO",
+                  "RECHAZADO"
+                ]
+              },
+              "resolution": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "observations": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "resolvedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReleaseDetailResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "projectId",
+              "projectStatus",
+              "version",
+              "status",
+              "resolution",
+              "observations",
+              "resolvedAt",
+              "eligibility"
+            ],
+            "properties": {
+              "id": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                    "minLength": 26,
+                    "maxLength": 26
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "projectId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "projectStatus": {
+                "type": "string",
+                "maxLength": 30
+              },
+              "version": {
+                "type": "integer",
+                "minimum": 0,
+                "maximum": 4294967295
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDIENTE",
+                  "APROBADO",
+                  "RECHAZADO"
+                ]
+              },
+              "resolution": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 255
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "observations": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 5000
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "resolvedAt": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 40
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "eligibility": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": [
+                  "requirementsComplete",
+                  "reportsComplete",
+                  "advisersComplete",
+                  "eligible",
+                  "requirements",
+                  "reports"
+                ],
+                "properties": {
+                  "requirementsComplete": {
+                    "type": "boolean"
+                  },
+                  "reportsComplete": {
+                    "type": "boolean"
+                  },
+                  "advisersComplete": {
+                    "type": "boolean"
+                  },
+                  "eligible": {
+                    "type": "boolean"
+                  },
+                  "requirements": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "requirementId",
+                        "name",
+                        "evidenceId",
+                        "state",
+                        "reviewNumber",
+                        "valid"
+                      ],
+                      "properties": {
+                        "requirementId": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                          "minLength": 26,
+                          "maxLength": 26
+                        },
+                        "name": {
+                          "type": "string",
+                          "maxLength": 160
+                        },
+                        "evidenceId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                              "minLength": 26,
+                              "maxLength": 26
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "maxLength": 30
+                        },
+                        "reviewNumber": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 4294967295
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "maxItems": 1000
+                  },
+                  "reports": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "additionalProperties": false,
+                      "required": [
+                        "id",
+                        "type",
+                        "sequence",
+                        "evidenceId",
+                        "state",
+                        "grade",
+                        "valid"
+                      ],
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                          "minLength": 26,
+                          "maxLength": 26
+                        },
+                        "type": {
+                          "type": "string",
+                          "enum": [
+                            "PARCIAL",
+                            "FINAL"
+                          ]
+                        },
+                        "sequence": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 3
+                        },
+                        "evidenceId": {
+                          "anyOf": [
+                            {
+                              "type": "string",
+                              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                              "minLength": 26,
+                              "maxLength": 26
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "state": {
+                          "type": "string",
+                          "maxLength": 30
+                        },
+                        "grade": {
+                          "anyOf": [
+                            {
+                              "type": "number",
+                              "minimum": 0,
+                              "maximum": 100
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "valid": {
+                          "type": "boolean"
+                        }
+                      }
+                    },
+                    "maxItems": 4
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReleaseHistoryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "number",
+                    "previousStatus",
+                    "status",
+                    "resolution",
+                    "observations",
+                    "occurredAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "number": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4294967295
+                    },
+                    "previousStatus": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 30
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 30
+                    },
+                    "resolution": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "maxLength": 255
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "observations": {
+                      "type": "string",
+                      "maxLength": 5000
+                    },
+                    "occurredAt": {
+                      "type": "string",
+                      "maxLength": 40
+                    }
+                  }
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReopenedEvidenceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "evidenceId",
+              "status",
+              "reviewNumber",
+              "reopeningNumber"
+            ],
+            "properties": {
+              "evidenceId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "ENVIADO"
+                ]
+              },
+              "reviewNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              },
+              "reopeningNumber": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 4294967295
+              }
+            }
+          }
+        }
+      },
+      "ResidencyReopeningHistoryResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor",
+              "canReopen"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "number",
+                    "previousReviewNumber",
+                    "previousStatus",
+                    "observations",
+                    "occurredAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "number": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4294967295
+                    },
+                    "previousReviewNumber": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 4294967295
+                    },
+                    "previousStatus": {
+                      "type": "string",
+                      "maxLength": 30
+                    },
+                    "observations": {
+                      "type": "string",
+                      "maxLength": 5000
+                    },
+                    "occurredAt": {
+                      "type": "string",
+                      "maxLength": 40
+                    }
+                  }
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "canReopen": {
+                "type": "boolean"
+              }
+            }
+          }
+        }
+      },
+      "ResidencyDocumentTemplate": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "type",
+          "name",
+          "version",
+          "active",
+          "configuration",
+          "resources"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SOLICITUD_RESIDENCIA",
+              "CARTA_PRESENTACION_FORMAL",
+              "CARTA_PRESENTACION_INFORMAL",
+              "FORMATO_REPORTE_PARCIAL",
+              "FORMATO_REPORTE_FINAL",
+              "CONSTANCIA_ASESORIA"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "configuration": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "institution",
+              "institutionKey",
+              "city",
+              "departmentTitle",
+              "divisionTitle",
+              "departmentSignerId",
+              "divisionSignerId"
+            ],
+            "properties": {
+              "institution": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "institutionKey": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "city": {
+                "type": "string",
+                "maxLength": 255
+              },
+              "departmentTitle": {
+                "type": "string",
+                "maxLength": 180
+              },
+              "divisionTitle": {
+                "type": "string",
+                "maxLength": 180
+              },
+              "departmentSignerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                    "minLength": 26,
+                    "maxLength": 26
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "divisionSignerId": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                    "minLength": 26,
+                    "maxLength": 26
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              },
+              "viewHash": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "rendererRevision": {
+                "type": "string",
+                "maxLength": 80
+              }
+            }
+          },
+          "resources": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "id",
+                "order",
+                "builtin"
+              ],
+              "properties": {
+                "id": {
+                  "type": "string",
+                  "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                  "minLength": 26,
+                  "maxLength": 26
+                },
+                "order": {
+                  "type": "integer",
+                  "minimum": 0,
+                  "maximum": 5
+                },
+                "builtin": {
+                  "type": "boolean"
+                }
+              }
+            },
+            "maxItems": 6
+          }
+        }
+      },
+      "ResidencyDocumentTemplateResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResidencyDocumentTemplate"
+          }
+        }
+      },
+      "ResidencyDocumentTemplatesResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResidencyDocumentTemplate"
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ResidencyIssuedDocument": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "projectId",
+          "type",
+          "templateId",
+          "templateVersion",
+          "version",
+          "status",
+          "snapshotHash",
+          "fileHash",
+          "fileSize",
+          "issuedAt",
+          "folio",
+          "annulmentReason",
+          "annulledAt"
+        ],
+        "properties": {
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "projectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "type": {
+            "type": "string",
+            "enum": [
+              "SOLICITUD_RESIDENCIA",
+              "CARTA_PRESENTACION_FORMAL",
+              "CARTA_PRESENTACION_INFORMAL",
+              "FORMATO_REPORTE_PARCIAL",
+              "FORMATO_REPORTE_FINAL",
+              "CONSTANCIA_ASESORIA"
+            ]
+          },
+          "templateId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "templateVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "PENDIENTE",
+              "PROCESANDO",
+              "LISTO",
+              "FALLIDO",
+              "ANULADO"
+            ]
+          },
+          "snapshotHash": {
+            "type": "string",
+            "maxLength": 64
+          },
+          "fileHash": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 64
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "fileSize": {
+            "anyOf": [
+              {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 10485760
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "issuedAt": {
+            "type": "string",
+            "maxLength": 40
+          },
+          "folio": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 80
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "annulmentReason": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "annulledAt": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 40
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        }
+      },
+      "ResidencyIssuedDocumentResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/ResidencyIssuedDocument"
+          }
+        }
+      },
+      "ResidencyIssuedDocumentsResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "$ref": "#/components/schemas/ResidencyIssuedDocument"
+                },
+                "maxItems": 100
+              },
+              "nextCursor": {
+                "anyOf": [
+                  {
+                    "type": "string",
+                    "maxLength": 4096
+                  },
+                  {
+                    "type": "null"
+                  }
+                ]
+              }
+            }
+          }
+        }
+      },
+      "ResidencyTemplateResourceResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "id",
+              "mime",
+              "size",
+              "sha256",
+              "expiresAt"
+            ],
+            "properties": {
+              "id": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "mime": {
+                "type": "string",
+                "enum": [
+                  "image/png",
+                  "image/jpeg"
+                ]
+              },
+              "size": {
+                "type": "integer",
+                "minimum": 1,
+                "maximum": 524288
+              },
+              "sha256": {
+                "type": "string",
+                "maxLength": 64
+              },
+              "expiresAt": {
+                "type": "string",
+                "maxLength": 40
+              }
+            }
+          }
+        }
+      },
+      "ResidencyProjectApprovalInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyReportSubmissionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "sequence",
+          "stagedFileId",
+          "expectedSubmissionVersion"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PARCIAL",
+              "FINAL"
+            ]
+          },
+          "sequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "stagedFileId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "expectedSubmissionVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 65534
+          }
+        }
+      },
+      "ResidencyReportReviewInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidenceId",
+          "decision",
+          "expectedReviewNumber"
+        ],
+        "properties": {
+          "evidenceId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APROBADO",
+              "RECHAZADO",
+              "CAMBIOS_SOLICITADOS"
+            ]
+          },
+          "observations": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 5000
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "grade": {
+            "anyOf": [
+              {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100,
+                "multipleOf": 0.01
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "expectedReviewNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyEvidenceReopenInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "observations",
+          "expectedReviewNumber"
+        ],
+        "properties": {
+          "observations": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1
+          },
+          "expectedReviewNumber": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyReleaseDecisionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision",
+          "observations",
+          "expectedVersion"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "APROBADO",
+              "RECHAZADO"
+            ]
+          },
+          "resolution": {
+            "anyOf": [
+              {
+                "type": "string",
+                "maxLength": 255
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "observations": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 0,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyReleaseReopenInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "observations",
+          "expectedVersion"
+        ],
+        "properties": {
+          "observations": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyTemplateVersionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "name",
+          "expectedPreviousVersion",
+          "active"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "SOLICITUD_RESIDENCIA",
+              "CARTA_PRESENTACION_FORMAL",
+              "CARTA_PRESENTACION_INFORMAL",
+              "FORMATO_REPORTE_PARCIAL",
+              "FORMATO_REPORTE_FINAL",
+              "CONSTANCIA_ASESORIA"
+            ]
+          },
+          "name": {
+            "type": "string",
+            "maxLength": 160,
+            "minLength": 1
+          },
+          "expectedPreviousVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65534
+          },
+          "active": {
+            "type": "boolean"
+          },
+          "departmentSignerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "divisionSignerId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "departmentTitle": {
+            "type": "string",
+            "maxLength": 180,
+            "minLength": 1
+          },
+          "divisionTitle": {
+            "type": "string",
+            "maxLength": 180,
+            "minLength": 1
+          },
+          "resourceIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            },
+            "maxItems": 6,
+            "uniqueItems": true
+          }
+        }
+      },
+      "ResidencyDocumentIssueInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "templateId",
+          "expectedTemplateVersion"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "SOLICITUD_RESIDENCIA",
+              "CARTA_PRESENTACION_FORMAL",
+              "CARTA_PRESENTACION_INFORMAL",
+              "FORMATO_REPORTE_PARCIAL",
+              "FORMATO_REPORTE_FINAL",
+              "CONSTANCIA_ASESORIA"
+            ]
+          },
+          "templateId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "expectedTemplateVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "recipientContactId": {
+            "anyOf": [
+              {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "reportSequence": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 3
+          },
+          "adviserAssignmentId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "year": {
+            "type": "integer",
+            "minimum": 2000,
+            "maximum": 2199
+          },
+          "semester": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 2
+          },
+          "startsOn": {
+            "type": "string",
+            "format": "date"
+          },
+          "endsOn": {
+            "type": "string",
+            "format": "date"
+          }
+        }
+      },
+      "ResidencyDocumentAnnulInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "observations",
+          "expectedVersion"
+        ],
+        "properties": {
+          "observations": {
+            "type": "string",
+            "maxLength": 5000,
+            "minLength": 1
+          },
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      },
+      "ResidencyDocumentRetryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "expectedVersion"
+        ],
+        "properties": {
+          "expectedVersion": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          }
+        }
+      }
+    }
+  }
+}

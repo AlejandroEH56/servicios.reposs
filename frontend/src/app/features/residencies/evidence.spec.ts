@@ -23,6 +23,8 @@ interface Harness {
   submit(): void;
   openReview(row: EvidenceRecord): void;
   review(): void;
+  reopen(): void;
+  reopeningReason: string;
   saveDefinition(): void;
   definitionDraft: EvidenceRequirementInput;
   definition: Signal<EvidenceRequirement | null>;
@@ -58,6 +60,7 @@ describe('Expediente documental', () => {
         else if (path === 'requirements/' + requirementId) request.flush({ data: requirement });
         else if (path === 'review-queue') request.flush({ data: { items: evidence.canReview ? [evidence] : [], nextCursor: null } });
         else if (path === 'evidence/' + evidenceId) request.flush({ data: evidence });
+        else if (path.endsWith('/reopen-history')) request.flush({ data: { items: [], nextCursor: null, canReopen: evidence.status === 'APROBADO' } });
         else if (path.endsWith('/history')) request.flush({ data: { items: [evidence], nextCursor: null } });
         else if (path === 'residents') request.flush({ data: { items: own ? [own] : [], nextCursor: null } });
         else request.flush({ data: { items: [], nextCursor: null } });
@@ -72,6 +75,23 @@ describe('Expediente documental', () => {
     const fixture = TestBed.createComponent(EvidenceWorkspace); fixture.detectChanges(); drain(fixture); return fixture;
   }
   function choose(component: Harness) { component.chooseFile({ target: { files: [new File(['test document'], 'proof.txt', { type: 'text/plain' })] } } as unknown as Event); }
+  it('reabre una evidencia aprobada con motivo, versión y clave estable y actualiza el expediente', () => {
+    evidence = { ...evidence, status: 'APROBADO', reviewNumber: 1, canReview: false };
+    requirement = { ...requirement, latestEvidence: evidence, canSubmit: false };
+    const fixture = setup(['residencies.files.read', 'residencies.evidence.reopen']); const component = harness(fixture);
+    component.selectRequirement(requirement); drain(fixture);
+    expect(fixture.nativeElement.textContent).toContain('Reabrir revisión documental');
+    component.reopeningReason = 'Corrección de ensayo'; component.reopen(); http.expectOne('/sanctum/csrf-cookie').flush(null);
+    const first = http.expectOne('/api/v1/residencies/evidence/' + evidenceId + '/reopen');
+    expect(first.request.body).toEqual({ observations: 'Corrección de ensayo', expectedReviewNumber: 1 });
+    const key = first.request.headers.get('Idempotency-Key'); first.error(new ProgressEvent('network')); drain(fixture);
+    component.reopen(); http.expectOne('/sanctum/csrf-cookie').flush(null);
+    const retry = http.expectOne('/api/v1/residencies/evidence/' + evidenceId + '/reopen'); expect(retry.request.headers.get('Idempotency-Key')).toBe(key);
+    evidence = { ...evidence, status: 'ENVIADO', canReview: true }; requirement = { ...requirement, latestEvidence: evidence, canSubmit: true };
+    retry.flush({ data: { evidenceId, status: 'ENVIADO', reviewNumber: 1, reopeningNumber: 1 } }); drain(fixture);
+    expect(component.selected()?.latestEvidence?.status).toBe('ENVIADO');
+    expect(fixture.nativeElement.textContent).not.toContain('Reabrir revisión documental'); fixture.destroy();
+  });
   it('explica la inscripción pendiente sin ofrecer acciones de administración o revisión', () => {
     const fixture = setup([], false, false);
     expect(fixture.nativeElement.textContent).toContain('Solicita la inscripción a administración');

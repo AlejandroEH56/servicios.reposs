@@ -23,6 +23,7 @@ async function scenario(page, role) {
       if (path === 'requirements/' + requirementId) return route.fulfill({ json: { data: requirement } });
       if (path === 'review-queue') return route.fulfill({ json: { data: { items: evidence?.canReview ? [evidence] : [], nextCursor: null } } });
       if (path === 'evidence/' + evidenceId) return route.fulfill({ json: { data: evidence } });
+      if (path.endsWith('/reopen-history')) return route.fulfill({ json: { data: { items: [], nextCursor: null, canReopen: false } } });
       if (path.endsWith('/history')) return route.fulfill({ json: { data: { items: evidence ? [evidence] : [], nextCursor: null } } });
     }
     expect(request.headers()['x-xsrf-token']).toBeTruthy();

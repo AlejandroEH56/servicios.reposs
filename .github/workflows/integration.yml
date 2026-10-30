@@ -87,7 +87,7 @@ jobs:
           mkdir -p artifacts/docker-tls
           chmod 777 artifacts
           docker build --target test -f docker/backend.Dockerfile -t servicios-tests:${GITHUB_SHA} .
-          docker run --rm --network none -e APP_ENV=testing -v "$PWD/artifacts:/srv/app/artifacts" servicios-tests:${GITHUB_SHA} php vendor/bin/phpunit --log-junit artifacts/linux.xml
+          docker run --rm --network none -e APP_ENV=testing -e S8_PDF_POPPLER=1 -v "$PWD/artifacts:/srv/app/artifacts" servicios-tests:${GITHUB_SHA} php vendor/bin/phpunit --log-junit artifacts/linux.xml
           docker compose --env-file docker/environment.example build --provenance=mode=max backend proxy mysql antivirus collector
       - name: Start private topology and migrate
         run: |
@@ -95,7 +95,7 @@ jobs:
           docker compose --env-file docker/environment.example run --rm migrator
           docker compose --env-file docker/environment.example run --rm grant-runtime
           docker compose --env-file docker/environment.example run --rm initialize-volumes
-          docker compose --env-file docker/environment.example up -d backend worker proxy collector antivirus
+          docker compose --env-file docker/environment.example up -d backend worker document-worker proxy collector antivirus
           for i in $(seq 1 60); do if docker cp servicios_stage-proxy-1:/data/caddy/pki/authorities/local/root.crt artifacts/docker-tls/root.crt 2>/dev/null; then break; fi; sleep 1; done
           test -s artifacts/docker-tls/root.crt
           sudo cp artifacts/docker-tls/root.crt /usr/local/share/ca-certificates/servicios-stage.crt

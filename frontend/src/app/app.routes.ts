@@ -4,6 +4,7 @@ import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
   { path: '', pathMatch: 'full', redirectTo: 'session' },
+  { path: 'residencies/completion', canActivate: [authGuard], loadComponent: () => import('./features/residencies/completion').then(m => m.CompletionWorkspace) },
   { path: 'residencies/evidence', canActivate: [authGuard], loadComponent: () => import('./features/residencies/evidence').then(m => m.EvidenceWorkspace) },
   { path: 'residencies', canActivate: [authGuard], loadComponent: () => import('./features/residencies/residencies').then(m => m.Residencies) },
   { path: 'academic-planning/calendar', canActivate: [authGuard], loadComponent: () => import('./features/academic-planning/calendar').then(m => m.Calendar) },

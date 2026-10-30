@@ -26,6 +26,7 @@ export interface ResidencyRecord {
   givenNames?: string;
   id: string;
   identityId?: (string | null);
+  insuranceType?: ('IMSS' | 'ISSSTE' | null);
   internalAdvisers?: Array<ResidencyRecord>;
   kind: 'modalities' | 'sectors' | 'business-lines' | 'programs' | 'periods' | 'residents' | 'companies' | 'contacts' | 'projects' | 'internal-advisers' | 'external-advisers';
   mission?: (string | null);
@@ -52,6 +53,7 @@ export interface ResidencyRecord {
   secondSurname?: (string | null);
   sectorId?: (string | null);
   socialSecurityNumber?: (string | null);
+  source?: ('BANCO_PROYECTOS' | 'PROPUESTA_PROPIA' | null);
   startsOn?: string;
   status?: string;
   vacancies?: number;

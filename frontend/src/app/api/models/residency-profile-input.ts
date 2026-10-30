@@ -7,6 +7,7 @@ export interface ResidencyProfileInput {
   curp?: (string | null);
   firstSurname: string;
   givenNames: string;
+  insuranceType?: ('IMSS' | 'ISSSTE' | null);
   mobilePhone?: (string | null);
   phone?: (string | null);
   programId: string;

@@ -69,6 +69,10 @@ foreach ($table in $privileges.runtimeWritable) {
 }
 foreach ($table in $privileges.runtimeMutable) { $sql += "GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`n" }
 foreach ($table in $privileges.runtimeAppendOnly) { $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`n" }
+foreach ($entry in $privileges.runtimeColumnUpdates.PSObject.Properties) {
+    $table=$entry.Name;$columns=($entry.Value -join ', ')
+    $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`nREVOKE ALL PRIVILEGES ON servicios_moderno_stage.$table FROM 'sr_container_runtime'@'%';`nGRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`nGRANT UPDATE ($columns) ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`n"
+}
 foreach ($table in $privileges.appendOnly) { $sql += "GRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_runtime'@'%';`nGRANT SELECT, INSERT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
 foreach ($table in $privileges.operatorWritable) { $sql += "GRANT SELECT, INSERT, UPDATE ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }
 foreach ($table in $privileges.operatorReadOnly) { $sql += "GRANT SELECT ON servicios_moderno_stage.$table TO 'sr_container_operator'@'%';`n" }

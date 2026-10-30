@@ -5,6 +5,8 @@ import { EvidencePreparedFile, EvidenceRecord, EvidenceRequirement, EvidenceRequ
 import { createEvidenceRequirement, downloadResidencyEvidence$Jpeg, downloadResidencyEvidence$Pdf, downloadResidencyEvidence$Plain, downloadResidencyEvidence$Png, getEvidenceHistory, getEvidenceRequirement, getResidencyEvidence, listEvidenceRequirements, listEvidenceReviewQueue, listResidentRequirements, reviewResidencyEvidence, stageResidencyEvidence, submitResidencyEvidence, updateEvidenceRequirement } from '../../api/functions';
 import { WorkspaceService } from '../../core/auth/workspace.service';
 import { ResidencyClient } from './residency-client';
+import { listResidencyEvidenceReopenings, reopenResidencyEvidence } from '../../api/functions';
+import { ResidencyReopeningHistoryResponse } from '../../api/models';
 
 type Mime = EvidenceRequirementInput['allowedMimes'][number];
 type View = 'file' | 'definitions' | 'queue';
@@ -31,6 +33,10 @@ export class EvidenceWorkspace implements OnInit {
   protected readonly programNext = signal<string | null>(null);
   protected readonly next = signal<string | null>(null);
   protected readonly historyNext = signal<string | null>(null);
+  protected readonly reopenings = signal<ResidencyReopeningHistoryResponse['data']['items']>([]);
+  protected readonly reopeningNext = signal<string | null>(null);
+  protected readonly canReopen = signal(false);
+  protected reopeningReason = '';
   protected residentId = ''; protected projectId = ''; protected residentSearch = ''; protected definitionSearch = '';
   protected file: File | null = null;
   protected definitionDraft = this.blank(); protected maximumMb = 10;
@@ -55,6 +61,7 @@ export class EvidenceWorkspace implements OnInit {
   private context(): string { return this.residentId + '|' + this.projectId; }
   private blank(): EvidenceRequirementInput { return { code: '', name: '', programId: null, stage: 'PRERREQUISITO', scope: 'RESIDENTE', required: true, displayOrder: 0, validFrom: null, validUntil: null, active: true, allowedMimes: ['application/pdf'], maxBytes: 10485760 }; }
   protected changeView(view: View): void {
+    this.clearReopenings();
     this.view.set(view); this.notice.set(''); this.next.set(null); this.requirements.set([]); this.reviewTarget.set(null); this.clearUpload(); this.history.set([]); this.selected.set(null);
     if (view === 'definitions') this.loadDefinitions(); else if (view === 'queue') this.loadQueue(); else this.loadRequirements();
   }
@@ -74,6 +81,7 @@ export class EvidenceWorkspace implements OnInit {
     });
   }
   protected changeContext(): void {
+    this.clearReopenings();
     this.requirements.set([]); this.selected.set(null); this.next.set(null); this.clearUpload(); this.history.set([]); this.historyNext.set(null); this.notice.set('');
     this.loadRequirements();
   }
@@ -88,8 +96,27 @@ export class EvidenceWorkspace implements OnInit {
     });
   }
   protected selectRequirement(requirement: EvidenceRequirement): void {
+    this.clearReopenings();
     this.selected.set(requirement); this.clearUpload(); this.history.set([]); this.historyNext.set(null); this.reviewTarget.set(null);
-    if (requirement.latestEvidence) this.loadHistory(requirement.latestEvidence);
+    if (requirement.latestEvidence) { this.loadHistory(requirement.latestEvidence); this.loadReopenings(); }
+  }
+  private clearReopenings(): void { this.reopenings.set([]); this.reopeningNext.set(null); this.canReopen.set(false); this.reopeningReason = ''; }
+  protected loadReopenings(more = false): void {
+    const evidence = this.selected()?.latestEvidence; if (!evidence || this.view() !== 'file') return;
+    const context = this.context(); const requirement = this.selected()?.id;
+    this.work.run(this.work.api.invoke(listResidencyEvidenceReopenings, { record: evidence.id, pageSize: 25, cursor: more ? this.reopeningNext() ?? undefined : undefined }), response => {
+      if (context !== this.context() || this.view() !== 'file' || this.selected()?.id !== requirement || this.selected()?.latestEvidence?.id !== evidence.id) return;
+      this.reopenings.set(more ? [...this.reopenings(), ...response.data.items] : response.data.items); this.reopeningNext.set(response.data.nextCursor); this.canReopen.set(response.data.canReopen ?? false);
+    });
+  }
+  protected reopen(): void {
+    const evidence = this.selected()?.latestEvidence; if (!evidence || !this.canReopen()) return;
+    if (!this.reopeningReason.trim()) { this.work.message.set('Indica el motivo de reapertura.'); return; }
+    const context = this.context(); const body = { observations: this.reopeningReason.trim(), expectedReviewNumber: evidence.reviewNumber }; const key = this.key('reopen', evidence.id, body);
+    this.work.run(this.work.csrf(token => this.work.api.invoke(reopenResidencyEvidence, { record: evidence.id, 'X-XSRF-TOKEN': token, 'Idempotency-Key': key, body })), () => {
+      if (context !== this.context() || this.view() !== 'file' || this.selected()?.latestEvidence?.id !== evidence.id) return;
+      this.keys.delete('reopen'); this.canReopen.set(false); this.reopeningReason = ''; this.notice.set('Revisión documental reabierta. Se conserva la decisión anterior en el historial.'); this.refreshSelected();
+    }, () => this.refreshSelected());
   }
   private clearUpload(): void { this.file = null; this.prepared.set(null); this.uploadKey = ''; this.keys.delete('submit'); }
   protected chooseFile(event: Event): void { const input = event.target as HTMLInputElement; this.file = input.files?.[0] ?? null; input.value = ''; this.prepared.set(null); this.uploadKey = crypto.randomUUID(); this.keys.delete('submit'); }
@@ -126,7 +153,8 @@ export class EvidenceWorkspace implements OnInit {
     this.work.run(this.work.api.invoke(listResidentRequirements, { record: this.residentId, projectId: this.projectId || undefined, requirementId: selected.id, pageSize: 1 }), response => {
       if (this.view() !== 'file' || context !== this.context() || this.selected()?.id !== selected.id) return;
       const current = response.data.items[0] ?? null; this.selected.set(current);
-      if (current) this.requirements.update(rows => rows.map(row => row.id === current.id ? current : row));
+      this.canReopen.set(false);
+      if (current) { this.requirements.update(rows => rows.map(row => row.id === current.id ? current : row)); if (current.latestEvidence) { this.loadHistory(current.latestEvidence); this.loadReopenings(); } }
       else this.requirements.update(rows => rows.filter(row => row.id !== selected.id));
       if (!current || this.prepared()?.requirementVersion !== current.version) this.clearUpload();
     });

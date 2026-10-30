@@ -17,8 +17,17 @@
     "compartido_mensajes_salida", "compartido_bandeja_entrada", "compartido_archivos_almacenados",
     "sessions", "cache", "cache_locks", "jobs", "job_batches", "failed_jobs"
   ],
-  "runtimeMutable": ["residencias_entregas_evidencia", "residencias_archivos_preparados"],
-  "runtimeAppendOnly": ["residencias_revisiones_evidencia"],
+  "runtimeMutable": ["residencias_archivos_preparados"],
+  "runtimeAppendOnly": ["residencias_revisiones_evidencia", "residencias_historial_liberaciones", "residencias_reaperturas_evidencia", "residencias_recursos_plantilla", "residencias_anulaciones_documento", "residencias_constancias", "residencias_proyectos_constancia"],
+  "runtimeColumnUpdates": {
+    "residencias_entregas_evidencia": ["estado", "version", "cantidad_revisiones", "reemplazado_en"],
+    "residencias_reportes_avance": ["id_entrega", "entregado_en", "version"],
+    "residencias_liberaciones": ["estado", "resolucion", "observaciones", "id_identidad_resolutor", "resuelto_en", "version", "actualizado_en", "datos_elegibilidad"],
+    "residencias_plantillas_documento": ["activo", "actualizado_en"],
+    "residencias_documentos_emitidos": ["id_archivo", "sha256_archivo", "tamano_archivo", "estado", "version", "bloqueado_por", "bloqueado_hasta", "ultimo_error"],
+    "residencias_secuencias_folio": ["ultimo_numero"],
+    "residencias_recursos_preparados": ["id_archivo", "estado", "utilizado_en"]
+  },
   "appendOnly": ["compartido_registros_auditoria", "iam_historial_roles"],
   "operatorWritable": ["iam_identidades", "iam_identidad_roles", "iam_controles"],
   "operatorReadOnly": ["iam_cuentas_externas", "iam_roles", "iam_permisos", "iam_rol_permisos"]

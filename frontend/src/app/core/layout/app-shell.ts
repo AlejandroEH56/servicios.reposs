@@ -15,6 +15,7 @@ import { AuthFacade } from '../auth/auth.facade';
           <a routerLink="/notices">Avisos públicos</a>
           <a routerLink="/residencies">Residencias profesionales</a>
           <a routerLink="/residencies/evidence">Expediente documental</a>
+          <a routerLink="/residencies/completion">Reportes, liberación y documentos</a>
           <a routerLink="/academic-planning">Planificación académica</a>
           <a routerLink="/academic-planning/calendar">Horarios y disponibilidad</a>
           @if (identity.permissions.includes('publicaciones.administrar')) { <a routerLink="/publications">Publicaciones</a> }

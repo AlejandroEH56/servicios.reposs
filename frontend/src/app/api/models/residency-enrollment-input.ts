@@ -9,6 +9,7 @@ export interface ResidencyEnrollmentInput {
   firstSurname: string;
   givenNames: string;
   identityId: string;
+  insuranceType?: ('IMSS' | 'ISSSTE' | null);
   mobilePhone?: (string | null);
   phone?: (string | null);
   programId: string;
