@@ -54,8 +54,8 @@ async function scenario(page,role){
 }
 async function project(page,global){
  await page.goto('/portal/residencies/completion');
- if(global)await page.getByLabel('Residente',{exact:true}).selectOption(residentId);
- await page.getByLabel('Proyecto',{exact:true}).selectOption(projectId);
+ if(global)await page.getByRole('combobox',{name:'Residente',exact:true}).selectOption(residentId);
+ await page.getByRole('combobox',{name:'Proyecto',exact:true}).selectOption(projectId);
  await expect(page.getByRole('heading',{name:'Plan de reportes',exact:true})).toBeVisible();
 }
 test('residente envía un reporte PDF propio y conserva su contexto',async({page})=>{
@@ -72,12 +72,12 @@ test('revisor aprueba un reporte con calificación y sin resolver liberación',a
  await expect(page.getByRole('status')).toContainText('Revisión registrada');await expect(page.locator('body')).toContainText('Calificación 96.5');expect(changes).toEqual(['review']);await expect(page.getByRole('button',{name:'Resolver liberación',exact:true})).toHaveCount(0);
 });
 test('administración versiona firmantes y solicita una emisión asíncrona',async({page})=>{
- const changes=await scenario(page,'admin');await project(page,true);await page.getByLabel('Área',{exact:true}).selectOption('templates');
+ const changes=await scenario(page,'admin');await project(page,true);await page.getByRole('combobox',{name:'Área',exact:true}).selectOption('templates');
  await page.getByRole('button',{name:'Carta de presentación informal · v1 · Inactiva',exact:true}).click();
- await page.getByLabel('Firmante de departamento',{exact:true}).selectOption(identity);await page.getByLabel('Versión activa',{exact:true}).check();
+ await page.getByRole('combobox',{name:'Firmante de departamento',exact:true}).selectOption(identity);await page.getByLabel('Versión activa',{exact:true}).check();
  await page.getByRole('button',{name:'Guardar nueva versión de plantilla',exact:true}).click();await expect(page.getByRole('button',{name:'Carta de presentación informal · v2 · Activa',exact:true})).toBeVisible();
- await page.getByLabel('Área',{exact:true}).selectOption('project');await page.getByLabel('Formato activo',{exact:true}).selectOption(preparedId);await page.getByRole('button',{name:'Solicitar emisión PDF',exact:true}).click();
- await expect(page.locator('body')).toContainText('PENDIENTE');expect(changes).toEqual(['template','issue']);
+ await page.getByRole('combobox',{name:'Área',exact:true}).selectOption('project');await page.getByRole('combobox',{name:'Formato activo',exact:true}).selectOption(preparedId);await page.getByRole('button',{name:'Solicitar emisión PDF',exact:true}).click();
+ await expect(page.getByRole('status')).toContainText('Emisión solicitada');await expect(page.getByRole('button',{name:'Actualizar estado',exact:true})).toBeVisible();expect(changes).toEqual(['template','issue']);
 });
 test('administración resuelve y reabre con motivo e historial',async({page})=>{
  const changes=await scenario(page,'admin');await project(page,true);await page.getByLabel('Motivo',{exact:true}).fill('Expediente conciliado');await page.getByRole('button',{name:'Resolver liberación',exact:true}).click();
