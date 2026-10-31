@@ -18,7 +18,10 @@ jobs:
           coverage: none
       - run: composer validate --strict
       - run: composer install --no-interaction --prefer-dist
+      - run: sudo apt-get update && sudo apt-get install -y poppler-utils
       - run: php vendor/bin/phpunit
+        env:
+          S8_PDF_POPPLER: '1'
       - run: composer analyse
       - run: composer audit --locked
   frontend-openapi:

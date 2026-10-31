@@ -1,13 +1,35 @@
 <?php
 
 use App\Http\Middleware\RequireActiveIdentity;
+use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\DocumentsController;
 use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\EvidenceController;
+use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\ProgressController;
 use App\Modules\Residencies\Presentation\Http\Controllers\Api\V1\ResidencyController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:10,1'])->post('api/v1/residencies/files/staged', [EvidenceController::class, 'write'])->defaults('operation', 'stage')->name('residencies.evidence.stage');
+Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:10,1'])->post('api/v1/residencies/template-resources/staged', [DocumentsController::class, 'write'])->defaults('operation', 'stage-resource')->name('residencies.templates.stage');
 
 Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:120,1'])->prefix('api/v1/residencies')->name('residencies.')->group(function (): void {
+    foreach (['report-plan' => 'plan', 'release' => 'release', 'release/history' => 'release-history'] as $path => $operation) {
+        Route::get('projects/{record}/'.$path, [ProgressController::class, 'read'])->whereUlid('record')->defaults('operation', $operation)->name('completion.'.$operation);
+    }
+    foreach (['report-plan' => 'plan-initialize', 'approve' => 'project-approve', 'reports' => 'report-submit', 'reports/reviews' => 'report-review', 'release/resolve' => 'release-resolve', 'release/reopen' => 'release-reopen'] as $path => $operation) {
+        Route::post('projects/{record}/'.$path, [ProgressController::class, 'write'])->whereUlid('record')->defaults('operation', $operation)->name('completion.'.$operation);
+    }
+    Route::get('reports/review-queue', [ProgressController::class, 'read'])->defaults('operation', 'report-queue')->name('completion.report-queue');
+    Route::post('evidence/{record}/reopen', [ProgressController::class, 'write'])->whereUlid('record')->defaults('operation', 'evidence-reopen')->name('completion.evidence-reopen');
+    Route::get('evidence/{record}/reopen-history', [ProgressController::class, 'read'])->whereUlid('record')->defaults('operation', 'reopening-history')->name('completion.reopening-history');
+    Route::get('document-signers', [DocumentsController::class, 'read'])->defaults('operation', 'signers')->name('documents.signers');
+    Route::get('document-templates', [DocumentsController::class, 'read'])->defaults('operation', 'templates')->name('documents.templates');
+    Route::get('document-templates/{record}', [DocumentsController::class, 'read'])->whereUlid('record')->defaults('operation', 'templates')->name('documents.template');
+    Route::post('document-templates', [DocumentsController::class, 'write'])->defaults('operation', 'template-version')->name('documents.template-version');
+    Route::get('projects/{record}/documents', [DocumentsController::class, 'read'])->whereUlid('record')->defaults('operation', 'project-documents')->name('documents.list');
+    Route::post('projects/{record}/documents', [DocumentsController::class, 'write'])->whereUlid('record')->defaults('operation', 'issue')->name('documents.issue');
+    Route::get('issued-documents/{record}', [DocumentsController::class, 'read'])->whereUlid('record')->defaults('operation', 'document')->name('documents.get');
+    Route::get('issued-documents/{record}/download', [DocumentsController::class, 'download'])->whereUlid('record')->name('documents.download');
+    Route::post('issued-documents/{record}/annul', [DocumentsController::class, 'write'])->whereUlid('record')->defaults('operation', 'annul')->name('documents.annul');
+    Route::post('issued-documents/{record}/retry', [DocumentsController::class, 'write'])->whereUlid('record')->defaults('operation', 'retry')->name('documents.retry');
     Route::get('requirements', [EvidenceController::class, 'read'])->defaults('operation', 'definitions')->name('requirements.list');
     Route::get('requirements/{record}', [EvidenceController::class, 'read'])->whereUlid('record')->defaults('operation', 'definitions')->name('requirements.get');
     Route::post('requirements', [EvidenceController::class, 'write'])->defaults('operation', 'define')->name('requirements.create');

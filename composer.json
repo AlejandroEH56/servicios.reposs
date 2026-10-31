@@ -11,6 +11,7 @@
     "require": {
         "php": "^8.3",
         "ext-gd": "*",
+        "dompdf/dompdf": "^3.1.6",
         "firebase/php-jwt": "^7.2",
         "laravel/framework": "^13.17",
         "laravel/sanctum": "^4.3",

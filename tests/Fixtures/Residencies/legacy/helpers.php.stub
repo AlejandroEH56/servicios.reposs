@@ -1,0 +1,6 @@
+<?php
+
+function esc(mixed $value): string
+{
+    return e($value);
+}

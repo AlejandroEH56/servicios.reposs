@@ -75,6 +75,19 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+  document-worker:
+    <<: *backend
+    env_file: ${RUNTIME_ENV_FILE:-.tools/environments/container-runtime.env}
+    command: [php, artisan, queue:work, documents, --queue=documents, --tries=3, --timeout=120, --sleep=1, --no-interaction]
+    healthcheck:
+      test: [CMD, php, artisan, 'residencies:documents-health', --no-interaction]
+      interval: 30s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+    depends_on:
+      mysql:
+        condition: service_healthy
   migrator:
     <<: *backend
     restart: "no"

@@ -16,3 +16,4 @@ bootstrap/cache/*.php
 public/storage
 .codex
 .agents
+.aws

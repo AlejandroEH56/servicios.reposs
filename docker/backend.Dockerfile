@@ -10,7 +10,7 @@ RUN apk upgrade --no-cache \
     && apk add --no-cache icu-libs libzip oniguruma tzdata unzip ca-certificates libpng libjpeg-turbo libwebp \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
-    && docker-php-ext-install pdo_mysql mbstring intl zip opcache gd \
+    && docker-php-ext-install pdo_mysql mbstring intl zip opcache gd pcntl \
     && apk del .build-deps
 RUN test "$(apk --print-arch)" = x86_64 \
     && wget -O /tmp/curl.apk https://dl-cdn.alpinelinux.org/alpine/edge/main/x86_64/curl-8.23.0-r0.apk \
@@ -22,6 +22,7 @@ RUN test "$(apk --print-arch)" = x86_64 \
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /srv/app
 FROM base AS test
+RUN apk add --no-cache poppler-utils font-liberation fontconfig
 RUN printf 'memory_limit=256M\n' > /usr/local/etc/php/conf.d/test-memory.ini
 COPY composer.json composer.lock ./
 RUN composer install --no-interaction --prefer-dist --no-scripts

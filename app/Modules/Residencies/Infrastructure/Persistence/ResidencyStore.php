@@ -364,6 +364,7 @@ class ResidencyStore implements ResidencyDirectory
         }
         $this->unique('residents', 'curp', $input['curp'] ?? null, $row);
         $values += ['id_programa' => $program->id] + $this->personValues($input) + ['domicilio' => $input['address'] ?? null, 'ciudad' => $input['city'] ?? null, 'numero_seguro_social' => $input['socialSecurityNumber'] ?? null, 'telefono' => $input['phone'] ?? null, 'telefono_celular' => $input['mobilePhone'] ?? null, 'curp' => $input['curp'] ?? null];
+        $values['tipo_seguro'] = array_key_exists('insuranceType', $input) ? $input['insuranceType'] : ($row->tipo_seguro ?? null);
 
         return $this->save('residents', $row, $values);
     }
@@ -392,6 +393,7 @@ class ResidencyStore implements ResidencyDirectory
             abort_if($this->table('projects')->where('id_empresa', $row->id)->whereNotIn('estado', ['CANCELADO', 'ARCHIVADO'])->exists(), 409);
         }
         $values = ['razon_social' => $input['name'], 'rfc' => $input['rfc'], 'id_sector' => $input['sectorId'] ?? null, 'id_ramo' => $input['businessLineId'] ?? null, 'mision' => $input['mission'] ?? null, 'domicilio' => $input['address'] ?? null, 'ciudad' => $input['city'] ?? null, 'codigo_postal' => $input['postalCode'] ?? null, 'telefono' => $input['phone'] ?? null, 'correo' => $input['email'] ?? null, 'fax' => $input['fax'] ?? null, 'estado' => $input['status']];
+        $values['telefono_celular'] = array_key_exists('mobilePhone', $input) ? $input['mobilePhone'] : ($row->telefono_celular ?? null);
         if ($row === null) {
             $values['id_identidad_creadora'] = $actor;
         }
@@ -428,6 +430,9 @@ class ResidencyStore implements ResidencyDirectory
         }
         if ($row !== null) {
             abort_unless($row->id_residente === $resident->id && $row->id_periodo === $period->id && $row->id_programa === $program->id, 409);
+            if (DB::table('residencias_reportes_avance')->where('id_proyecto', $row->id)->exists()) {
+                abort_unless($row->fecha_inicio === $input['startsOn'] && $row->fecha_fin === $input['endsOn'], 409);
+            }
             foreach (['internal-advisers', 'external-advisers'] as $kind) {
                 $assignments = $this->table($kind)->where('id_proyecto', $row->id)->get();
                 if ($assignments->isNotEmpty()) {
@@ -442,7 +447,8 @@ class ResidencyStore implements ResidencyDirectory
         abort_if((clone $others)->where('id_periodo', $period->id)->exists(), 409);
         abort_if((clone $others)->where('estado', '!=', 'CANCELADO')->where('fecha_inicio', '<=', $input['endsOn'])->where('fecha_fin', '>=', $input['startsOn'])->exists(), 409);
 
-        return $this->save('projects', $row, ['id_residente' => $resident->id, 'id_periodo' => $period->id, 'id_empresa' => $input['companyId'], 'id_programa' => $program->id, 'nombre' => $input['name'], 'numero_vacantes' => (int) $input['vacancies'], 'fecha_inicio' => $input['startsOn'], 'fecha_fin' => $input['endsOn'], 'estado' => $row === null ? 'BORRADOR' : $row->estado]);
+        return $this->save('projects', $row, ['id_residente' => $resident->id, 'id_periodo' => $period->id, 'id_empresa' => $input['companyId'], 'id_programa' => $program->id, 'nombre' => $input['name'], 'numero_vacantes' => (int) $input['vacancies'], 'fecha_inicio' => $input['startsOn'], 'fecha_fin' => $input['endsOn'], 'estado' => $row === null ? 'BORRADOR' : $row->estado,
+            'procedencia' => array_key_exists('source', $input) ? $input['source'] : ($row->procedencia ?? null)]);
     }
 
     /** @param array<string, mixed> $input
@@ -509,19 +515,19 @@ class ResidencyStore implements ResidencyDirectory
         if ($kind === 'residents') {
             $base += ['name' => trim($row->nombres.' '.$row->primer_apellido.' '.($row->segundo_apellido ?? '')), 'controlNumber' => $row->numero_control, 'programId' => $row->id_programa, 'status' => $row->estado];
 
-            return $detail ? $base + ['identityId' => $row->id_identidad, 'givenNames' => $row->nombres, 'firstSurname' => $row->primer_apellido, 'secondSurname' => $row->segundo_apellido, 'email' => $row->correo_institucional, 'address' => $row->domicilio, 'city' => $row->ciudad, 'socialSecurityNumber' => $row->numero_seguro_social, 'phone' => $row->telefono, 'mobilePhone' => $row->telefono_celular, 'curp' => $row->curp] : $base;
+            return $detail ? $base + ['identityId' => $row->id_identidad, 'givenNames' => $row->nombres, 'firstSurname' => $row->primer_apellido, 'secondSurname' => $row->segundo_apellido, 'email' => $row->correo_institucional, 'address' => $row->domicilio, 'city' => $row->ciudad, 'socialSecurityNumber' => $row->numero_seguro_social, 'insuranceType' => $row->tipo_seguro, 'phone' => $row->telefono, 'mobilePhone' => $row->telefono_celular, 'curp' => $row->curp] : $base;
         }
         if ($kind === 'companies') {
             $canManage = $companyAccess === null ? $this->allowed($actor, 'companies.manage', $row->id_identidad_creadora) : ($companyAccess['global'] || ($companyAccess['self'] && $row->id_identidad_creadora === $actor));
             $base += ['name' => $row->razon_social, 'rfc' => $row->rfc, 'status' => $row->estado, 'canManage' => $canManage];
 
-            return $detail ? $base + ['canReadContacts' => $this->canReadContacts($row, $actor), 'sectorId' => $row->id_sector, 'businessLineId' => $row->id_ramo, 'mission' => $row->mision, 'address' => $row->domicilio, 'city' => $row->ciudad, 'postalCode' => $row->codigo_postal, 'phone' => $row->telefono, 'email' => $row->correo, 'fax' => $row->fax] : $base;
+            return $detail ? $base + ['canReadContacts' => $this->canReadContacts($row, $actor), 'sectorId' => $row->id_sector, 'businessLineId' => $row->id_ramo, 'mission' => $row->mision, 'address' => $row->domicilio, 'city' => $row->ciudad, 'postalCode' => $row->codigo_postal, 'phone' => $row->telefono, 'mobilePhone' => $row->telefono_celular, 'email' => $row->correo, 'fax' => $row->fax] : $base;
         }
         if ($kind === 'contacts') {
             return $base + ['companyId' => $row->id_empresa, 'name' => trim($row->nombres.' '.$row->primer_apellido.' '.($row->segundo_apellido ?? '')), 'givenNames' => $row->nombres, 'firstSurname' => $row->primer_apellido, 'secondSurname' => $row->segundo_apellido, 'position' => $row->nombre_puesto, 'degree' => $row->nombre_grado, 'email' => $row->correo, 'phone' => $row->telefono, 'active' => (bool) $row->activo];
         }
         if ($kind === 'projects') {
-            $base += ['residentId' => $row->id_residente, 'periodId' => $row->id_periodo, 'companyId' => $row->id_empresa, 'programId' => $row->id_programa, 'name' => $row->nombre, 'vacancies' => (int) $row->numero_vacantes, 'startsOn' => $row->fecha_inicio, 'endsOn' => $row->fecha_fin, 'status' => $row->estado];
+            $base += ['residentId' => $row->id_residente, 'periodId' => $row->id_periodo, 'companyId' => $row->id_empresa, 'programId' => $row->id_programa, 'name' => $row->nombre, 'vacancies' => (int) $row->numero_vacantes, 'source' => $row->procedencia, 'startsOn' => $row->fecha_inicio, 'endsOn' => $row->fecha_fin, 'status' => $row->estado];
             if ($detail) {
                 foreach (['internal-advisers' => 'internalAdvisers', 'external-advisers' => 'externalAdvisers'] as $adviserKind => $field) {
                     $assignments = $this->table($adviserKind)->where('id_proyecto', $row->id)->orderBy('fecha_inicio')->orderBy('id')->limit(101)->get();

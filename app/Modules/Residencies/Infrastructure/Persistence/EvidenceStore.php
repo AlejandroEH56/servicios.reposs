@@ -4,7 +4,9 @@ namespace App\Modules\Residencies\Infrastructure\Persistence;
 
 use App\Modules\IAM\Application\AuthorizationDirectory;
 use App\Modules\Residencies\Application\EvidenceWorkflow;
+use App\Modules\Residencies\Domain\Services\DocumentRules;
 use App\Modules\Residencies\Domain\Services\EvidenceRules;
+use App\Modules\Residencies\Domain\Services\ProgressRules;
 use App\Modules\Residencies\Domain\Services\ResidencyRules;
 use App\Modules\Shared\Application\Ports\ScannedFiles;
 use Illuminate\Database\Query\Builder;
@@ -55,7 +57,7 @@ class EvidenceStore implements EvidenceWorkflow
             $row = $this->find('proyectos', $project);
             abort_unless($row->id_residente === $id, 404);
             if ($write) {
-                abort_unless($row->estado === 'BORRADOR' && $this->find('periodos', $row->id_periodo)->estado === 'ACTIVO', 409);
+                abort_unless(in_array($row->estado, ['BORRADOR', 'APROBADO'], true) && $this->find('periodos', $row->id_periodo)->estado === 'ACTIVO', 409);
             }
         }
 
@@ -65,8 +67,26 @@ class EvidenceStore implements EvidenceWorkflow
     /** @param array<string, mixed> $input */
     private function applicable(array $input, string $actor): object
     {
-        $resident = $this->resident($input['residentId'], $input['projectId'] ?? null, $actor, 'evidence.submit', true);
         $definition = $this->find('definiciones_requisito', $input['requirementId']);
+        $report = $definition->tipo_evidencia === 'REPORTE';
+        $resident = $this->resident($input['residentId'], $input['projectId'] ?? null, $actor, $report ? 'reports.submit' : 'evidence.submit', true);
+        if ($report) {
+            abort_unless($definition->id_proyecto === ($input['projectId'] ?? null), 409);
+            $project = $this->find('proyectos', $definition->id_proyecto);
+            abort_unless($project->estado === 'APROBADO', 409);
+            $slot = $this->table('reportes_avance')->where('id_requisito', $definition->id)->first();
+            abort_unless($slot !== null, 409);
+            $preceding = $this->table('reportes_avance as r')->leftJoin('residencias_entregas_evidencia as e', 'e.id', '=', 'r.id_entrega')
+                ->where('r.id_proyecto', $project->id)->where('r.tipo_reporte', 'PARCIAL')
+                ->when($slot->tipo_reporte === 'PARCIAL', fn (Builder $q) => $q->where('r.numero_consecutivo', '<', $slot->numero_consecutivo));
+            abort_if($preceding->where(fn (Builder $q) => $q->whereNull('e.estado')->orWhere('e.estado', '!=', 'APROBADO'))->exists(), 409);
+            $reports = $this->reportStates($project->id);
+            foreach ($reports as $row) {
+                if ($row['type'] === 'PARCIAL' && ($slot->tipo_reporte === 'FINAL' || $row['sequence'] < $slot->numero_consecutivo)) {
+                    abort_unless(ProgressRules::dependenciesCurrent($reports, $row), 409);
+                }
+            }
+        }
         abort_unless($definition->activo && in_array($definition->etapa, ['PRERREQUISITO', 'REQUISITO'], true)
             && ($definition->id_programa === null || $definition->id_programa === $resident->id_programa)
             && ($definition->alcance === 'PROYECTO') === (($input['projectId'] ?? null) !== null)
@@ -77,7 +97,8 @@ class EvidenceStore implements EvidenceWorkflow
 
     private function reviewer(object $evidence, string $actor): void
     {
-        $this->permission($actor, 'evidence.review');
+        $definition = $this->find('definiciones_requisito', $evidence->id_requisito);
+        $this->permission($actor, $definition->tipo_evidencia === 'REPORTE' ? 'reports.review' : 'evidence.review');
         $resident = $this->resident($evidence->id_residente, $evidence->id_proyecto, $actor);
         abort_if($resident->id_identidad === $actor || $evidence->id_identidad_envio === $actor, 403);
     }
@@ -98,9 +119,12 @@ class EvidenceStore implements EvidenceWorkflow
             if ($operation === 'definitions') {
                 $this->permission($actor, 'requirements.manage');
                 if ($resource !== null) {
-                    return $this->definition($this->find('definiciones_requisito', $resource));
+                    $definition = $this->find('definiciones_requisito', $resource);
+                    abort_unless($definition->tipo_evidencia === 'DOCUMENTO', 404);
+
+                    return $this->definition($definition);
                 }
-                $query = $this->table('definiciones_requisito');
+                $query = $this->table('definiciones_requisito')->where('tipo_evidencia', 'DOCUMENTO');
                 if (($filters['q'] ?? '') !== '') {
                     $pattern = '%'.strtr($filters['q'], ['!' => '!!', '%' => '!%', '_' => '!_']).'%';
                     $query->whereRaw("nombre LIKE ? ESCAPE '!'", [$pattern]);
@@ -113,7 +137,7 @@ class EvidenceStore implements EvidenceWorkflow
             if ($operation === 'requirements') {
                 $project = $filters['projectId'] ?? null;
                 $resident = $this->resident((string) $resource, $project, $actor);
-                $query = $this->table('definiciones_requisito')->where('alcance', $project === null ? 'RESIDENTE' : 'PROYECTO')
+                $query = $this->table('definiciones_requisito')->where('tipo_evidencia', 'DOCUMENTO')->where('alcance', $project === null ? 'RESIDENTE' : 'PROYECTO')
                     ->where(fn (Builder $q) => $q->whereNull('id_programa')->orWhere('id_programa', $resident->id_programa));
                 if (isset($filters['requirementId'])) {
                     $query->where('id', $filters['requirementId']);
@@ -129,7 +153,7 @@ class EvidenceStore implements EvidenceWorkflow
                 $projectWritable = true;
                 if ($project !== null) {
                     $parent = $this->find('proyectos', $project);
-                    $projectWritable = $parent->estado === 'BORRADOR' && $this->find('periodos', $parent->id_periodo)->estado === 'ACTIVO';
+                    $projectWritable = in_array($parent->estado, ['BORRADOR', 'APROBADO'], true) && $this->find('periodos', $parent->id_periodo)->estado === 'ACTIVO';
                 }
                 $items = [];
                 foreach ($rows as $row) {
@@ -148,6 +172,7 @@ class EvidenceStore implements EvidenceWorkflow
             if ($operation === 'queue') {
                 $this->permission($actor, 'evidence.review');
                 $query = $this->table('entregas_evidencia')->where('estado', 'ENVIADO')->where('id_identidad_envio', '!=', $actor)
+                    ->whereIn('id_requisito', $this->table('definiciones_requisito')->where('tipo_evidencia', 'DOCUMENTO')->select('id'))
                     ->whereIn('id_residente', $this->table('residentes')->where('id_identidad', '!=', $actor)->select('id'));
                 if (isset($filters['residentId'])) {
                     $query->where('id_residente', $filters['residentId']);
@@ -226,8 +251,8 @@ class EvidenceStore implements EvidenceWorkflow
         $authorize = function () use ($operation, $resource, $input, $actor): void {
             if ($operation === 'define') {
                 $this->permission($actor, 'requirements.manage');
-            } elseif ($operation === 'submit') {
-                $this->resident($input['residentId'], $input['projectId'] ?? null, $actor, 'evidence.submit');
+            } elseif (in_array($operation, ['submit', 'submit-report'], true)) {
+                $this->resident($input['residentId'], $input['projectId'] ?? null, $actor, $operation === 'submit-report' ? 'reports.submit' : 'evidence.submit');
             } elseif ($operation === 'review') {
                 $this->reviewer($this->find('entregas_evidencia', (string) $resource), $actor);
             } else {
@@ -257,6 +282,7 @@ class EvidenceStore implements EvidenceWorkflow
             $result = match ($operation) {
                 'define' => $this->saveDefinition($resource, $input, $version),
                 'submit' => $this->submit($input, $actor),
+                'submit-report' => $this->submit($input, $actor, true),
                 'review' => $this->decide((string) $resource, $input, $actor),
                 default => abort(404),
             };
@@ -275,6 +301,7 @@ class EvidenceStore implements EvidenceWorkflow
     private function saveDefinition(?string $id, array $input, ?int $version): array
     {
         $old = $id === null ? null : $this->find('definiciones_requisito', $id);
+        abort_if($old && $old->tipo_evidencia !== 'DOCUMENTO', 404);
         if ($old) {
             abort_unless((int) $old->version === $version, 409);
         }
@@ -319,9 +346,10 @@ class EvidenceStore implements EvidenceWorkflow
 
     /** @param array<string, mixed> $input
      * @return array<string, mixed> */
-    private function submit(array $input, string $actor): array
+    private function submit(array $input, string $actor, bool $report = false): array
     {
         $definition = $this->applicable($input, $actor);
+        abort_unless(($definition->tipo_evidencia === 'REPORTE') === $report, 409);
         $staged = $this->find('archivos_preparados', $input['stagedFileId']);
         abort_unless($staged->id_identidad_carga === $actor && $staged->id_residente === $input['residentId']
             && $staged->id_requisito === $input['requirementId'] && $staged->id_proyecto === ($input['projectId'] ?? null), 403);
@@ -338,6 +366,7 @@ class EvidenceStore implements EvidenceWorkflow
         $this->table('entregas_evidencia')->insert(['id' => $id, 'id_requisito' => $definition->id, 'id_residente' => $input['residentId'],
             'id_proyecto' => $input['projectId'] ?? null, 'id_archivo' => $staged->id_archivo, 'id_identidad_envio' => $actor,
             'numero_version' => $previous + 1, 'estado' => 'ENVIADO', 'version' => 1, 'cantidad_revisiones' => 0,
+            'dependencias_reporte' => $report ? $this->reportDependencies($definition) : null,
             'instantanea_requisito' => json_encode($this->definition($definition), JSON_THROW_ON_ERROR), 'nombre_original' => $staged->nombre_original,
             'tipo_mime' => $staged->tipo_mime, 'tamano_bytes' => $staged->tamano_bytes, 'sha256' => $staged->sha256, 'enviado_en' => now(), 'creado_en' => now()]);
         $this->table('archivos_preparados')->where('id', $staged->id)->update(['estado' => 'UTILIZADO', 'utilizado_en' => now(), 'actualizado_en' => now()]);
@@ -353,6 +382,20 @@ class EvidenceStore implements EvidenceWorkflow
         $this->reviewer($evidence, $actor);
         abort_unless($evidence->estado === 'ENVIADO' && (int) $input['expectedReviewNumber'] === (int) $evidence->cantidad_revisiones + 1, 409);
         $this->verifyFile($evidence);
+        if ($this->find('definiciones_requisito', $evidence->id_requisito)->tipo_evidencia === 'REPORTE') {
+            ProgressRules::grade($input['decision'], $input['grade'] ?? null);
+            abort_if($this->table('liberaciones')->where('id_proyecto', $evidence->id_proyecto)->where('estado', 'APROBADO')->exists(), 409);
+            if ($input['decision'] === 'APROBADO') {
+                $reports = $this->reportStates($evidence->id_proyecto);
+                $current = array_values(array_filter($reports, fn (array $r): bool => $r['evidenceId'] === $evidence->id))[0] ?? null;
+                abort_unless($current && ProgressRules::dependenciesCurrent($reports, $current), 409);
+                foreach ($reports as $row) {
+                    if ($row['type'] === 'PARCIAL' && ($current['type'] === 'FINAL' || $row['sequence'] < $current['sequence'])) {
+                        abort_unless($row['status'] === 'APROBADO' && ProgressRules::dependenciesCurrent($reports, $row), 409);
+                    }
+                }
+            }
+        }
         $state = EvidenceRules::decisionState($input['decision'], $input['observations'] ?? null);
         $review = (string) Str::ulid();
         $this->table('revisiones_evidencia')->insert(['id' => $review, 'id_entrega' => $id, 'id_identidad_revisor' => $actor,
@@ -374,6 +417,22 @@ class EvidenceStore implements EvidenceWorkflow
         } catch (Throwable) {
             abort(503);
         }
+    }
+
+    /** @return list<array<string,mixed>> */
+    private function reportStates(string $project): array
+    {
+        return $this->table('reportes_avance as r')->leftJoin('residencias_entregas_evidencia as e', 'e.id', '=', 'r.id_entrega')
+            ->where('r.id_proyecto', $project)->get(['r.tipo_reporte', 'r.numero_consecutivo', 'r.id_entrega', 'e.cantidad_revisiones', 'e.estado', 'e.dependencias_reporte'])
+            ->map(fn (object $r): array => ['type' => $r->tipo_reporte, 'sequence' => (int) $r->numero_consecutivo, 'evidenceId' => $r->id_entrega,
+                'reviewNumber' => (int) ($r->cantidad_revisiones ?? 0), 'status' => $r->estado ?? 'SIN_ENTREGA', 'dependencies' => $r->dependencias_reporte])->all();
+    }
+
+    private function reportDependencies(object $definition): string
+    {
+        $slot = $this->table('reportes_avance')->where('id_requisito', $definition->id)->firstOrFail();
+
+        return DocumentRules::canonical(ProgressRules::dependencies($this->reportStates($slot->id_proyecto), $slot->tipo_reporte, (int) $slot->numero_consecutivo));
     }
 
     /** @return array<string, mixed> */

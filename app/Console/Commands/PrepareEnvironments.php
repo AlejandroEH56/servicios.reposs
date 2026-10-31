@@ -88,6 +88,20 @@ class PrepareEnvironments extends Command
                                     }
                                 }
                             }
+                            foreach ($privileges['runtimeColumnUpdates'] ?? [] as $table => $columns) {
+                                if (! in_array($table, $existingTables, true)) {
+                                    continue;
+                                }
+                                $available = $admin->query('SHOW COLUMNS FROM `'.$database.'`.`'.$table.'`')->fetchAll(PDO::FETCH_COLUMN);
+                                $allowed = array_values(array_intersect($columns, $available));
+                                $target = '`'.$database.'`.`'.$table.'`';
+                                $admin->exec('GRANT SELECT, INSERT ON '.$target.' TO '.$account);
+                                $admin->exec('REVOKE ALL PRIVILEGES ON '.$target.' FROM '.$account);
+                                $admin->exec('GRANT SELECT, INSERT ON '.$target.' TO '.$account);
+                                if ($allowed !== []) {
+                                    $admin->exec('GRANT UPDATE (`'.implode('`, `', $allowed).'`) ON '.$target.' TO '.$account);
+                                }
+                            }
                         }
                         foreach ($privileges['appendOnly'] as $table) {
                             if (in_array($table, $existingTables, true)) {
