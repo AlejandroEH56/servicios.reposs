@@ -12,6 +12,7 @@ use App\Modules\Shared\Infrastructure\Outbox\OutboxProcessor;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Queue\Events\Looping;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -250,6 +251,31 @@ class SprintEightCompletionTest extends TestCase
         $second = $this->fixture->issue($template, $extra);
         $this->assertSame('ITSH/RPSS/2026(1)/002', $second['folio']);
         $this->assertDatabaseCount('residencias_anulaciones_documento', 1);
+    }
+
+    public function test_certificate_academic_year_is_independent_of_issue_year_and_still_requires_a_matching_release(): void
+    {
+        $this->travelTo(Carbon::parse('2025-10-31 12:00:00', 'America/Mexico_City'));
+        try {
+            $this->login($this->fixture->administrator);
+            $this->fixture->initializeAndApprove();
+            $this->fixture->completeReports();
+            $template = $this->fixture->template('CONSTANCIA_ASESORIA');
+            $body = ['type' => $template['type'], 'templateId' => $template['id'], 'expectedTemplateVersion' => $template['version'],
+                'adviserAssignmentId' => $this->fixture->assignment, 'year' => 2026, 'semester' => 1, 'startsOn' => '2026-02-01', 'endsOn' => '2026-07-31'];
+            $this->postJson($this->path('documents'), $body, $this->headers())->assertConflict();
+            $this->fixture->release();
+            $document = $this->postJson($this->path('documents'), $body, $this->headers())->assertAccepted()->assertJsonPath('data.folio', 'ITSH/RPSS/2026(1)/001')->json('data');
+            $this->assertSame('2025', substr(DB::table('residencias_documentos_emitidos')->where('id', $document['id'])->value('emitido_en'), 0, 4));
+            $this->postJson($this->path('documents'), array_replace($body, ['semester' => 2, 'startsOn' => '2026-08-01', 'endsOn' => '2026-12-31']), $this->headers())->assertConflict();
+            $this->assertDatabaseCount('residencias_constancias', 1);
+            $this->assertDatabaseCount('residencias_secuencias_folio', 1);
+            $this->assertSame(1, (int) DB::table('residencias_secuencias_folio')->value('ultimo_numero'));
+            $this->login($this->fixture->residentUser);
+            $this->getJson(self::ROOT.'issued-documents/'.$document['id'])->assertForbidden();
+        } finally {
+            $this->travelBack();
+        }
     }
 
     public function test_preceding_approval_is_required_and_generic_evidence_cannot_bypass_report_linking(): void

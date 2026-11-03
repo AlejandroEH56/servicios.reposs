@@ -434,7 +434,6 @@ class DocumentStore implements DocumentWorkflow
         abort_unless($assignment->id_proyecto === $project->id, 422);
         [$from,$until] = DocumentRules::semester((int) $input['year'], (int) $input['semester']);
         ResidencyRules::contained($input['startsOn'], $input['endsOn'], $from, $until);
-        abort_if((int) $input['year'] > now('America/Mexico_City')->year, 422);
         $rows = $this->table('proyectos as p')->join('residencias_asesores_internos_proyecto as a', 'a.id_proyecto', '=', 'p.id')
             ->join('residencias_liberaciones as l', 'l.id_proyecto', '=', 'p.id')->join('residencias_residentes as r', 'r.id', '=', 'p.id_residente')
             ->where('a.id_empleado', $assignment->id_empleado)->where('p.id_programa', $project->id_programa)->where('p.estado', 'COMPLETADO')->where('l.estado', 'APROBADO')
