@@ -99,12 +99,21 @@ class LaboratoryCalendarStore implements LaboratoryCalendar
         }, 3);
     }
 
+    public function lockForCapture(): void
+    {
+        if (DB::transactionLevel() < 1) {
+            throw new \LogicException('A transaction is required to lock the planning calendar.');
+        }
+
+        DB::table('planificacion_controles')->where('codigo', 'WRITER')->sharedLock()->firstOrFail();
+    }
+
     public function availability(string $laboratory, string $start, string $end): array
     {
         [$from, $until] = AvailabilityRules::window($start, $end);
 
         return DB::transaction(function () use ($laboratory, $from, $until): array {
-            DB::table('planificacion_controles')->where('codigo', 'WRITER')->sharedLock()->firstOrFail();
+            $this->lockForCapture();
             $lab = DB::table('planificacion_laboratorios')->where('id', $laboratory)->first();
             abort_if($lab === null, 404);
             $semester = DB::table('planificacion_semestres')->where('estado', 'ACTIVO')->first();

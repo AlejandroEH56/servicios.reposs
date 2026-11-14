@@ -4,6 +4,8 @@ namespace App\Modules\AcademicPlanning\Application;
 
 interface LaboratoryCalendar
 {
+    public function lockForCapture(): void;
+
     /** @param array<string, mixed> $filters
      * @return array<string, mixed> */
     public function schedules(string $laboratory, array $filters): array;

@@ -18,8 +18,13 @@
     "sessions", "cache", "cache_locks", "jobs", "job_batches", "failed_jobs"
   ],
   "runtimeMutable": ["residencias_archivos_preparados"],
-  "runtimeAppendOnly": ["residencias_revisiones_evidencia", "residencias_historial_liberaciones", "residencias_reaperturas_evidencia", "residencias_recursos_plantilla", "residencias_anulaciones_documento", "residencias_constancias", "residencias_proyectos_constancia"],
+  "runtimeAppendOnly": ["laboratorios_claves_idempotencia", "residencias_revisiones_evidencia", "residencias_historial_liberaciones", "residencias_reaperturas_evidencia", "residencias_recursos_plantilla", "residencias_anulaciones_documento", "residencias_constancias", "residencias_proyectos_constancia"],
   "runtimeColumnUpdates": {
+    "laboratorios_controles": ["codigo"],
+    "laboratorios_solicitudes": ["id_laboratorio", "id_semestre", "titulo", "proposito", "insumos", "inicio_en", "fin_en", "numero_asistentes", "estado", "version", "actualizado_en", "enviado_en"],
+    "laboratorios_detalles_practica": ["id_carrera", "id_asignatura", "id_grupo", "nombre_practica", "numero_practica"],
+    "laboratorios_detalles_varios": ["codigo_tipo_uso", "descripcion"],
+    "laboratorios_detalles_extraordinarios": ["justificacion", "id_empleado_solicitante"],
     "residencias_entregas_evidencia": ["estado", "version", "cantidad_revisiones", "reemplazado_en"],
     "residencias_reportes_avance": ["id_entrega", "entregado_en", "version"],
     "residencias_liberaciones": ["estado", "resolucion", "observaciones", "id_identidad_resolutor", "resuelto_en", "version", "actualizado_en", "datos_elegibilidad"],

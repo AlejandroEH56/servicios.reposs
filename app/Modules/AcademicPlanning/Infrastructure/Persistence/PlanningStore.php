@@ -25,6 +25,11 @@ class PlanningStore implements PlanningDirectory
 
     public function __construct(private AuthorizationDirectory $authorization, private OrganizationDirectory $organization) {}
 
+    public function hasActiveCurriculum(string $career, string $subject): bool
+    {
+        return DB::table('planificacion_reticulas')->where('id_carrera', $career)->where('id_asignatura', $subject)->where('activo', true)->exists();
+    }
+
     private function table(string $kind): string
     {
         abort_unless(isset(self::TABLES[$kind]), 404);

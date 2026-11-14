@@ -2,6 +2,7 @@
 
 use App\Modules\AcademicPlanning\Infrastructure\Providers\AcademicPlanningServiceProvider;
 use App\Modules\IAM\Infrastructure\Providers\IamServiceProvider;
+use App\Modules\LaboratoryRequests\Infrastructure\Providers\LaboratoryRequestsServiceProvider;
 use App\Modules\Organization\Infrastructure\Providers\OrganizationServiceProvider;
 use App\Modules\Publications\Infrastructure\Providers\PublicationsServiceProvider;
 use App\Modules\Residencies\Infrastructure\Providers\ResidenciesServiceProvider;
@@ -16,4 +17,5 @@ return [
     PublicationsServiceProvider::class,
     AcademicPlanningServiceProvider::class,
     ResidenciesServiceProvider::class,
+    LaboratoryRequestsServiceProvider::class,
 ];

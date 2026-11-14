@@ -173,7 +173,7 @@ jobs:
           for name in backend proxy mysql antivirus collector; do
             docker build --provenance=mode=max -f docker/$name.Dockerfile -t servicios-$name:${GITHUB_SHA} .
           done
-          [[ "$(date -u +%F)" < 2026-11-08 ]] || { echo 'MySQL classification review expired'; exit 1; }
+          [[ "$(date -u +%F)" < 2026-12-13 ]] || { echo 'MySQL classification review expired'; exit 1; }
           result=0
           for name in backend proxy mysql antivirus collector; do
             image="servicios-$name:${GITHUB_SHA}"

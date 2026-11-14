@@ -1,0 +1,1342 @@
+{
+  "openapi": "3.1.1",
+  "info": {
+    "title": "Solicitudes de laboratorio",
+    "version": "0.9.0",
+    "description": "Captura de solicitudes propias y cotización sin reserva.",
+    "license": {
+      "name": "MIT",
+      "identifier": "MIT"
+    }
+  },
+  "tags": [
+    {
+      "name": "LaboratoryRequests",
+      "description": "Captura y envío de solicitudes de laboratorio."
+    }
+  ],
+  "paths": {
+    "/api/v1/laboratory-requests": {
+      "get": {
+        "operationId": "listLaboratoryRequests",
+        "summary": "Listar solicitudes propias.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryRequestPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "createLaboratoryRequest",
+        "summary": "Crear borrador de solicitud.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoryRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Respuesta privada.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\"[1-9][0-9]{0,9}\"$",
+                  "maxLength": 12
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/availability-quotes": {
+      "post": {
+        "operationId": "quoteLaboratoryAvailability",
+        "summary": "Cotizar el calendario sin reservar el laboratorio.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoryQuoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryQuoteResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}": {
+      "get": {
+        "operationId": "getLaboratoryRequest",
+        "summary": "Consultar una solicitud propia.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\"[1-9][0-9]{0,9}\"$",
+                  "maxLength": 12
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "patch": {
+        "operationId": "updateLaboratoryRequest",
+        "summary": "Editar un borrador propio sin cambiar su tipo.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$",
+              "maxLength": 12
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoryRequestInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\"[1-9][0-9]{0,9}\"$",
+                  "maxLength": 12
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}/submit": {
+      "post": {
+        "operationId": "submitLaboratoryRequest",
+        "summary": "Enviar un borrador propio a revisión sin reservar.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$",
+              "maxLength": 12
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\"[1-9][0-9]{0,9}\"$",
+                  "maxLength": 12
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    }
+  },
+  "components": {
+    "schemas": {
+      "LaboratoryPracticeDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "careerId",
+          "subjectId",
+          "groupId",
+          "name"
+        ],
+        "properties": {
+          "careerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "subjectId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "groupId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "name": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "number": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 1,
+            "maxLength": 40
+          }
+        }
+      },
+      "LaboratoryVariousDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "useCode",
+          "description"
+        ],
+        "properties": {
+          "useCode": {
+            "type": "string",
+            "enum": [
+              "PROYECTO",
+              "ACTIVIDAD",
+              "OTRO"
+            ]
+          },
+          "description": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          }
+        }
+      },
+      "LaboratoryExtraordinaryDetail": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "justification"
+        ],
+        "properties": {
+          "justification": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          }
+        }
+      },
+      "LaboratoryPracticeInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "practice"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PRACTICA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "practice": {
+            "$ref": "#/components/schemas/LaboratoryPracticeDetail"
+          }
+        }
+      },
+      "LaboratoryPracticeRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "practice",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PRACTICA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "practice": {
+            "$ref": "#/components/schemas/LaboratoryPracticeDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          }
+        }
+      },
+      "LaboratoryVariousInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "various"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "VARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "various": {
+            "$ref": "#/components/schemas/LaboratoryVariousDetail"
+          }
+        }
+      },
+      "LaboratoryVariousRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "various",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "VARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "various": {
+            "$ref": "#/components/schemas/LaboratoryVariousDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          }
+        }
+      },
+      "LaboratoryExtraordinaryInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "extraordinary"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXTRAORDINARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "extraordinary": {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryDetail"
+          }
+        }
+      },
+      "LaboratoryExtraordinaryRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "extraordinary",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXTRAORDINARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "extraordinary": {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          }
+        }
+      },
+      "LaboratoryRequestInput": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/LaboratoryPracticeInput"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryVariousInput"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryInput"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "PRACTICA": "#/components/schemas/LaboratoryPracticeInput",
+            "VARIA": "#/components/schemas/LaboratoryVariousInput",
+            "EXTRAORDINARIA": "#/components/schemas/LaboratoryExtraordinaryInput"
+          }
+        }
+      },
+      "LaboratoryRequestRecord": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/LaboratoryPracticeRecord"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryVariousRecord"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryRecord"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "PRACTICA": "#/components/schemas/LaboratoryPracticeRecord",
+            "VARIA": "#/components/schemas/LaboratoryVariousRecord",
+            "EXTRAORDINARIA": "#/components/schemas/LaboratoryExtraordinaryRecord"
+          }
+        }
+      },
+      "LaboratoryQuoteInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "laboratoryId",
+          "startAt",
+          "endAt"
+        ],
+        "properties": {
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          }
+        }
+      },
+      "LaboratoryQuoteResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "laboratoryId",
+              "startAt",
+              "endAt",
+              "semesterId",
+              "timeZone",
+              "available",
+              "reservation",
+              "basis",
+              "intervals",
+              "reasonCode"
+            ],
+            "properties": {
+              "laboratoryId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "startAt": {
+                "type": "string",
+                "format": "date-time",
+                "maxLength": 40
+              },
+              "endAt": {
+                "type": "string",
+                "format": "date-time",
+                "maxLength": 40
+              },
+              "semesterId": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "timeZone": {
+                "type": "string",
+                "enum": [
+                  "America/Mexico_City"
+                ]
+              },
+              "available": {
+                "type": "boolean"
+              },
+              "reservation": {
+                "type": "boolean",
+                "const": false
+              },
+              "basis": {
+                "type": "string",
+                "enum": [
+                  "PLANNING_CALENDAR"
+                ]
+              },
+              "intervals": {
+                "type": "array",
+                "maxItems": 200,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "startAt",
+                    "endAt"
+                  ],
+                  "properties": {
+                    "startAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    },
+                    "endAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    }
+                  }
+                }
+              },
+              "reasonCode": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "enum": [
+                  null,
+                  "LABORATORY_UNAVAILABLE",
+                  "NO_ACTIVE_SEMESTER",
+                  "NO_SCHEDULE",
+                  "OUTSIDE_AVAILABLE_INTERVAL"
+                ]
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryRequestResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LaboratoryRequestRecord"
+          }
+        }
+      },
+      "LaboratoryRequestPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 25,
+                "items": {
+                  "$ref": "#/components/schemas/LaboratoryRequestRecord"
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
