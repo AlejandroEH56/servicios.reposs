@@ -168,7 +168,11 @@ El conjunto definitivo `20261103T060015Z` conserva las cinco imágenes exactas, 
 - Riesgos: exactamente un subtipo, reglas temporales, falsa expectativa de reserva por cotización.
 - Salida: schema discriminado y transición borrador→pendiente cubiertos; paridad de fixtures legacy.
 
-El responsable aprobó el 2026-11-13 que las identidades activas puedan cotizar, `DOCENTE_SOLICITANTE` capture y envíe sus propias solicitudes prácticas y varias, y `LABORATORISTA` capture y envíe extraordinarias propias en laboratorios bajo su responsabilidad. La creación de roles no asigna identidades. La cotización es informativa; el envío pasa de BORRADOR a PENDIENTE. El Sprint 9 está EN EJECUCIÓN.
+El responsable aprobó el 2026-11-13 que las identidades activas puedan cotizar, `DOCENTE_SOLICITANTE` capture y envíe sus propias solicitudes prácticas y varias, y `LABORATORISTA` capture y envíe extraordinarias propias en laboratorios bajo su responsabilidad. La creación de roles no asigna identidades. La cotización es informativa; el envío pasa de BORRADOR a PENDIENTE.
+
+La validación técnica y el piloto del Sprint 9 quedaron aceptados el 2026-11-14. El [PR 15](https://github.com/AlejandroEH56/servicios.reposs/pull/15) contiene la implementación. Los cinco controles CI aprobaron el candidato funcional `da23ad9`. Los casos de paridad con el legado comprobaron el detalle exclusivo de cada tipo, la edición del borrador y el envío a PENDIENTE. En staging, el responsable aceptó los cuatro pasos del piloto. La base confirmó una práctica, una varia y una extraordinaria en PENDIENTE, con detalle exclusivo y envío auditado; la franja siguió disponible y no se generó reserva. La práctica del piloto no registró una edición guardada en auditoría; la edición quedó verificada en las pruebas y en el ensayo MySQL aislado.
+
+El respaldo definitivo `20261114T173536Z` incluye las cinco imágenes exactas, SQL, archivos, TLS, antivirus y perfiles cifrados. La restauración en Linux, en volúmenes nuevos y una red aislada del mismo equipo, recuperó las tres solicitudes del piloto, conservó la disponibilidad de la franja y verificó los servicios en 90.76 segundos. Se cumplieron el RPO de 24 horas y el RTO de cuatro horas. El responsable confirmó el 2026-11-14 que guardó la carpeta completa en su respaldo en la nube; la clave se conserva por separado. Esta confirmación completa el requisito de custodia. La integración a main se verifica aparte en el PR.
 
 ### Sprint 10 — Decisión y calendario de solicitudes
 
