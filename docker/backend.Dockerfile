@@ -48,7 +48,7 @@ RUN set -eux; \
         --with-config-file-scan-dir="$PHP_INI_DIR/conf.d" --enable-option-checking=fatal \
         --with-mhash --with-pic --enable-mbstring --enable-mysqlnd --with-password-argon2 \
         --with-sodium=shared --without-pdo-sqlite --without-sqlite3 \
-        --with-curl --with-iconv --with-openssl --with-readline --with-zlib \
+        --with-curl --with-iconv=/usr --with-openssl --with-readline --with-zlib \
         --disable-phpdbg --disable-cgi --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data; \
     make -j 4; \
     make install; \
