@@ -37,13 +37,19 @@ RUN set -eux; \
     apk add --no-cache --virtual .php-rebuild $PHPIZE_DEPS \
         argon2-dev curl-dev gnu-libiconv-dev libsodium-dev libxml2-dev \
         linux-headers oniguruma-dev openssl-dev readline-dev zlib-dev; \
-    configure_flags="$(php-config --configure-options | sed -e 's/--with-pdo-sqlite=\/usr//g' -e 's/--with-sqlite3=\/usr//g')"; \
     printf '%s  %s\n' "$PHP_SHA256" /usr/src/php.tar.xz | sha256sum -c -; \
     docker-php-source extract; \
     cd /usr/src/php; \
     rm -f /usr/include/iconv.h; \
-    export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS"; \
-    ./configure $configure_flags --without-pdo-sqlite --without-sqlite3; \
+    export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" \
+        PHP_BUILD_PROVIDER='https://github.com/docker-library/php' PHP_UNAME='Linux'; \
+    ./configure --build="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
+        --sysconfdir=/usr/local/etc --with-config-file-path="$PHP_INI_DIR" \
+        --with-config-file-scan-dir="$PHP_INI_DIR/conf.d" --enable-option-checking=fatal \
+        --with-mhash --with-pic --enable-mbstring --enable-mysqlnd --with-password-argon2 \
+        --with-sodium=shared --without-pdo-sqlite --without-sqlite3 \
+        --with-curl --with-iconv --with-openssl --with-readline --with-zlib \
+        --disable-phpdbg --disable-cgi --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data; \
     make -j 4; \
     make install; \
     strip --strip-all /usr/local/bin/php /usr/local/sbin/php-fpm; \
