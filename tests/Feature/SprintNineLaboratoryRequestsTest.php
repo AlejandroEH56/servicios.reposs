@@ -186,6 +186,7 @@ class SprintNineLaboratoryRequestsTest extends TestCase
             array_replace($valid, ['attendees' => 26]),
             array_replace($valid, ['startAt' => '2026-11-16T06:59:00-06:00']),
             array_replace($valid, ['startAt' => '2026-11-16T07:00:00']),
+            array_replace($valid, ['startAt' => '2026-11-16T99:00:00-06:00']),
             array_replace($valid, ['endAt' => '2026-11-17T08:00:00-06:00']),
             array_replace($valid, ['startAt' => '2026-11-12T07:00:00-06:00']),
             array_replace_recursive($valid, ['practice' => ['groupId' => (string) Str::ulid()]]),

@@ -34,7 +34,11 @@ final class RequestRules
         if (! preg_match('/^\d{4}-\d\d-\d\dT\d\d:\d\d:\d\d(?:\.\d{1,6})?(?:Z|[+-](?:(?:0\d|1[0-3]):[0-5]\d|14:00))$/D', $value)) {
             throw new InvalidArgumentException('Expected a date and time with UTC offset.');
         }
-        $instant = new DateTimeImmutable($value);
+        try {
+            $instant = new DateTimeImmutable($value);
+        } catch (\DateMalformedStringException $exception) {
+            throw new InvalidArgumentException('Invalid date and time.', previous: $exception);
+        }
         $errors = DateTimeImmutable::getLastErrors();
         if ($errors !== false) {
             throw new InvalidArgumentException('Invalid date and time.');
