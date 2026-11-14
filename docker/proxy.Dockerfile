@@ -5,7 +5,7 @@ RUN apk add --no-cache patch
 COPY docker/go-jose-v3-rsa-bounds.patch /tmp/go-jose-v3-rsa-bounds.patch
 COPY docker/go-jose-v3-rsa-bounds_test.go /tmp/rsa_bounds_test.go
 RUN go mod init servicios/caddy \
-    && go get github.com/caddyserver/caddy/v2/cmd/caddy@v2.11.7 golang.org/x/net@v0.60.0 github.com/go-jose/go-jose/v4@v4.1.6 \
+    && go get github.com/caddyserver/caddy/v2/cmd/caddy@v2.11.7 golang.org/x/net@v0.62.0 github.com/klauspost/compress@v1.20.2 github.com/go-jose/go-jose/v4@v4.1.6 \
     && go mod download github.com/go-jose/go-jose/v3@v3.0.5 \
     && cp -R /go/pkg/mod/github.com/go-jose/go-jose/v3@v3.0.5 /src/go-jose-v3 \
     && chmod -R u+w /src/go-jose-v3 \
@@ -23,7 +23,7 @@ RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
 FROM caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS production
-RUN apk upgrade --no-cache && apk del curl \
+RUN apk upgrade --no-cache && apk add --no-cache 'zlib>=1.4-r0' && apk del curl \
     && ! apk info -e curl && ! apk info -e libcurl
 COPY --from=caddy-build /out/caddy /usr/bin/caddy
 COPY --from=frontend /build/dist/servicios-ui/browser /srv/frontend
