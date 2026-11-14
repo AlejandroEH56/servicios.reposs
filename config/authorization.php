@@ -20,8 +20,10 @@ $residenciesAdministration = array_fill_keys([...array_keys($resident), 'residen
     'residencies.reports.review', 'residencies.evidence.reopen', 'residencies.release.resolve', 'residencies.release.reopen', 'residencies.templates.manage', 'residencies.documents.issue', 'residencies.documents.revoke'], 'GLOBAL');
 
 return [
-    'matrix_version' => 'sprint-8-20261028-approved',
+    'matrix_version' => 'sprint-9-20261113-approved',
     'permissions' => [
+        'laboratorios.solicitudes.crear' => ['SELF'],
+        'laboratorios.solicitudes.extraordinarias.crear' => ['SELF'],
         'residencies.reports.submit' => ['SELF', 'GLOBAL'],
         'residencies.reports.review' => ['GLOBAL'],
         'residencies.evidence.reopen' => ['GLOBAL'],
@@ -71,8 +73,8 @@ return [
             'organization.asesores.consultar' => 'GLOBAL',
         ],
         'EMPLEADO' => $personal,
-        'DOCENTE_SOLICITANTE' => $personal,
-        'LABORATORISTA' => $personal,
+        'DOCENTE_SOLICITANTE' => $personal + ['laboratorios.solicitudes.crear' => 'SELF'],
+        'LABORATORISTA' => $personal + ['laboratorios.solicitudes.extraordinarias.crear' => 'SELF'],
         'INVENTARIO_RESPONSABLE' => $personal,
         'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'residencies.files.read' => 'GLOBAL', 'residencies.evidence.review' => 'GLOBAL',
             'residencies.reports.review' => 'GLOBAL', 'residencies.evidence.reopen' => 'GLOBAL'],

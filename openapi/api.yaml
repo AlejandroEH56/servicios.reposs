@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.8.0
+  version: 0.9.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -35,7 +35,18 @@ tags:
   -
     name: Completion
     description: 'Reportes, liberación y emisión privada.'
+  -
+    name: LaboratoryRequests
+    description: 'Captura de solicitudes propias y cotización sin reserva.'
 paths:
+  /api/v1/laboratory-requests:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests
+  /api/v1/laboratory-requests/availability-quotes:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1availability-quotes
+  /api/v1/laboratory-requests/{record}:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}
+  /api/v1/laboratory-requests/{record}/submit:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1submit
   /api/v1/residencies/projects/{record}/report-plan:
     $ref: ./completion.yaml#/paths/~1api~1v1~1residencies~1projects~1{record}~1report-plan
   /api/v1/residencies/projects/{record}/approve:

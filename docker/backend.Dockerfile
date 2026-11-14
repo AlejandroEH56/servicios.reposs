@@ -7,6 +7,7 @@ COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
 FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS base
 RUN apk upgrade --no-cache \
+    && apk add --no-cache 'zlib>=1.4-r0' \
     && apk add --no-cache icu-libs libzip oniguruma tzdata unzip ca-certificates libpng libjpeg-turbo libwebp \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
@@ -31,7 +32,35 @@ RUN mkdir -p .tools/phpstan-cache .tools/phpunit-cache storage/app/private stora
     && touch .phpunit.result.cache && chown -R www-data:www-data .tools .phpunit.result.cache storage bootstrap/cache public/portal
 USER www-data
 CMD ["php", "vendor/bin/phpunit"]
-FROM base AS production
+FROM base AS mysql-runtime
+RUN set -eux; \
+    apk add --no-cache --virtual .php-rebuild $PHPIZE_DEPS \
+        argon2-dev curl-dev gnu-libiconv-dev libsodium-dev libxml2-dev \
+        linux-headers oniguruma-dev openssl-dev readline-dev zlib-dev; \
+    printf '%s  %s\n' "$PHP_SHA256" /usr/src/php.tar.xz | sha256sum -c -; \
+    docker-php-source extract; \
+    cd /usr/src/php; \
+    rm -f /usr/include/iconv.h; \
+    export CFLAGS="$PHP_CFLAGS" CPPFLAGS="$PHP_CPPFLAGS" LDFLAGS="$PHP_LDFLAGS" \
+        PHP_BUILD_PROVIDER='https://github.com/docker-library/php' PHP_UNAME='Linux'; \
+    ./configure --build="$(dpkg-architecture --query DEB_BUILD_GNU_TYPE)" \
+        --sysconfdir=/usr/local/etc --with-config-file-path="$PHP_INI_DIR" \
+        --with-config-file-scan-dir="$PHP_INI_DIR/conf.d" --enable-option-checking=fatal \
+        --with-mhash --with-pic --enable-mbstring --enable-mysqlnd --with-password-argon2 \
+        --with-sodium=shared --without-pdo-sqlite --without-sqlite3 \
+        --with-curl --with-iconv=/usr --with-openssl --with-readline --with-zlib \
+        --disable-phpdbg --disable-cgi --enable-fpm --with-fpm-user=www-data --with-fpm-group=www-data; \
+    make -j 4; \
+    make install; \
+    strip --strip-all /usr/local/bin/php /usr/local/sbin/php-fpm; \
+    cd /; \
+    docker-php-source delete; \
+    apk del --no-network .php-rebuild 'so:libsqlite3.so.0'; \
+    ! apk info -e sqlite-libs; \
+    php -r 'exit(!extension_loaded("pdo_sqlite") && !extension_loaded("sqlite3") && extension_loaded("pdo_mysql") && extension_loaded("pcntl") ? 0 : 1);'; \
+    php-fpm -t
+
+FROM mysql-runtime AS production
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
 COPY app ./app

@@ -1,0 +1,118 @@
+<h2>Solicitudes de laboratorio</h2>
+<nav aria-label="Navegación de solicitudes">
+  <a routerLink="/dashboard">Inicio</a>
+  <a routerLink="/academic-planning/calendar">Horarios semanales</a>
+</nav>
+<p>Consulta las franjas disponibles y prepara tu solicitud. Cotizar o enviar no reserva el laboratorio.</p>
+@if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (notice()) { <p role="status">{{ notice() }}</p> }
+
+<section aria-labelledby="my-lab-requests">
+  <h3 id="my-lab-requests">Mis solicitudes</h3>
+  <button type="button" [disabled]="work.busy()" (click)="reset()">Nueva consulta o solicitud</button>
+  <ul>
+    @for (row of records(); track row.id) {
+      <li><button type="button" [disabled]="work.busy()" (click)="open(row.id)">{{ row.title }} · {{ labels[row.type] }} · {{ row.status }} · {{ displayDate(row.startAt) }}</button></li>
+    } @empty { <li>No hay solicitudes propias.</li> }
+  </ul>
+  @if (next()) { <button type="button" [disabled]="work.busy()" (click)="loadList(true)">Más solicitudes</button> }
+</section>
+
+@if (step === 1) {
+  <h3>1. Laboratorio y horario</h3>
+  <form #timeForm="ngForm" (ngSubmit)="checkAvailability()">
+    <fieldset [disabled]="work.busy()">
+      <legend>Horario de Ciudad de México</legend>
+      <label>Laboratorio
+        <select name="laboratory" required [(ngModel)]="laboratory" (ngModelChange)="rangeChanged()">
+          <option value="">Selecciona un laboratorio</option>
+          @for (lab of options().laboratories; track lab.id) { <option [value]="lab.id">{{ lab.name }} · {{ lab.capacity }} personas</option> }
+        </select>
+      </label>
+      @if (cursors().laboratories) { <button type="button" (click)="loadOptions('laboratories', true)">Más laboratorios</button> }
+      <label>Fecha <input name="day" type="date" required [(ngModel)]="day" (ngModelChange)="rangeChanged()"></label>
+      <label>Inicio <input name="start" type="time" min="07:00" max="19:59" required [(ngModel)]="start" (ngModelChange)="rangeChanged()"></label>
+      <label>Fin <input name="end" type="time" min="07:01" max="20:00" required [(ngModel)]="end" (ngModelChange)="rangeChanged()"></label>
+      <button type="submit" [disabled]="timeForm.invalid">Cotizar disponibilidad</button>
+      @if (editable()) {
+        <button type="button" [disabled]="timeForm.invalid" (click)="step = 2">Continuar a los detalles</button>
+      }
+    </fieldset>
+  </form>
+  @if (quote(); as result) {
+    <p role="status">{{ result.available ? 'El intervalo está disponible según el calendario.' : 'El intervalo completo no está disponible. Revisa el semestre, las franjas y los días inhábiles.' }}</p>
+    <ul aria-label="Intervalos preliminares">
+      @for (interval of result.intervals; track interval.startAt) {
+        <li>{{ displayDate(interval.startAt) }} a {{ displayDate(interval.endAt) }}</li>
+      }
+    </ul>
+  }
+} @else {
+  <h3>2. Detalles de la solicitud</h3>
+  @if (selected(); as row) {
+    <p>Estado: <strong>{{ row.status }}</strong> · {{ displayDate(row.startAt) }} a {{ displayDate(row.endAt) }}.</p>
+    @if (row.submittedAt) { <p>Enviada el {{ displayDate(row.submittedAt) }}.</p> }
+  }
+  @if (editable()) {
+    <button type="button" [disabled]="work.busy()" (click)="step = 1">Cambiar horario</button>
+  }
+  <form #draftForm="ngForm" (ngSubmit)="save(draftForm)">
+    <fieldset [disabled]="work.busy() || !editable()">
+      <legend>Información de la solicitud</legend>
+      <label>Tipo
+        <select name="type" [(ngModel)]="type" (ngModelChange)="clearDetails()" [disabled]="!!selected()">
+          @if (selected()) { <option [value]="type">{{ labels[type] }}</option> }
+          @else { @for (item of allowedTypes(); track item) { <option [value]="item">{{ labels[item] }}</option> } }
+        </select>
+      </label>
+      <label>Título <input name="title" required minlength="2" maxlength="255" [(ngModel)]="title"></label>
+      <label>Propósito <textarea name="purpose" required minlength="2" maxlength="255" [(ngModel)]="purpose"></textarea></label>
+      <label>Asistentes <input name="attendees" type="number" min="1" max="65535" step="1" required [(ngModel)]="attendees"></label>
+      <label>Insumos u observaciones <textarea name="supplies" maxlength="10000" [(ngModel)]="supplies"></textarea></label>
+      @switch (type) {
+        @case ('PRACTICA') {
+          <label>Carrera
+            <select name="career" required [(ngModel)]="practice.careerId" (ngModelChange)="practice.groupId = ''">
+              <option value="">Selecciona una carrera</option>
+              @for (item of options().careers; track item.id) { <option [value]="item.id">{{ item.name }}</option> }
+            </select>
+          </label>
+          <label>Asignatura
+            <select name="subject" required [(ngModel)]="practice.subjectId">
+              <option value="">Selecciona una asignatura</option>
+              @for (item of options().subjects; track item.id) { <option [value]="item.id">{{ item.name }}</option> }
+            </select>
+          </label>
+          <label>Grupo
+            <select name="group" required [(ngModel)]="practice.groupId">
+              <option value="">Selecciona un grupo</option>
+              @for (item of options().groups; track item.id) {
+                @if (item.careerId === practice.careerId) { <option [value]="item.id">{{ item.name }}</option> }
+              }
+            </select>
+          </label>
+          @for (kind of catalogKinds; track kind) {
+            @if (cursors()[kind]) { <button type="button" (click)="loadOptions(kind, true)">Más {{ catalogLabels[kind] }}</button> }
+          }
+          <label>Nombre de la práctica <input name="practiceName" required minlength="2" maxlength="255" [(ngModel)]="practice.name"></label>
+          <label>Número de práctica <input name="practiceNumber" maxlength="40" [(ngModel)]="practice.number"></label>
+        }
+        @case ('VARIA') {
+          <label>Tipo de uso
+            <select name="useCode" [(ngModel)]="various.useCode"><option value="PROYECTO">Proyecto</option><option value="ACTIVIDAD">Actividad</option><option value="OTRO">Otro</option></select>
+          </label>
+          <label>Descripción de las tareas <textarea name="description" required minlength="2" maxlength="255" [(ngModel)]="various.description"></textarea></label>
+        }
+        @case ('EXTRAORDINARIA') {
+          <p>Disponible para laboratorios bajo tu responsabilidad.</p>
+          <label>Justificación <textarea name="justification" required minlength="2" maxlength="255" [(ngModel)]="extraordinary.justification"></textarea></label>
+        }
+      }
+      @if (editable()) { <button type="submit" [disabled]="draftForm.invalid">Guardar borrador</button> }
+    </fieldset>
+  </form>
+  @if (editable() && selected()) {
+    <p>{{ hasUnsavedChanges() ? 'Guarda los cambios antes de enviar.' : 'El envío utiliza el último borrador guardado.' }}</p>
+    <button type="button" [disabled]="work.busy() || hasUnsavedChanges()" (click)="submit()">Enviar a revisión</button>
+  }
+}

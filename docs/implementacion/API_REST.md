@@ -234,7 +234,7 @@ La operación de documentos del Sprint 8 usa el healthcheck privado `residencies
 | `POST /laboratory-requests` | `CreateLaboratoryRequestRequest` | `LaboratoryRequestResponse` | solicitante + idempotencia |
 | `GET /laboratory-requests/{requestId}` | — | `LaboratoryRequestResponse` | request policy |
 | `PATCH /laboratory-requests/{requestId}` | `UpdateDraftLaboratoryRequestRequest` | `LaboratoryRequestResponse` | owner + borrador + `If-Match` |
-| `POST /laboratory-requests/{requestId}/submit` | `SubmitLaboratoryRequestRequest` | `LaboratoryRequestResponse` | owner |
+| `POST /laboratory-requests/{requestId}/submit` | Sin cuerpo | `LaboratoryRequestResponse` | propietario + borrador + `If-Match` + idempotencia |
 | `POST /laboratory-requests/{requestId}/decisions` | `DecideLaboratoryRequestRequest` | `LaboratoryRequestResponse` | reviewer + idempotencia |
 | `POST /laboratory-requests/{requestId}/cancel` | `CancelLaboratoryRequestRequest` | `LaboratoryRequestResponse` | owner/reviewer según estado |
 | `GET /laboratory-requests/review-queue` | `RequestReviewQueueQuery` | `Page<LaboratoryRequestResponse>` | reviewer contextual |
@@ -242,6 +242,8 @@ La operación de documentos del Sprint 8 usa el healthcheck privado `residencies
 | `GET /laboratory-requests/{requestId}/receipt` | — | PDF/metadata | request policy |
 
 `CreateLaboratoryRequestRequest`: discriminador `type` y exactamente un objeto `practice`, `various` o `extraordinary`, más `laboratoryId`, `startAt`, `endAt`, `purpose`. El servidor vuelve a comprobar conflicto al autorizar dentro del lock; una cotización nunca reserva.
+
+Sprint 9 implementa las seis operaciones de captura en `openapi/laboratory-requests.yaml` 0.9.0. El tipo y el propietario quedan fijos al crear; el cuerpo de edición contiene los datos completos y el único detalle compatible. Las solicitudes usan intervalos futuros del mismo día, 07:00–20:00 de Ciudad de México, con fecha dentro del semestre activo, capacidad y referencias académicas válidas. Se guardan fechas en UTC y se devuelve ETag. La cotización no escribe ni reserva; el envío vuelve a consultar el calendario bajo bloqueo compartido y deja el registro PENDIENTE. Las decisiones, ocupación y comprobantes corresponden al Sprint 10.
 
 ### 5.7 Inventories
 
