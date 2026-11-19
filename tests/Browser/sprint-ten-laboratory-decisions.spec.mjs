@@ -28,8 +28,8 @@ async function workspace(page, { reviewer = true, own = false, conflict = false 
     const reply = data => route.fulfill({json: {data}});
     if (request.method() === 'GET') {
       if (path.endsWith('/review-queue')) return reply({items: row.status === 'PENDIENTE' ? [row] : [], nextCursor: null});
-      if (path.endsWith('/workflow')) return reply({items: own ? [row] : [], nextCursor: null});
-      if (path.includes('/workflow/')) return reply(row);
+      if (path === root + '/workflow') return reply({items: own ? [row] : [], nextCursor: null});
+      if (path.endsWith('/workflow')) return reply(row);
       if (path.endsWith('/decisions')) return reply({items: history});
       if (path.endsWith('/notifications')) return reply({items: [], nextCursor: null});
       if (path.endsWith('/calendar')) return reply({laboratoryId: actor, timeZone: 'America/Mexico_City',

@@ -29,4 +29,4 @@ export function getLaboratoryWorkflow(http: HttpClient, rootUrl: string, params:
   );
 }
 
-getLaboratoryWorkflow.PATH = '/api/v1/laboratory-requests/workflow/{record}';
+getLaboratoryWorkflow.PATH = '/api/v1/laboratory-requests/{record}/workflow';

@@ -9,7 +9,7 @@ Route::middleware(['web', 'auth', RequireActiveIdentity::class, 'throttle:120,1'
     Route::post('availability-quotes', [LaboratoryRequestController::class, 'quote'])->name('quote');
     Route::get('review-queue', [LaboratoryDecisionController::class, 'queue'])->name('queue');
     Route::get('workflow', [LaboratoryDecisionController::class, 'workflow'])->name('workflow-index');
-    Route::get('workflow/{record}', [LaboratoryDecisionController::class, 'workflow'])->whereUlid('record')->name('workflow-show');
+    Route::get('{record}/workflow', [LaboratoryDecisionController::class, 'workflow'])->whereUlid('record')->name('workflow-show');
     Route::get('calendar', [LaboratoryDecisionController::class, 'calendar'])->name('calendar');
     Route::get('notifications', [LaboratoryDecisionController::class, 'notifications'])->name('notifications');
     Route::post('{record}/decisions', [LaboratoryDecisionController::class, 'decide'])->whereUlid('record')->name('decide');

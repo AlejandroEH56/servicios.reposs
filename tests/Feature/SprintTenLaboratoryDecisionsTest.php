@@ -135,7 +135,7 @@ class SprintTenLaboratoryDecisionsTest extends TestCase
         $response = $this->postJson($path.'/decisions', $body, $headers)->assertOk()->assertHeader('ETag', '"3"')->assertJsonPath('data.status', 'AUTORIZADO')->json();
         $this->postJson($path.'/decisions', $body, $headers)->assertOk()->assertExactJson($response);
         $this->getJson($path)->assertConflict();
-        $this->getJson(self::ROOT.'/workflow/'.$first['id'])->assertOk()->assertJsonPath('data.status', 'AUTORIZADO');
+        $this->getJson(self::ROOT.'/'.$first['id'].'/workflow')->assertOk()->assertJsonPath('data.status', 'AUTORIZADO');
         $this->postJson($path.'/decisions', ['decision' => 'RECHAZADO', 'reason' => 'Cambio de motivo'], $headers)->assertConflict();
         $this->postJson(self::ROOT.'/'.$second['id'].'/decisions', $body, $this->headers(2))->assertConflict();
         $this->assertDatabaseCount('laboratorios_decisiones_solicitud', 1);

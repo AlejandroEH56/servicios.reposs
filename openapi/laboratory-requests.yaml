@@ -323,7 +323,7 @@
             "$ref": "./management.yaml#/components/responses/Problem"
           }
         },
-        "description": "Consulta de captura. Tras una decisión devuelve 409; consultar /workflow/{record} para el estado completo."
+        "description": "Consulta de captura. Tras una decisión devuelve 409; consultar /{record}/workflow para el estado completo."
       },
       "patch": {
         "operationId": "updateLaboratoryRequest",
@@ -1227,7 +1227,7 @@
         }
       }
     },
-    "/api/v1/laboratory-requests/workflow/{record}": {
+    "/api/v1/laboratory-requests/{record}/workflow": {
       "get": {
         "operationId": "getLaboratoryWorkflow",
         "summary": "Detalle de solicitud propia o del alcance del revisor, en cualquier estado.",

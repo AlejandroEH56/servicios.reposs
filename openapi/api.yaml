@@ -41,8 +41,8 @@ tags:
 paths:
   /api/v1/laboratory-requests/workflow:
     $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1workflow
-  /api/v1/laboratory-requests/workflow/{record}:
-    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1workflow~1{record}
+  /api/v1/laboratory-requests/{record}/workflow:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1workflow
   /api/v1/laboratory-requests/review-queue:
     $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1review-queue
   /api/v1/laboratory-requests/calendar:
