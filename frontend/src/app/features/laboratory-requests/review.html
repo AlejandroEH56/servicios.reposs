@@ -1,6 +1,7 @@
 <h2>Revisión y ocupación de laboratorios</h2>
 <nav aria-label="Navegación de laboratorio"><a routerLink="/dashboard">Inicio</a> <a routerLink="/laboratory-requests">Capturar solicitud</a></nav>
-@if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (conflictMessage()) { <p role="alert">{{ conflictMessage() }}</p> }
+@else if (work.message()) { <p role="alert">{{ work.message() }}</p> }
 @if (notice()) { <p role="status">{{ notice() }}</p> }
 <section aria-labelledby="all-my-requests">
   <h3 id="all-my-requests">Mis solicitudes e historial</h3>

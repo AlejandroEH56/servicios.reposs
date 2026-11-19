@@ -30,6 +30,7 @@ export class LaboratoryReview {
   protected readonly queueCursor = signal<string | null>(null);
   protected readonly notificationCursor = signal<string | null>(null);
   protected readonly notice = signal('');
+  protected readonly conflictMessage = signal('');
   protected laboratory = '';
   protected day = '';
   protected reason = '';
@@ -83,6 +84,7 @@ export class LaboratoryReview {
     });
   }
   protected open(id: string): void {
+    this.conflictMessage.set('');
     this.selected.set(null);
     this.receipt.set(null);
     this.history.set([]);
@@ -100,6 +102,7 @@ export class LaboratoryReview {
   protected resolve(cancel = false): void {
     const row = this.selected();
     if (!row || this.reason.trim().length < 3 || (cancel ? !this.canCancel() : !this.canDecide())) return;
+    this.conflictMessage.set('');
     const fingerprint = JSON.stringify([row.id, row.version, cancel, this.decision, this.reason.trim()]);
     if (this.retry?.fingerprint !== fingerprint) this.retry = {fingerprint, key: crypto.randomUUID()};
     const headers = {record: row.id, 'If-Match': '"' + row.version + '"', 'Idempotency-Key': this.retry.key};
@@ -114,7 +117,10 @@ export class LaboratoryReview {
       this.loadMine();
       if (this.reviewer()) this.loadQueue();
       if (this.occupied() !== null) this.loadCalendar();
-    }, () => this.open(row.id));
+    }, () => {
+      this.open(row.id);
+      this.conflictMessage.set('El registro cambió o existe un conflicto. Revisa la solicitud actualizada antes de guardar.');
+    });
   }
   protected loadReceipt(): void {
     const row = this.selected();
