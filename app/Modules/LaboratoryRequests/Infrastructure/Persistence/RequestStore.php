@@ -6,6 +6,7 @@ use App\Modules\AcademicPlanning\Application\LaboratoryCalendar;
 use App\Modules\AcademicPlanning\Application\PlanningDirectory;
 use App\Modules\IAM\Application\AuthorizationDirectory;
 use App\Modules\LaboratoryRequests\Application\RequestCapture;
+use App\Modules\LaboratoryRequests\Domain\Services\OccupancyRules;
 use App\Modules\LaboratoryRequests\Domain\Services\RequestRules;
 use App\Modules\Organization\Application\OrganizationDirectory;
 use DateTimeImmutable;
@@ -33,6 +34,7 @@ class RequestStore implements RequestCapture
         private LaboratoryCalendar $calendar,
         private PlanningDirectory $planning,
         private OrganizationDirectory $organization,
+        private RequestAccess $access,
     ) {}
 
     public function quote(string $laboratory, string $start, string $end): array
@@ -40,7 +42,19 @@ class RequestStore implements RequestCapture
         try {
             RequestRules::window($start, $end, now()->toDateTimeImmutable());
 
-            return $this->calendar->availability($laboratory, $start, $end);
+            $result = $this->calendar->availability($laboratory, $start, $end);
+            $occupied = DB::table(self::TABLE)->where('id_laboratorio', $laboratory)->where('estado', 'AUTORIZADO')
+                ->where('inicio_en', '<', $this->databaseTime($result['endAt']))->where('fin_en', '>', $this->databaseTime($result['startAt']))->get();
+            $result['intervals'] = OccupancyRules::subtract($result['intervals'], $occupied->map(fn (object $row): array => [
+                'startAt' => $this->iso($row->inicio_en), 'endAt' => $this->iso($row->fin_en),
+            ])->all());
+            if ($occupied->isNotEmpty()) {
+                $result['available'] = false;
+                $result['reasonCode'] = 'OUTSIDE_AVAILABLE_INTERVAL';
+            }
+            $result['occupancyIncluded'] = true;
+
+            return $result;
         } catch (InvalidArgumentException) {
             abort(422, 'El intervalo debe ser futuro, del mismo día y entre las 07:00 y las 20:00.');
         }
@@ -49,7 +63,12 @@ class RequestStore implements RequestCapture
     public function read(string $actor, ?string $id, ?string $cursor = null): array
     {
         if ($id !== null) {
-            return $this->present($this->owned($actor)->where('id', $id)->first() ?? abort(404));
+            $row = DB::table(self::TABLE)->where('id', $id)->first() ?? abort(404);
+            $this->access->view($actor, $row);
+            abort_unless(in_array($row->estado, ['BORRADOR', 'PENDIENTE'], true), 409,
+                'La solicitud tiene una decisión. Consulta el flujo de revisión para ver su estado e historial.');
+
+            return $this->present($row);
         }
         $after = null;
         if ($cursor !== null) {
@@ -60,7 +79,7 @@ class RequestStore implements RequestCapture
                 abort(422);
             }
         }
-        $rows = $this->owned($actor)->when($after !== null, fn (Builder $query) => $query->where('id', '<', $after))
+        $rows = $this->owned($actor)->whereIn('estado', ['BORRADOR', 'PENDIENTE'])->when($after !== null, fn (Builder $query) => $query->where('id', '<', $after))
             ->orderByDesc('id')->limit(26)->get();
         $items = $rows->take(25);
 
@@ -212,7 +231,7 @@ class RequestStore implements RequestCapture
     }
 
     /** @return array<string, mixed> */
-    private function present(object $row): array
+    public function present(object $row): array
     {
         $type = $row->tipo_solicitud;
         if (! is_string($type) || ! isset(self::DETAIL_TABLES[$type])) {
@@ -226,7 +245,7 @@ class RequestStore implements RequestCapture
             'EXTRAORDINARIA' => ['justification' => $detail->justificacion],
         };
 
-        return ['id' => $row->id, 'laboratoryId' => $row->id_laboratorio, 'semesterId' => $row->id_semestre, 'type' => $type,
+        return ['id' => $row->id, 'ownerId' => $row->id_identidad_solicitante, 'laboratoryId' => $row->id_laboratorio, 'semesterId' => $row->id_semestre, 'type' => $type,
             'title' => $row->titulo, 'purpose' => $row->proposito, 'attendees' => (int) $row->numero_asistentes, 'supplies' => $row->insumos,
             'startAt' => $this->iso($row->inicio_en), 'endAt' => $this->iso($row->fin_en), 'status' => $row->estado,
             'version' => (int) $row->version, 'submittedAt' => $row->enviado_en === null ? null : $this->iso($row->enviado_en),

@@ -4,6 +4,9 @@ namespace App\Modules\AcademicPlanning\Application;
 
 interface PlanningDirectory
 {
+    /** @return list<string> */
+    public function responsibleLaboratoryIds(string $employee): array;
+
     public function hasActiveCurriculum(string $career, string $subject): bool;
 
     /** @param array<string, mixed> $filters

@@ -16,5 +16,6 @@ export interface LaboratoryQuoteResponse {
 'endAt': string;
 }>;
 'reasonCode': ('LABORATORY_UNAVAILABLE' | 'NO_ACTIVE_SEMESTER' | 'NO_SCHEDULE' | 'OUTSIDE_AVAILABLE_INTERVAL' | null);
+'occupancyIncluded'?: true;
 };
 }

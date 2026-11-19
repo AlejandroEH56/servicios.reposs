@@ -183,6 +183,11 @@ El respaldo definitivo `20261114T173536Z` incluye las cinco imágenes exactas, S
 - Riesgos: doble autorización concurrente, permisos por laboratorio, PDF/correo repetido.
 - Salida: stress concurrente sin solapamientos autorizados; efectos outbox idempotentes.
 
+Ejecución del Sprint 10 iniciada el 2026-11-18 desde main `f09b107`, con el Sprint 9 integrado y sus controles, piloto, recuperación y custodia aceptados. El responsable aprobó LABORATORISTA con revisión contextual de sus laboratorios y ADMIN_LABORATORIOS con revisión GLOBAL; se prohíbe autorizar o rechazar solicitudes propias. El propietario puede cancelar BORRADOR/PENDIENTE/AUTORIZADO antes del inicio, con motivo; los revisores pueden cancelar dentro de su alcance. Se aprobaron las asignaciones explícitas y auditadas de ADMIN_LABORATORIOS a la cuenta habitual y DOCENTE_SOLICITANTE a la identidad de ensayo Desarrollador 2. Microsoft sólo autentica y no concede estos permisos.
+
+La implementación incorpora cola contextual, decisiones y cancelaciones con If-Match e idempotencia, historial append-only, calendario anonimizado y notificaciones dentro del portal, sin envío de correo externo. Autorizar vuelve a comprobar fecha futura, semestre activo, calendario, capacidad y ocupación bajo el mismo mutex usado por captura; sólo AUTORIZADO ocupa y CANCELADO libera la franja. La decisión, su instantánea y el evento outbox se guardan en la misma transacción. El consumidor deduplica comprobante privado y notificación por decisión, y la descarga sólo ofrece la última decisión tras volver a autorizar y verificar integridad.
+
+OpenAPI 0.10.0 conserva los estados del contrato de captura del Sprint 9: su colección contiene BORRADOR/PENDIENTE; el detalle devuelve 409 después de una decisión. Las nuevas consultas /workflow y /{record}/workflow ofrecen todos los estados, sin ampliar los enums del contrato anterior. La UI distingue captura e historial. Las nuevas pantallas están en /portal/laboratory-requests/review. El sprint permanece EN EJECUCIÓN hasta completar el piloto real y las evidencias definitivas de CI, imágenes, recuperación y custodia.
 ### Sprint 11 — Inventarios: raíz, ubicaciones e ítems
 
 - Casos de uso: inicializar inventario, árbol de ubicaciones, registrar/editar/retirar cinco tipos de ítem y asignar acceso.

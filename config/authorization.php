@@ -20,8 +20,9 @@ $residenciesAdministration = array_fill_keys([...array_keys($resident), 'residen
     'residencies.reports.review', 'residencies.evidence.reopen', 'residencies.release.resolve', 'residencies.release.reopen', 'residencies.templates.manage', 'residencies.documents.issue', 'residencies.documents.revoke'], 'GLOBAL');
 
 return [
-    'matrix_version' => 'sprint-9-20261113-approved',
+    'matrix_version' => 'sprint-10-20261118-approved',
     'permissions' => [
+        'laboratorios.solicitudes.revisar' => ['SELF', 'GLOBAL'],
         'laboratorios.solicitudes.crear' => ['SELF'],
         'laboratorios.solicitudes.extraordinarias.crear' => ['SELF'],
         'residencies.reports.submit' => ['SELF', 'GLOBAL'],
@@ -58,6 +59,7 @@ return [
         'organization.asesores.consultar' => ['GLOBAL'],
     ],
     'roles' => [
+        'ADMIN_LABORATORIOS' => ['laboratorios.solicitudes.revisar' => 'GLOBAL'],
         'ADMIN_RESIDENCIAS' => $residenciesAdministration,
         'ADMIN_PLANIFICACION' => ['planning.manage' => 'GLOBAL', 'planning.catalogs.manage' => 'GLOBAL'],
         'ADMIN_PUBLICACIONES' => ['publicaciones.administrar' => 'GLOBAL'],
@@ -74,7 +76,7 @@ return [
         ],
         'EMPLEADO' => $personal,
         'DOCENTE_SOLICITANTE' => $personal + ['laboratorios.solicitudes.crear' => 'SELF'],
-        'LABORATORISTA' => $personal + ['laboratorios.solicitudes.extraordinarias.crear' => 'SELF'],
+        'LABORATORISTA' => $personal + ['laboratorios.solicitudes.extraordinarias.crear' => 'SELF', 'laboratorios.solicitudes.revisar' => 'SELF'],
         'INVENTARIO_RESPONSABLE' => $personal,
         'DRPSS_REVISOR' => $personal + ['organization.asesores.consultar' => 'GLOBAL', 'residencies.files.read' => 'GLOBAL', 'residencies.evidence.review' => 'GLOBAL',
             'residencies.reports.review' => 'GLOBAL', 'residencies.evidence.reopen' => 'GLOBAL'],

@@ -3,6 +3,7 @@ import { anonymousGuard, authGuard, authMatchGuard } from './core/guards/auth.gu
 import { permissionGuard } from './core/guards/permission.guard';
 
 export const routes: Routes = [
+  { path: 'laboratory-requests/review', canActivate: [authGuard], loadComponent: () => import('./features/laboratory-requests/review').then(m => m.LaboratoryReview) },
   { path: '', pathMatch: 'full', redirectTo: 'session' },
   { path: 'laboratory-requests', canActivate: [authGuard], loadComponent: () => import('./features/laboratory-requests/capture').then(m => m.LaboratoryRequestCapture) },
   { path: 'residencies/completion', canActivate: [authGuard], loadComponent: () => import('./features/residencies/completion').then(m => m.CompletionWorkspace) },

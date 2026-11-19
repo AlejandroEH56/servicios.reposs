@@ -8,6 +8,7 @@ export interface LaboratoryExtraordinaryRecord {
   extraordinary: LaboratoryExtraordinaryDetail;
   id: string;
   laboratoryId: string;
+  ownerId?: string;
   purpose: string;
   semesterId: string;
   startAt: string;

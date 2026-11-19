@@ -7,6 +7,7 @@ export interface LaboratoryPracticeRecord {
   endAt: string;
   id: string;
   laboratoryId: string;
+  ownerId?: string;
   practice: LaboratoryPracticeDetail;
   purpose: string;
   semesterId: string;
