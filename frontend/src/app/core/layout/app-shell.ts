@@ -18,6 +18,7 @@ import { AuthFacade } from '../auth/auth.facade';
           <a routerLink="/residencies/completion">Reportes, liberación y documentos</a>
           <a routerLink="/academic-planning">Planificación académica</a>
           <a routerLink="/laboratory-requests">Solicitudes de laboratorio</a>
+          <a routerLink="/laboratory-requests/review">Revisión y ocupación de laboratorios</a>
           <a routerLink="/academic-planning/calendar">Horarios y disponibilidad</a>
           @if (identity.permissions.includes('publicaciones.administrar')) { <a routerLink="/publications">Publicaciones</a> }
           @if (identity.permissions.includes('iam.roles.consultar') || identity.permissions.includes('iam.roles.gestionar')) { <a routerLink="/iam">Administración IAM</a> }

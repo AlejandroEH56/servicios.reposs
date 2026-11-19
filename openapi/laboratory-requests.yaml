@@ -2,8 +2,8 @@
   "openapi": "3.1.1",
   "info": {
     "title": "Solicitudes de laboratorio",
-    "version": "0.9.0",
-    "description": "Captura de solicitudes propias y cotización sin reserva.",
+    "version": "0.10.0",
+    "description": "Captura, decisiones auditadas, ocupación autorizada, comprobantes y notificaciones privadas.",
     "license": {
       "name": "MIT",
       "identifier": "MIT"
@@ -78,7 +78,8 @@
           "503": {
             "$ref": "./management.yaml#/components/responses/Problem"
           }
-        }
+        },
+        "description": "Colección de captura: incluye BORRADOR y PENDIENTE. Para el historial completo se usa /workflow."
       },
       "post": {
         "operationId": "createLaboratoryRequest",
@@ -321,7 +322,8 @@
           "503": {
             "$ref": "./management.yaml#/components/responses/Problem"
           }
-        }
+        },
+        "description": "Consulta de captura. Tras una decisión devuelve 409; consultar /workflow/{record} para el estado completo."
       },
       "patch": {
         "operationId": "updateLaboratoryRequest",
@@ -499,6 +501,773 @@
               "application/json": {
                 "schema": {
                   "$ref": "#/components/schemas/LaboratoryRequestResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/review-queue": {
+      "get": {
+        "operationId": "listLaboratoryReviewQueue",
+        "summary": "Solicitudes pendientes en el alcance del revisor.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/calendar": {
+      "get": {
+        "operationId": "getLaboratoryOccupancy",
+        "summary": "Intervalos autorizados sin datos personales.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "laboratoryId",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "startAt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 40
+            }
+          },
+          {
+            "name": "endAt",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "date-time",
+              "maxLength": 40
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryOccupancyResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/notifications": {
+      "get": {
+        "operationId": "listLaboratoryNotifications",
+        "summary": "Notificaciones propias de decisiones.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryNotificationPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}/decisions": {
+      "get": {
+        "operationId": "getLaboratoryDecisionHistory",
+        "summary": "Historial inmutable de decisiones.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryDecisionHistory"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      },
+      "post": {
+        "operationId": "decideLaboratoryRequest",
+        "summary": "Autorizar o rechazar; se prohíbe autorrevisión.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$",
+              "maxLength": 12
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoryDecisionInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}/cancel": {
+      "post": {
+        "operationId": "cancelLaboratoryRequest",
+        "summary": "Cancelar antes del inicio, con motivo.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          },
+          {
+            "name": "X-XSRF-TOKEN",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 4096
+            }
+          },
+          {
+            "name": "If-Match",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^\"[1-9][0-9]{0,9}\"$",
+              "maxLength": 12
+            }
+          },
+          {
+            "name": "Idempotency-Key",
+            "in": "header",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 16,
+              "maxLength": 100,
+              "pattern": "^[A-Za-z0-9_-]{16,100}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        },
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/LaboratoryCancelInput"
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}/receipt": {
+      "get": {
+        "operationId": "getLaboratoryReceipt",
+        "summary": "Estado del comprobante de la última decisión.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryReceiptResponse"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/{record}/receipt/file": {
+      "get": {
+        "operationId": "downloadLaboratoryReceipt",
+        "summary": "Descargar el PDF de la última decisión con autorización vigente.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada, sin caché.",
+            "content": {
+              "application/pdf": {
+                "schema": {
+                  "type": "string",
+                  "format": "binary"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/workflow": {
+      "get": {
+        "operationId": "listLaboratoryWorkflow",
+        "summary": "Listar solicitudes propias en todos los estados.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string",
+              "minLength": 1,
+              "maxLength": 2048
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowPage"
+                }
+              }
+            }
+          },
+          "401": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "403": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "404": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "409": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "415": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "419": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "422": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "429": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          },
+          "503": {
+            "$ref": "./management.yaml#/components/responses/Problem"
+          }
+        }
+      }
+    },
+    "/api/v1/laboratory-requests/workflow/{record}": {
+      "get": {
+        "operationId": "getLaboratoryWorkflow",
+        "summary": "Detalle de solicitud propia o del alcance del revisor, en cualquier estado.",
+        "tags": [
+          "LaboratoryRequests"
+        ],
+        "security": [
+          {
+            "session": []
+          }
+        ],
+        "parameters": [
+          {
+            "name": "record",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+              "minLength": 26,
+              "maxLength": 26
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Respuesta privada.",
+            "headers": {
+              "ETag": {
+                "schema": {
+                  "type": "string",
+                  "pattern": "^\"[1-9][0-9]{0,9}\"$",
+                  "maxLength": 12
+                }
+              }
+            },
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowResponse"
                 }
               }
             }
@@ -779,6 +1548,12 @@
             ],
             "format": "date-time",
             "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
           }
         }
       },
@@ -945,6 +1720,12 @@
             ],
             "format": "date-time",
             "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
           }
         }
       },
@@ -1111,6 +1892,12 @@
             ],
             "format": "date-time",
             "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
           }
         }
       },
@@ -1286,6 +2073,10 @@
                   "NO_SCHEDULE",
                   "OUTSIDE_AVAILABLE_INTERVAL"
                 ]
+              },
+              "occupancyIncluded": {
+                "type": "boolean",
+                "const": true
               }
             }
           }
@@ -1323,6 +2114,693 @@
                 "maxItems": 25,
                 "items": {
                   "$ref": "#/components/schemas/LaboratoryRequestRecord"
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "minLength": 1,
+                "maxLength": 2048
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryDecisionInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "decision",
+          "reason"
+        ],
+        "properties": {
+          "decision": {
+            "type": "string",
+            "enum": [
+              "AUTORIZADO",
+              "RECHAZADO"
+            ]
+          },
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3
+          }
+        }
+      },
+      "LaboratoryCancelInput": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "reason"
+        ],
+        "properties": {
+          "reason": {
+            "type": "string",
+            "maxLength": 2000,
+            "minLength": 3
+          }
+        }
+      },
+      "LaboratoryDecisionHistory": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "status",
+                    "previousStatus",
+                    "reason",
+                    "version",
+                    "decidedAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "status": {
+                      "type": "string",
+                      "enum": [
+                        "AUTORIZADO",
+                        "RECHAZADO",
+                        "CANCELADO"
+                      ]
+                    },
+                    "previousStatus": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "reason": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1
+                    },
+                    "decidedAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryOccupancyResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "laboratoryId",
+              "timeZone",
+              "items"
+            ],
+            "properties": {
+              "laboratoryId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "timeZone": {
+                "type": "string",
+                "const": "America/Mexico_City"
+              },
+              "items": {
+                "type": "array",
+                "maxItems": 1000,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "startAt",
+                    "endAt",
+                    "status"
+                  ],
+                  "properties": {
+                    "startAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    },
+                    "endAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    },
+                    "status": {
+                      "type": "string",
+                      "const": "OCUPADO"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryReceiptResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "decisionId",
+              "requestId",
+              "requestStatus",
+              "status",
+              "sha256",
+              "size"
+            ],
+            "properties": {
+              "decisionId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "requestId": {
+                "type": "string",
+                "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                "minLength": 26,
+                "maxLength": 26
+              },
+              "requestStatus": {
+                "type": "string",
+                "maxLength": 20
+              },
+              "status": {
+                "type": "string",
+                "enum": [
+                  "PENDIENTE",
+                  "LISTO"
+                ]
+              },
+              "sha256": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 64
+              },
+              "size": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryNotificationPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 25,
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "id",
+                    "requestId",
+                    "status",
+                    "createdAt"
+                  ],
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "requestId": {
+                      "type": "string",
+                      "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+                      "minLength": 26,
+                      "maxLength": 26
+                    },
+                    "status": {
+                      "type": "string",
+                      "maxLength": 20
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "format": "date-time",
+                      "maxLength": 40
+                    }
+                  }
+                }
+              },
+              "nextCursor": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "maxLength": 2048
+              }
+            }
+          }
+        }
+      },
+      "LaboratoryPracticeWorkflowRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "practice",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "PRACTICA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "practice": {
+            "$ref": "#/components/schemas/LaboratoryPracticeDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE",
+              "AUTORIZADO",
+              "RECHAZADO",
+              "CANCELADO",
+              "COMPLETADO"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          }
+        }
+      },
+      "LaboratoryVariousWorkflowRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "various",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "VARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "various": {
+            "$ref": "#/components/schemas/LaboratoryVariousDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE",
+              "AUTORIZADO",
+              "RECHAZADO",
+              "CANCELADO",
+              "COMPLETADO"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          }
+        }
+      },
+      "LaboratoryExtraordinaryWorkflowRecord": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "type",
+          "laboratoryId",
+          "startAt",
+          "endAt",
+          "title",
+          "purpose",
+          "attendees",
+          "supplies",
+          "extraordinary",
+          "id",
+          "semesterId",
+          "status",
+          "version",
+          "submittedAt"
+        ],
+        "properties": {
+          "type": {
+            "type": "string",
+            "enum": [
+              "EXTRAORDINARIA"
+            ]
+          },
+          "laboratoryId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "startAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "endAt": {
+            "type": "string",
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "title": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "purpose": {
+            "type": "string",
+            "minLength": 2,
+            "maxLength": 255
+          },
+          "attendees": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 65535
+          },
+          "supplies": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "minLength": 2,
+            "maxLength": 10000
+          },
+          "extraordinary": {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryDetail"
+          },
+          "id": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "semesterId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          },
+          "status": {
+            "type": "string",
+            "enum": [
+              "BORRADOR",
+              "PENDIENTE",
+              "AUTORIZADO",
+              "RECHAZADO",
+              "CANCELADO",
+              "COMPLETADO"
+            ]
+          },
+          "version": {
+            "type": "integer",
+            "minimum": 1,
+            "maximum": 4294967295
+          },
+          "submittedAt": {
+            "type": [
+              "string",
+              "null"
+            ],
+            "format": "date-time",
+            "maxLength": 40
+          },
+          "ownerId": {
+            "type": "string",
+            "pattern": "^[0-9A-HJKMNP-TV-Z]{26}$",
+            "minLength": 26,
+            "maxLength": 26
+          }
+        }
+      },
+      "LaboratoryWorkflowRecord": {
+        "oneOf": [
+          {
+            "$ref": "#/components/schemas/LaboratoryPracticeWorkflowRecord"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryVariousWorkflowRecord"
+          },
+          {
+            "$ref": "#/components/schemas/LaboratoryExtraordinaryWorkflowRecord"
+          }
+        ],
+        "discriminator": {
+          "propertyName": "type",
+          "mapping": {
+            "PRACTICA": "#/components/schemas/LaboratoryPracticeWorkflowRecord",
+            "VARIA": "#/components/schemas/LaboratoryVariousWorkflowRecord",
+            "EXTRAORDINARIA": "#/components/schemas/LaboratoryExtraordinaryWorkflowRecord"
+          }
+        }
+      },
+      "LaboratoryWorkflowResponse": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/LaboratoryWorkflowRecord"
+          }
+        }
+      },
+      "LaboratoryWorkflowPage": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "data"
+        ],
+        "properties": {
+          "data": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "items",
+              "nextCursor"
+            ],
+            "properties": {
+              "items": {
+                "type": "array",
+                "maxItems": 25,
+                "items": {
+                  "$ref": "#/components/schemas/LaboratoryWorkflowRecord"
                 }
               },
               "nextCursor": {

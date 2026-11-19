@@ -1,6 +1,7 @@
 <h2>Solicitudes de laboratorio</h2>
 <nav aria-label="Navegación de solicitudes">
   <a routerLink="/dashboard">Inicio</a>
+  <a routerLink="/laboratory-requests/review">Revisión, historial y ocupación</a>
   <a routerLink="/academic-planning/calendar">Horarios semanales</a>
 </nav>
 <p>Consulta las franjas disponibles y prepara tu solicitud. Cotizar o enviar no reserva el laboratorio.</p>
@@ -8,7 +9,8 @@
 @if (notice()) { <p role="status">{{ notice() }}</p> }
 
 <section aria-labelledby="my-lab-requests">
-  <h3 id="my-lab-requests">Mis solicitudes</h3>
+  <h3 id="my-lab-requests">Mis borradores y solicitudes pendientes</h3>
+  <p>Las solicitudes con decisión están en <a routerLink="/laboratory-requests/review">Historial y revisión</a>.</p>
   <button type="button" [disabled]="work.busy()" (click)="reset()">Nueva consulta o solicitud</button>
   <ul>
     @for (row of records(); track row.id) {

@@ -14,6 +14,7 @@
             <file>tests/Feature/SprintSevenEvidenceTest.php</file>
             <file>tests/Feature/SprintEightCompletionTest.php</file>
             <file>tests/Feature/SprintNineLaboratoryRequestsTest.php</file>
+            <file>tests/Feature/SprintTenLaboratoryDecisionsTest.php</file>
             <file>tests/Feature/IdentifierBoundaryTest.php</file>
             <file>tests/Feature/OutboxTest.php</file>
             <file>tests/Feature/IdentityContactTest.php</file>

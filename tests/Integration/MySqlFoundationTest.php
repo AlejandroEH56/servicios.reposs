@@ -477,7 +477,11 @@ PHP;
             } catch (PDOException $exception) {
                 $this->assertSame(1142, $exception->errorInfo[1]);
             }
-            foreach (['UPDATE residencias_documentos_emitidos SET datos_emision=datos_emision WHERE 1=0',
+            foreach (['UPDATE laboratorios_decisiones_solicitud SET decision=decision WHERE 1=0', 'DELETE FROM laboratorios_decisiones_solicitud WHERE 1=0',
+                'UPDATE laboratorios_comprobantes SET id_archivo=id_archivo WHERE 1=0', 'DELETE FROM laboratorios_comprobantes WHERE 1=0',
+                'UPDATE laboratorios_notificaciones SET estado_solicitud=estado_solicitud WHERE 1=0', 'DELETE FROM laboratorios_notificaciones WHERE 1=0',
+                'UPDATE laboratorios_solicitudes SET id_identidad_solicitante=id_identidad_solicitante WHERE 1=0', 'DELETE FROM laboratorios_solicitudes WHERE 1=0',
+                'UPDATE residencias_documentos_emitidos SET datos_emision=datos_emision WHERE 1=0',
                 'UPDATE residencias_documentos_emitidos SET html_emision=html_emision WHERE 1=0',
                 'UPDATE residencias_documentos_emitidos SET hash_datos_emision=hash_datos_emision WHERE 1=0',
                 'UPDATE residencias_entregas_evidencia SET instantanea_requisito=instantanea_requisito WHERE 1=0',

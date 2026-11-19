@@ -2,6 +2,7 @@
 
 namespace App\Modules\Shared\Infrastructure\Providers;
 
+use App\Modules\LaboratoryRequests\Application\DecisionEffects;
 use App\Modules\Organization\Application\ProfileProjector;
 use App\Modules\Residencies\Application\DocumentWorkflow;
 use App\Modules\Shared\Application\Ports\ReadinessCheck;
@@ -31,6 +32,9 @@ class SharedServiceProvider extends ServiceProvider
         $this->app->bind(ReadinessCheck::class, ReadinessProbe::class);
         $this->app->bind(OutboxProcessor::class, function () {
             return new OutboxProcessor([
+                'laboratory-requests.decision-recorded.v1' => ['laboratory-requests.receipt-notification' => function (array $event): void {
+                    $this->app->make(DecisionEffects::class)->deliver($event);
+                }],
                 'residencies.document-requested.v1' => ['residencies.render-queue' => function (array $event): void {
                     $this->app->make(DocumentWorkflow::class)->queueRender($event['data']['documentId']);
                 }],

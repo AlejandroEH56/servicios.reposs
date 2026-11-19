@@ -1,7 +1,7 @@
 openapi: 3.1.1
 info:
   title: 'Servicios - API'
-  version: 0.9.0
+  version: 0.10.0
   description: 'Identidad, autorización local y Organization desplegados. Permisos y alcances se evalúan en el servidor; ningún puesto Microsoft concede roles.'
   license:
     name: MIT
@@ -39,6 +39,24 @@ tags:
     name: LaboratoryRequests
     description: 'Captura de solicitudes propias y cotización sin reserva.'
 paths:
+  /api/v1/laboratory-requests/workflow:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1workflow
+  /api/v1/laboratory-requests/workflow/{record}:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1workflow~1{record}
+  /api/v1/laboratory-requests/review-queue:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1review-queue
+  /api/v1/laboratory-requests/calendar:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1calendar
+  /api/v1/laboratory-requests/notifications:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1notifications
+  /api/v1/laboratory-requests/{record}/decisions:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1decisions
+  /api/v1/laboratory-requests/{record}/cancel:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1cancel
+  /api/v1/laboratory-requests/{record}/receipt:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1receipt
+  /api/v1/laboratory-requests/{record}/receipt/file:
+    $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests~1{record}~1receipt~1file
   /api/v1/laboratory-requests:
     $ref: ./laboratory-requests.yaml#/paths/~1api~1v1~1laboratory-requests
   /api/v1/laboratory-requests/availability-quotes:

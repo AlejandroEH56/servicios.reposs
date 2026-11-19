@@ -259,6 +259,41 @@ echo json_encode($result,JSON_THROW_ON_ERROR);
   $result.operatorCompletionReadDenied=[Text.Encoding]::UTF8.GetString($operatorCompletionBytes).Trim() -eq 'true'
   if(-not($result.documentWorkerRecovered -and $result.operatorCompletionReadDenied)){throw 'Recovered document worker or operator isolation failed.'}
  }
+ $laboratoryProbe=@'
+require 'vendor/autoload.php';$app=require 'bootstrap/app.php';$app->make(Illuminate\Contracts\Console\Kernel::class)->bootstrap();
+$db=Illuminate\Support\Facades\DB::class;$schema=Illuminate\Support\Facades\Schema::class;
+$result=['available'=>$schema::hasColumn('laboratorios_decisiones_solicitud','version_solicitud'),'requests'=>0,'receipts'=>0];
+if($result['available']){
+ $result['requests']=$db::table('laboratorios_solicitudes')->count();
+ $overlap=$db::table('laboratorios_solicitudes as a')->join('laboratorios_solicitudes as b',fn($q)=>$q->on('a.id_laboratorio','=','b.id_laboratorio')->on('a.id','<','b.id'))
+  ->where('a.estado','AUTORIZADO')->where('b.estado','AUTORIZADO')->whereColumn('a.inicio_en','<','b.fin_en')->whereColumn('a.fin_en','>','b.inicio_en')->exists();
+ if($overlap){throw new RuntimeException('Recovered authorized requests overlap.');}
+ foreach($db::table('laboratorios_decisiones_solicitud')->get() as $decision){
+  if(!hash_equals($decision->sha256_instantanea,hash('sha256',$decision->instantanea))){throw new RuntimeException('Recovered laboratory snapshot differs.');}
+ }
+ $files=$app->make(App\Modules\Shared\Application\Ports\ScannedFiles::class);
+ foreach($db::table('laboratorios_comprobantes')->get() as $receipt){
+  $meta=$files->metadata($receipt->id_archivo);$bytes=$files->bytes($receipt->id_archivo);
+  $owner=$db::table('laboratorios_decisiones_solicitud')->where('id',$receipt->id_decision)->value('id_identidad_decisor');
+  if(!$meta||$meta['status']!=='LIMPIO'||$meta['ownerId']!==$owner||$meta['mime']!=='application/pdf'||$meta['sha256']!==$receipt->sha256_archivo||$meta['size']!==(int)$receipt->tamano_archivo||!hash_equals($receipt->sha256_archivo,hash('sha256',$bytes['content']))){throw new RuntimeException('Recovered laboratory receipt differs.');}
+  $result['receipts']++;
+ }
+ $statements=['UPDATE laboratorios_decisiones_solicitud SET decision=decision WHERE 1=0','DELETE FROM laboratorios_decisiones_solicitud WHERE 1=0','UPDATE laboratorios_comprobantes SET id_archivo=id_archivo WHERE 1=0','DELETE FROM laboratorios_comprobantes WHERE 1=0','UPDATE laboratorios_notificaciones SET estado_solicitud=estado_solicitud WHERE 1=0','DELETE FROM laboratorios_notificaciones WHERE 1=0','UPDATE laboratorios_solicitudes SET id_identidad_solicitante=id_identidad_solicitante WHERE 1=0','DELETE FROM laboratorios_solicitudes WHERE 1=0'];
+ $denied=0;foreach($statements as $statement){try{$db::statement($statement);}catch(PDOException $exception){if(!in_array((int)($exception->errorInfo[1]??0),[1142,1143],true)){throw $exception;}$denied++;}}
+ if($denied!==count($statements)){throw new RuntimeException('Recovered laboratory immutable boundary differs.');}
+ $result['immutableColumnsDenied']=true;$result['nonOverlapping']=true;
+ $result['notifications']=$db::table('laboratorios_notificaciones')->count();
+}
+echo json_encode($result,JSON_THROW_ON_ERROR);
+'@
+ $laboratoryBytes=Invoke-DockerBytes @('exec',$backend,'php','-r',$laboratoryProbe)
+ $laboratoryResult=[Text.Encoding]::UTF8.GetString($laboratoryBytes)|ConvertFrom-Json
+ $result.laboratoryWorkflowRecovered=$laboratoryResult.available
+ if($laboratoryResult.available){
+  $result.laboratoryRequestsRecovered=$laboratoryResult.requests;$result.laboratoryReceiptsRecovered=$laboratoryResult.receipts
+  $result.laboratoryNotificationsRecovered=$laboratoryResult.notifications
+  $result.laboratoryImmutableColumnsDenied=$laboratoryResult.immutableColumnsDenied;$result.laboratoryNonOverlapping=$laboratoryResult.nonOverlapping
+ }
  if(-not($result.workerRecovered -and $result.applicationRecovered -and $result.tlsVerified -and $result.runtimeDdlDenied -and $result.operatorDdlDenied -and $result.antivirusRecovered)){throw 'Cold application/principals/scanner check failed.'}
 } finally {
  $allStopped=$true;foreach($container in $containers){try{[void](Invoke-DockerBytes @('stop','--time','30',$container))}catch{$allStopped=$false}}
