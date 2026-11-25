@@ -1,3 +1,18 @@
+FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS openssl-backport
+RUN apk add --no-cache alpine-sdk perl linux-headers doas
+ENV JOBS=2 MAKEFLAGS=-j2 HARNESS_JOBS=2
+WORKDIR /build/openssl
+COPY docker/openssl-APKBUILD ./APKBUILD
+COPY docker/openssl-*.patch docker/openssl-fips.post-install ./
+RUN printf '%s\n' 'permit nopass root as root' > /etc/doas.conf \
+    && abuild-keygen -a -i -n \
+    && (abuild -F -r -P /out > /build/openssl-check.log 2>&1 || { tail -n 100 /build/openssl-check.log; exit 1; }) \
+    && tail -n 35 /build/openssl-check.log \
+    && mkdir /patched \
+    && find /out -type f \( -name 'openssl-3.5.9-r101.apk' -o -name 'libcrypto3-3.5.9-r101.apk' -o -name 'libssl3-3.5.9-r101.apk' \) -exec cp {} /patched/ \; \
+    && test "$(find /patched -type f | wc -l)" -eq 3
+
+
 FROM golang:1.26.9-alpine@sha256:3082400e369fa24d5fc60bca20edab3f6d604e0c5a690ec66b295eff4dd87ade AS caddy-build
 ENV CGO_ENABLED=0 GOTOOLCHAIN=local GOMAXPROCS=2 GOFLAGS=-p=2
 WORKDIR /src
@@ -23,9 +38,16 @@ RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
 FROM caddy:2.11.7-alpine@sha256:d8542f48d34a9cf4e4c11a478865229840e87e4c96ea3f439101f31a5d35f75f AS production
-RUN apk upgrade --no-cache && apk add --no-cache 'zlib>=1.4-r0' && apk del curl \
+ARG SECURITY_REFRESH=2026-11-24
+RUN test -n "$SECURITY_REFRESH" && apk upgrade --no-cache && apk add --no-cache 'zlib>=1.4-r0' 'libcrypto3>=3.5.9-r1' 'libssl3>=3.5.9-r1' && apk del curl \
     && ! apk info -e curl && ! apk info -e libcurl
 COPY --from=caddy-build /out/caddy /usr/bin/caddy
 COPY --from=frontend /build/dist/servicios-ui/browser /srv/frontend
 COPY public/ /srv/app/public/
 COPY docker/Caddyfile /etc/caddy/Caddyfile
+
+COPY --from=openssl-backport /patched/ /tmp/openssl-backport/
+RUN apk add --no-cache --allow-untrusted /tmp/openssl-backport/libcrypto3-*.apk /tmp/openssl-backport/libssl3-*.apk \
+    && rm /tmp/openssl-backport/*.apk && rmdir /tmp/openssl-backport \
+    && apk info -e 'libcrypto3=3.5.9-r101' 'libssl3=3.5.9-r101'
+
