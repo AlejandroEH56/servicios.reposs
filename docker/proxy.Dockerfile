@@ -19,6 +19,7 @@ WORKDIR /src
 RUN apk add --no-cache patch
 COPY docker/go-jose-v3-rsa-bounds.patch /tmp/go-jose-v3-rsa-bounds.patch
 COPY docker/go-jose-v3-rsa-bounds_test.go /tmp/rsa_bounds_test.go
+COPY docker/go-jose-v3-cbc-fixture.patch /tmp/go-jose-v3-cbc-fixture.patch
 RUN go mod init servicios/caddy \
     && go get github.com/caddyserver/caddy/v2/cmd/caddy@v2.11.7 golang.org/x/net@v0.62.0 github.com/klauspost/compress@v1.20.2 github.com/go-jose/go-jose/v4@v4.1.6 \
     && go mod download github.com/go-jose/go-jose/v3@v3.0.5 \
@@ -26,9 +27,12 @@ RUN go mod init servicios/caddy \
     && chmod -R u+w /src/go-jose-v3 \
     && printf '%s\n' '79f510a4b97fa2e34ec37932cab57e64dfdc9fa6c314654d1ccc2dd93898a532  /src/go-jose-v3/jwk.go' | sha256sum -c - \
     && patch --fuzz=0 -d /src/go-jose-v3 -p1 < /tmp/go-jose-v3-rsa-bounds.patch \
+    && printf '%s\n' '86a795ba34eafb4e240d34c7455f33ba4d398051b03735e706b15e98578e96ab  /src/go-jose-v3/cipher/cbc_hmac_test.go' | sha256sum -c - \
+    && patch --fuzz=0 -d /src/go-jose-v3 -p1 < /tmp/go-jose-v3-cbc-fixture.patch \
     && cp /tmp/rsa_bounds_test.go /src/go-jose-v3/rsa_bounds_test.go \
     && go mod edit -replace github.com/go-jose/go-jose/v3=./go-jose-v3 \
     && (cd /src/go-jose-v3 && go test ./...) \
+    && (cd /src/go-jose-v3 && go test ./cipher -run '^TestInvalidPaddingOpen$' -count=2000) \
     && go build -trimpath -ldflags="-s -w" -o /out/caddy github.com/caddyserver/caddy/v2/cmd/caddy \
     && go version -m /out/caddy
 FROM node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df AS frontend
