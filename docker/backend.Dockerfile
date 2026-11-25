@@ -20,7 +20,7 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
-FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS base
+FROM php:8.4.28-fpm-alpine@sha256:c0e41e0c856bf97b2e749f40a804031ce938d0d496c4c7d91ad416d993172826 AS base
 ARG SECURITY_REFRESH=2026-11-24
 RUN test -n "$SECURITY_REFRESH" && apk upgrade --no-cache \
     && apk add --no-cache 'zlib>=1.4-r0' 'libcrypto3>=3.5.9-r1' 'libssl3>=3.5.9-r1' \
