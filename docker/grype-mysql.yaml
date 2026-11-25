@@ -37,3 +37,35 @@ ignore:
       name: ^openssl-libs$
       version: 1:3.5.8-2.0.1.el9_8
       type: rpm
+
+  - vulnerability: ELSA-2026-50075
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS epoch 1 OpenSSL 3.5.9 rebase includes January fixes and CVE-2026-84782; advisory targets epoch 10 FIPS channel.
+    package:
+      name: ^openssl$
+      version: 1:3.5.9-1.0.1.el9_9
+      type: rpm
+
+  - vulnerability: ELSA-2026-50075
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS epoch 1 OpenSSL 3.5.9 rebase includes January fixes and CVE-2026-84782; advisory targets epoch 10 FIPS channel.
+    package:
+      name: ^openssl-libs$
+      version: 1:3.5.9-1.0.1.el9_9
+      type: rpm
+
+  - vulnerability: ELSA-2026-500448
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS epoch 1 OpenSSL 3.5.9 rebase includes January fixes and CVE-2026-84782; advisory targets epoch 10 FIPS channel.
+    package:
+      name: ^openssl$
+      version: 1:3.5.9-1.0.1.el9_9
+      type: rpm
+
+  - vulnerability: ELSA-2026-500448
+    namespace: oracle:distro:oraclelinux:9
+    reason: Exact non-FIPS epoch 1 OpenSSL 3.5.9 rebase includes January fixes and CVE-2026-84782; advisory targets epoch 10 FIPS channel.
+    package:
+      name: ^openssl-libs$
+      version: 1:3.5.9-1.0.1.el9_9
+      type: rpm
