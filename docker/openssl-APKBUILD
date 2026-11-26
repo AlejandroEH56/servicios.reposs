@@ -1,0 +1,349 @@
+# Contributor: Ariadne Conill <ariadne@dereferenced.org>
+# Contributor: Timo Teras <timo.teras@iki.fi>
+# Maintainer: Natanael Copa <ncopa@alpinelinux.org>
+pkgname=openssl
+pkgver=3.5.9
+_abiver=${pkgver%.*.*}
+pkgrel=101
+pkgdesc="Toolkit for Transport Layer Security (TLS)"
+url="https://www.openssl.org/"
+arch="all"
+license="Apache-2.0"
+provider_priority=100  # highest
+makedepends_build="perl"
+makedepends_host="linux-headers"
+makedepends="$makedepends_host $makedepends_build"
+install="$pkgname-fips.post-install"
+subpackages="
+	$pkgname-dbg
+	$pkgname-libs-static
+	$pkgname-dev
+	$pkgname-doc
+	$pkgname-misc::noarch
+	$pkgname-fips
+	libcrypto$_abiver:_libcrypto
+	libssl$_abiver:_libssl
+	"
+source="https://github.com/openssl/openssl/releases/download/openssl-$pkgver/openssl-$pkgver.tar.gz
+	openssl-auxv.patch
+	openssl-01-159e1de0c448.patch
+	openssl-02-9d0d29bcf98a.patch
+	openssl-03-a0051cfe699b.patch
+	openssl-04-257a3427aa0e.patch
+	openssl-05-86abaf90eb55.patch
+	openssl-06-355268c20f56.patch
+	openssl-07-f6244675833e.patch
+	openssl-08-bada6a2dd781.patch
+	openssl-09-c8f6d04f8e6d.patch
+	openssl-10-f3acb0a33280.patch
+	openssl-11-468c287cf451.patch
+	openssl-12-734c6cd7444b.patch
+	openssl-13-42919a7f4e00.patch
+	openssl-14-1ad851363d5b.patch
+	"
+builddir="$srcdir/openssl-$pkgver"
+
+# secfixes:
+#   3.5.8-r0:
+#     - CVE-2026-14456
+#     - CVE-2026-14457
+#     - CVE-2026-18798
+#     - CVE-2026-54874
+#     - CVE-2026-63072
+#     - CVE-2026-63073
+#     - CVE-2026-63074
+#     - CVE-2026-63075
+#     - CVE-2026-63076
+#     - CVE-2026-75803
+#   3.5.7-r0:
+#     - CVE-2026-34180
+#     - CVE-2026-34181
+#     - CVE-2026-34182
+#     - CVE-2026-34183
+#     - CVE-2026-42764
+#     - CVE-2026-42766
+#     - CVE-2026-42767
+#     - CVE-2026-42768
+#     - CVE-2026-42769
+#     - CVE-2026-42770
+#     - CVE-2026-45445
+#     - CVE-2026-45446
+#     - CVE-2026-45447
+#     - CVE-2026-7383
+#     - CVE-2026-9076
+#   3.5.6-r0:
+#     - CVE-2026-2673
+#     - CVE-2026-28387
+#     - CVE-2026-28388
+#     - CVE-2026-28389
+#     - CVE-2026-28390
+#     - CVE-2026-31789
+#     - CVE-2026-31790
+#   3.5.5-r0:
+#     - CVE-2025-11187
+#     - CVE-2025-15467
+#     - CVE-2025-15468
+#     - CVE-2025-15469
+#     - CVE-2025-66199
+#     - CVE-2025-68160
+#     - CVE-2025-69418
+#     - CVE-2025-69419
+#     - CVE-2025-69420
+#     - CVE-2025-69421
+#     - CVE-2026-22795
+#     - CVE-2026-22796
+#   3.5.4-r0:
+#     - CVE-2025-9230
+#     - CVE-2025-9231
+#     - CVE-2025-9232
+#   3.5.1-r0:
+#     - CVE-2025-4575
+#   3.3.3-r0:
+#     - CVE-2024-12797
+#   3.3.2-r5:
+#     - CVE-2024-13176
+#   3.3.2-r3:
+#     - CVE-2024-9143
+#   3.3.2-r0:
+#     - CVE-2024-6119
+#   3.3.1-r1:
+#     - CVE-2024-5535
+#   3.3.0-r3:
+#     - CVE-2024-4741
+#   3.3.0-r2:
+#     - CVE-2024-4603
+#   3.2.1-r2:
+#     - CVE-2024-2511
+#   3.1.4-r5:
+#     - CVE-2024-0727
+#   3.1.4-r4:
+#     - CVE-2023-6237
+#   3.1.4-r3:
+#     - CVE-2023-6129
+#   3.1.4-r1:
+#     - CVE-2023-5678
+#   3.1.4-r0:
+#     - CVE-2023-5363
+#   3.1.2-r0:
+#     - CVE-2023-3817
+#   3.1.1-r3:
+#     - CVE-2023-3446
+#   3.1.1-r2:
+#     - CVE-2023-2975
+#   3.1.1-r0:
+#     - CVE-2023-2650
+#   3.1.0-r4:
+#     - CVE-2023-1255
+#   3.1.0-r2:
+#     - CVE-2023-0465
+#   3.1.0-r1:
+#     - CVE-2023-0464
+#   3.0.8-r0:
+#     - CVE-2022-4203
+#     - CVE-2022-4304
+#     - CVE-2022-4450
+#     - CVE-2023-0215
+#     - CVE-2023-0216
+#     - CVE-2023-0217
+#     - CVE-2023-0286
+#     - CVE-2023-0401
+#   3.0.7-r2:
+#     - CVE-2022-3996
+#   3.0.7-r0:
+#     - CVE-2022-3786
+#     - CVE-2022-3602
+#   3.0.6-r0:
+#     - CVE-2022-3358
+#   3.0.5-r0:
+#     - CVE-2022-2097
+#   3.0.3-r0:
+#     - CVE-2022-1343
+#     - CVE-2022-1434
+#     - CVE-2022-1473
+#   3.0.2-r0:
+#     - CVE-2022-0778
+#   3.0.1-r0:
+#     - CVE-2021-4044
+#   1.1.1l-r0:
+#     - CVE-2021-3711
+#     - CVE-2021-3712
+#   1.1.1k-r0:
+#     - CVE-2021-3449
+#     - CVE-2021-3450
+#   1.1.1j-r0:
+#     - CVE-2021-23841
+#     - CVE-2021-23840
+#     - CVE-2021-23839
+#   1.1.1i-r0:
+#     - CVE-2020-1971
+#   1.1.1g-r0:
+#     - CVE-2020-1967
+#   1.1.1d-r3:
+#     - CVE-2019-1551
+#   1.1.1d-r1:
+#     - CVE-2019-1547
+#     - CVE-2019-1549
+#     - CVE-2019-1563
+#   1.1.1b-r1:
+#     - CVE-2019-1543
+#   1.1.1a-r0:
+#     - CVE-2018-0734
+#     - CVE-2018-0735
+#   0:
+#     - CVE-2022-1292
+#     - CVE-2022-2068
+#     - CVE-2022-2274
+#     - CVE-2023-0466
+#     - CVE-2023-4807
+
+prepare() {
+ cd "$builddir"
+ for item in $source; do
+  case "$item" in *.patch) patch --fuzz=0 -p1 < "$srcdir/$item" ;; esac
+ done
+}
+
+build() {
+	local target optflags
+
+	# openssl will prepend crosscompile always core CC et al
+	CC=${CC#"$CROSS_COMPILE"}
+	CXX=${CXX#"$CROSS_COMPILE"}
+	CPP=${CPP#"$CROSS_COMPILE"}
+
+	# determine target OS for openssl
+	case "$CARCH" in
+		aarch64*)	target="linux-aarch64" ;;
+		arm*)		target="linux-armv4" ;;
+		mips64*)	target="linux64-mips64" ;;
+		# explicit optflags is needed to prevent automatic -mips3 addition
+		mips*)		target="linux-mips32"; optflags="-mips32" ;;
+		ppc)		target="linux-ppc" ;;
+		ppc64)		target="linux-ppc64" ;;
+		ppc64le)	target="linux-ppc64le" ;;
+		x86)		target="linux-elf" ;;
+		x86_64)		target="linux-x86_64"; optflags="enable-ec_nistp_64_gcc_128" ;;
+		s390x)		target="linux64-s390x";;
+		riscv64)	target="linux64-riscv64";;
+		loongarch64)	target="linux64-loongarch64";;
+		*)		msg "Unable to determine architecture from (CARCH=$CARCH)" ; return 1 ;;
+	esac
+
+	# Configure assumes --options are for it, so can't use
+	# gcc's --sysroot fake this by overriding CC
+	[ -n "$CBUILDROOT" ] && CC="$CC --sysroot=$CBUILDROOT"
+
+	# when cross building do not enable threads as libatomic is not avaiable
+	if [ "$CBUILD" != "$CHOST" ]; then
+		optflags="$optflags no-threads"
+	fi
+
+	perl ./Configure \
+		$target \
+		--prefix=/usr \
+		--libdir=lib \
+		--openssldir=/etc/ssl \
+		enable-fips \
+		enable-ktls \
+		shared \
+		no-zlib \
+		no-async \
+		no-comp \
+		no-idea \
+		no-mdc2 \
+		no-rc5 \
+		no-ec2m \
+		no-ssl3 \
+		no-seed \
+		no-weak-ssl-ciphers \
+		$optflags \
+		$CPPFLAGS \
+		$CFLAGS \
+		$LDFLAGS -Wa,--noexecstack
+
+	# dump configuration into logs
+	perl configdata.pm --dump
+
+	make
+}
+
+check() {
+	# AFALG tests have a sporadic test failure, just delete the broken
+	# test for now.
+	rm -f test/recipes/30-test_afalg.t
+
+	make test
+}
+
+package() {
+	depends="libssl$_abiver=$pkgver-r$pkgrel libcrypto$_abiver=$pkgver-r$pkgrel"
+	provides="openssl3=$pkgver-r$pkgrel"
+	replaces="openssl3"
+
+	make DESTDIR="$pkgdir" install
+	# remove the script c_rehash
+	rm "$pkgdir"/usr/bin/c_rehash
+}
+
+dev() {
+	provides="openssl3-dev=$pkgver-r$pkgrel"
+	replaces="openssl3-dev"
+
+	default_dev
+}
+
+misc() {
+	depends="$pkgname=$pkgver-r$pkgrel perl"
+	pkgdesc="Various perl scripts from $pkgname"
+
+	amove etc/ssl/misc
+}
+
+fips() {
+	depends="libssl$_abiver=$pkgver-r$pkgrel libcrypto$_abiver=$pkgver-r$pkgrel"
+	pkgdesc="FIPS module from openssl"
+
+	amove etc/ssl/fipsmodule.cnf
+	amove usr/lib/ossl-modules/fips.so
+
+	cp "${pkgdir}"/etc/ssl/openssl.cnf "${subpkgdir}"/etc/ssl/openssl.cnf.fips
+	sed -i 's/^default\s=\sdefault_sect/# default = default_sect/' "${subpkgdir}"/etc/ssl/openssl.cnf.fips
+	sed -i 's/^#\s\.include\sfipsmodule.cnf/\.include \/etc\/ssl\/fipsmodule.cnf/' "${subpkgdir}"/etc/ssl/openssl.cnf.fips
+	sed -i 's/^#\sfips\s=\sfips_sect/fips = fips_sect\nbase = base_sect\n\n[base_sect]\nactivate=1/' "${subpkgdir}"/etc/ssl/openssl.cnf.fips
+}
+
+_libcrypto() {
+	pkgdesc="Crypto library from openssl"
+	replaces="libcrypto1.1"
+
+	amove etc
+	amove usr/lib/libcrypto*
+	amove usr/lib/engines-$_abiver
+	amove usr/lib/ossl-modules
+}
+
+_libssl() {
+	pkgdesc="SSL shared libraries"
+	depends="libcrypto$_abiver=$pkgver-r$pkgrel"
+
+	amove usr/lib/libssl*
+}
+
+sha512sums="
+c4c8136fd2c98d13bb85a57bfb0def25c906f47f1fe97675cd114594944eab957b5b81a3e0f48826e1a0f093afff5e83766b539d49768f6db68310fd678d7de6  openssl-3.5.9.tar.gz
+b2541075148fd5af4552d34158deb1a325f5adced90626dc03fd126f47323cde949b15b2657523c34b26530b322312a43bd42ada7295b4f2dd1d3b5d11892c62  openssl-auxv.patch
+ca38eeb1aa261d1051100b0e37a9699ccad73de551825bf49ade50af9396b1e749983f802fa3967f67ef778590adb3aba39b1fd8290a17aa753fa351953487a9  openssl-01-159e1de0c448.patch
+3e1ee5f38641be4c37bdf0ccbf815661d3bc8b800af51037d79fe25d6487e7b8d2fc4c9cc253178d52ec36fdf1de52a66e8a1e714129cfd515657e2551755d1d  openssl-02-9d0d29bcf98a.patch
+0bbd1f64e7bc62c8bbba9c85131a51cbfb6f7715156457d575df1e557d649340b8074195860f83be18fe3ed6852111f10053702d72658012f9c3a4c3fd504cea  openssl-03-a0051cfe699b.patch
+f23fa46c18fca5e475286f4a5fe57834ccca8603a34f54ab0032af16d296f82eee6a9614f70aec4632fc9024f6af9ded9f2698693f02b3ade889c9d58d2cbe59  openssl-04-257a3427aa0e.patch
+8ffc3a55446dfc0c2549b8e9dd33c33f1f3fd05777c30b32a967e5236782832118970f1970505d93285939c54d9ed72e9dff2da5c4f50a1b51f8a22f1d8bed2f  openssl-05-86abaf90eb55.patch
+b49cee4ad86bd43abae2b2612bab8c5cf7a072b49a47147f6c0185363a15fd1501344f83a61265dadd645fc943b3efac0d611a2c4d54d6b06c20893c82a7911e  openssl-06-355268c20f56.patch
+2c9c869d0427b08c1480307583c1803971fb6223e5876dd20f61fd64102f095373fb32f5cc7bbbd2bf62aca82c229d740a95c39d5556ec72fd41f371e4a311b6  openssl-07-f6244675833e.patch
+0f62d9121e355587a7d5c67961556b02adde8e54143700ebb9b99611dce4b00a60816be4ea0d01777e5a0823a821387c53c49b3ccec773dc18d25c7649a8df58  openssl-08-bada6a2dd781.patch
+3c7e6e79d2246229f5d0b8bdb4bd3c0e0a868a9e28656b208b6d6753a596b6db75614bf275faf12cae450ee639c4540e389ac0d22e7140a18ae3d62eb9cd6a9c  openssl-09-c8f6d04f8e6d.patch
+b467d83808a33444e7fcb601042923c348564944fcffc4af77fd315a0afbcb2a31aee21d650917a478d054f87979e797ba89621b5974f8084caff8455141bbec  openssl-10-f3acb0a33280.patch
+3f24a6cdd11b9e076e5fecc386174af75a9229d4b5999cdf3ef0f845aef87daaaf85a9ed7f897f083dfb9f75f8938d9baa70c40c13650543609f124b4248ab54  openssl-11-468c287cf451.patch
+8222211da663962f4da69958cd3f3a01dd57a58ab6fc1f432bc1b53e529a7e6fa9ae78a909a1f3d725b3cfa6cf1c878e22a04f0d4b87f07f7b58bff0461a5162  openssl-12-734c6cd7444b.patch
+5210e4370e553af46a9265e16527f9a51a232e9dacb4fa00790b172704f6fb16f51c27b1cf021fd524da3708dbd4e7d781c443099dd38ff37ee9b225e2bf76f7  openssl-13-42919a7f4e00.patch
+4a8c9b48cabe69011917f8ef8eb0f809f983324d66f901a54614aa603462a790bdefb038d2ddab1869e324ef65c46d0fbf857bfd6df919ffd19e2dd9a0c7942f  openssl-14-1ad851363d5b.patch
+"

@@ -44,17 +44,17 @@ class LaboratoryRequestController extends Controller
         return $this->respond($this->capture->submit($this->actor($request), $request->route('record'), $this->version($request), $this->key($request), $this->correlation($request)));
     }
 
-    private function actor(Request $request): string
+    protected function actor(Request $request): string
     {
         return (string) $request->user()?->getAuthIdentifier();
     }
 
-    private function correlation(Request $request): string
+    protected function correlation(Request $request): string
     {
         return (string) $request->attributes->get('correlationId');
     }
 
-    private function key(Request $request): string
+    protected function key(Request $request): string
     {
         $value = $request->header('Idempotency-Key', '');
         abort_unless(preg_match('/^[A-Za-z0-9_-]{16,100}$/D', $value) === 1, 422);
@@ -62,7 +62,7 @@ class LaboratoryRequestController extends Controller
         return $value;
     }
 
-    private function version(Request $request): int
+    protected function version(Request $request): int
     {
         abort_unless(preg_match('/^"([1-9][0-9]{0,9})"$/D', $request->header('If-Match', ''), $match) === 1, 422);
 
@@ -70,7 +70,7 @@ class LaboratoryRequestController extends Controller
     }
 
     /** @param array<string, mixed> $data */
-    private function respond(array $data, int $status = 200): JsonResponse
+    protected function respond(array $data, int $status = 200): JsonResponse
     {
         $response = response()->json(['data' => $data], $status)->header('Cache-Control', 'no-store, private');
         if (isset($data['version'])) {

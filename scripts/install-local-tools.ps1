@@ -2,10 +2,10 @@ $ErrorActionPreference = 'Stop'
 $projectRoot = Split-Path $PSScriptRoot -Parent
 $toolsRoot = Join-Path $projectRoot '.tools'
 New-Item -ItemType Directory -Force $toolsRoot | Out-Null
-$phpArchive = Join-Path $toolsRoot 'php-8.4.27.zip'
-$phpHash = '93bd8a815a52156606fb906d0573437908c61f96e2cc52c03a51e36a41bf5236'
+$phpArchive = Join-Path $toolsRoot 'php-8.4.28.zip'
+$phpHash = 'c1f9280588b7b6ad7b518969022f0b0175f106fab9d0639ad0e4ce7cd47ac1ed'
 if (-not (Test-Path $phpArchive)) {
-    Invoke-WebRequest 'https://downloads.php.net/~windows/releases/php-8.4.27-nts-Win32-vs17-x64.zip' -OutFile $phpArchive
+    Invoke-WebRequest 'https://downloads.php.net/~windows/releases/php-8.4.28-nts-Win32-vs17-x64.zip' -OutFile $phpArchive
 }
 if ((Get-FileHash $phpArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $phpHash) {
     throw 'Checksum PHP incorrecto. No se ejecutó el binario.'
@@ -13,7 +13,7 @@ if ((Get-FileHash $phpArchive -Algorithm SHA256).Hash.ToLowerInvariant() -ne $ph
 $phpRoot = Join-Path $toolsRoot 'php'
 $installedPhp = Join-Path $phpRoot 'php.exe'
 $installedVersion = if (Test-Path -LiteralPath $installedPhp) { & $installedPhp -n -r 'echo PHP_VERSION;' } else { '' }
-if ($installedVersion -ne '8.4.27') {
+if ($installedVersion -ne '8.4.28') {
     Expand-Archive -LiteralPath $phpArchive -DestinationPath $phpRoot -Force
 }
 $iniFile = Join-Path $phpRoot 'php.ini'
@@ -25,6 +25,9 @@ if (-not (Test-Path $iniFile)) {
     }
     Set-Content -LiteralPath $iniFile -Value $ini
 }
+$ini = [IO.File]::ReadAllText($iniFile)
+$ini = [regex]::Replace($ini, '(?mi)^memory_limit[ \t]*=[ \t]*128M(?=[ \t]*\r?$)', 'memory_limit = 256M')
+[IO.File]::WriteAllText($iniFile, $ini, (New-Object Text.UTF8Encoding($false)))
 $composerFile = Join-Path $toolsRoot 'composer.phar'
 if (-not (Test-Path $composerFile)) {
     Invoke-WebRequest 'https://getcomposer.org/download/2.10.3/composer.phar' -OutFile $composerFile
@@ -35,4 +38,14 @@ if ((Get-FileHash $composerFile -Algorithm SHA256).Hash.ToLowerInvariant() -ne '
 . (Join-Path $PSScriptRoot 'use-local-tools.ps1')
 php (Join-Path $PSScriptRoot 'configure-local-ca.php')
 php -v
-php $composerFile --version
+$composerVersionErrorPreference = $ErrorActionPreference
+try {
+    $ErrorActionPreference = 'Continue'
+    php $composerFile --version 2>&1 | ForEach-Object { $_.ToString() }
+    $composerVersionExit = $LASTEXITCODE
+} finally {
+    $ErrorActionPreference = $composerVersionErrorPreference
+}
+if ($composerVersionExit -ne 0) {
+    throw ('Composer no pudo verificar su versión; código de salida: ' + $composerVersionExit)
+}

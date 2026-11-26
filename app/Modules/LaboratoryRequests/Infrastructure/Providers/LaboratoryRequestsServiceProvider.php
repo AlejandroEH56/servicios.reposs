@@ -2,7 +2,11 @@
 
 namespace App\Modules\LaboratoryRequests\Infrastructure\Providers;
 
+use App\Modules\LaboratoryRequests\Application\DecisionEffects;
 use App\Modules\LaboratoryRequests\Application\RequestCapture;
+use App\Modules\LaboratoryRequests\Application\RequestDecisions;
+use App\Modules\LaboratoryRequests\Infrastructure\Persistence\DecisionEffectStore;
+use App\Modules\LaboratoryRequests\Infrastructure\Persistence\DecisionStore;
 use App\Modules\LaboratoryRequests\Infrastructure\Persistence\RequestStore;
 use Illuminate\Support\ServiceProvider;
 
@@ -11,6 +15,8 @@ class LaboratoryRequestsServiceProvider extends ServiceProvider
     public function register(): void
     {
         $this->app->bind(RequestCapture::class, RequestStore::class);
+        $this->app->bind(RequestDecisions::class, DecisionStore::class);
+        $this->app->bind(DecisionEffects::class, DecisionEffectStore::class);
     }
 
     public function boot(): void

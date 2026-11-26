@@ -29,7 +29,7 @@ jobs:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
-          php-version: '8.4.27'
+          php-version: '8.4.28'
           extensions: pdo_mysql, pdo_sqlite, mbstring, openssl, gd
           tools: composer:2.10.3
           coverage: none
@@ -67,7 +67,7 @@ jobs:
           docker compose version
       - uses: shivammathur/setup-php@b604ade2a87db23f8871b7182e69ec5e75effb45
         with:
-          php-version: '8.4.27'
+          php-version: '8.4.28'
           extensions: pdo_sqlite, pdo_mysql, mbstring, openssl, gd
           tools: composer:2.10.3
           coverage: none
@@ -175,13 +175,15 @@ jobs:
           done
           [[ "$(date -u +%F)" < 2026-12-13 ]] || { echo 'MySQL classification review expired'; exit 1; }
           result=0
+          node --test scripts/openssl-vendor-vex.test.mjs
           for name in backend proxy mysql antivirus collector; do
             image="servicios-$name:${GITHUB_SHA}"
             docker save -o artifacts/$name.tar "$image"
             .tools/quality/syft docker-archive:artifacts/$name.tar -o syft-json=artifacts/$name-sbom.json -o cyclonedx-json=artifacts/$name-cyclonedx.json
             args=()
             if [ "$name" = mysql ]; then args=(--config docker/grype-mysql.yaml); fi
-            .tools/quality/grype "${args[@]}" sbom:artifacts/$name-sbom.json --fail-on high -o json > artifacts/$name-image-scan.json || result=1
+            node scripts/openssl-vendor-vex.mjs artifacts/$name-sbom.json artifacts/$name-vex.json
+            .tools/quality/grype "${args[@]}" sbom:artifacts/$name-sbom.json --vex artifacts/$name-vex.json --fail-on high -o json > artifacts/$name-image-scan.json || result=1
             rm artifacts/$name.tar
           done
           exit "$result"

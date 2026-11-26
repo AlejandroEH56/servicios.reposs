@@ -96,7 +96,7 @@
             "tbachert/spi": true
         },
         "platform": {
-            "php": "8.4.27"
+            "php": "8.4.28"
         }
     },
     "minimum-stability": "stable",

@@ -15,6 +15,11 @@ use Symfony\Component\HttpKernel\Exception\HttpException;
 
 class PlanningStore implements PlanningDirectory
 {
+    public function responsibleLaboratoryIds(string $employee): array
+    {
+        return DB::table('planificacion_laboratorios')->where('id_empleado_responsable', $employee)->pluck('id')->all();
+    }
+
     private const TABLES = ['careers' => 'carreras', 'specialties' => 'especialidades', 'subjects' => 'asignaturas', 'curricula' => 'reticulas',
         'groups' => 'grupos', 'holiday-types' => 'tipos_dia_inhabil', 'semesters' => 'semestres', 'laboratories' => 'laboratorios', 'holidays' => 'dias_inhabiles'];
 

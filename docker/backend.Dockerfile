@@ -1,3 +1,18 @@
+FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS openssl-backport
+RUN apk add --no-cache alpine-sdk perl linux-headers doas
+ENV JOBS=2 MAKEFLAGS=-j2 HARNESS_JOBS=2
+WORKDIR /build/openssl
+COPY docker/openssl-APKBUILD ./APKBUILD
+COPY docker/openssl-*.patch docker/openssl-fips.post-install ./
+RUN printf '%s\n' 'permit nopass root as root' > /etc/doas.conf \
+    && abuild-keygen -a -i -n \
+    && (abuild -F -r -P /out > /build/openssl-check.log 2>&1 || { tail -n 100 /build/openssl-check.log; exit 1; }) \
+    && tail -n 35 /build/openssl-check.log \
+    && mkdir /patched \
+    && find /out -type f \( -name 'openssl-3.5.9-r101.apk' -o -name 'libcrypto3-3.5.9-r101.apk' -o -name 'libssl3-3.5.9-r101.apk' \) -exec cp {} /patched/ \; \
+    && test "$(find /patched -type f | wc -l)" -eq 3
+
+
 FROM composer:2.10.3@sha256:af98f42dfff7c68ba8d53c2164fd9fde1087b7d449514baa38c418b1f6bc4bac AS composer
 FROM node:24.19.0-bookworm-slim@sha256:a9f5f7c91a432850b2a8a7797adf5eadb6c733ceed61167806cee7ea7fbc29df AS frontend
 WORKDIR /build
@@ -5,9 +20,10 @@ COPY frontend/package.json frontend/package-lock.json ./
 RUN npm install --global npm@11.17.0 --ignore-scripts && npm ci --ignore-scripts
 COPY frontend/ ./
 RUN npm run build -- --base-href=/portal/
-FROM php:8.4.27-fpm-alpine@sha256:6b83fd767e1902ae4c89fe11f929f02e78bf769215c703060ac8a7c4be672c8c AS base
-RUN apk upgrade --no-cache \
-    && apk add --no-cache 'zlib>=1.4-r0' \
+FROM php:8.4.28-fpm-alpine@sha256:c0e41e0c856bf97b2e749f40a804031ce938d0d496c4c7d91ad416d993172826 AS base
+ARG SECURITY_REFRESH=2026-11-24
+RUN test -n "$SECURITY_REFRESH" && apk upgrade --no-cache \
+    && apk add --no-cache 'zlib>=1.4-r0' 'libcrypto3>=3.5.9-r1' 'libssl3>=3.5.9-r1' \
     && apk add --no-cache icu-libs libzip oniguruma tzdata unzip ca-certificates libpng libjpeg-turbo libwebp \
     && apk add --no-cache --virtual .build-deps $PHPIZE_DEPS icu-dev libzip-dev oniguruma-dev libpng-dev libjpeg-turbo-dev libwebp-dev \
     && docker-php-ext-configure gd --with-jpeg --with-webp \
@@ -23,6 +39,11 @@ RUN test "$(apk --print-arch)" = x86_64 \
 COPY --from=composer /usr/bin/composer /usr/local/bin/composer
 WORKDIR /srv/app
 FROM base AS test
+COPY --from=openssl-backport /patched/ /tmp/openssl-backport/
+RUN apk add --no-cache --allow-untrusted /tmp/openssl-backport/*.apk \
+    && rm /tmp/openssl-backport/*.apk && rmdir /tmp/openssl-backport \
+    && apk info -e 'libcrypto3=3.5.9-r101' 'libssl3=3.5.9-r101'
+
 RUN apk add --no-cache poppler-utils font-liberation fontconfig
 RUN printf 'memory_limit=256M\n' > /usr/local/etc/php/conf.d/test-memory.ini
 COPY composer.json composer.lock ./
@@ -61,6 +82,11 @@ RUN set -eux; \
     php-fpm -t
 
 FROM mysql-runtime AS production
+COPY --from=openssl-backport /patched/ /tmp/openssl-backport/
+RUN apk add --no-cache --allow-untrusted /tmp/openssl-backport/*.apk \
+    && rm /tmp/openssl-backport/*.apk && rmdir /tmp/openssl-backport \
+    && apk info -e 'libcrypto3=3.5.9-r101' 'libssl3=3.5.9-r101'
+
 COPY composer.json composer.lock ./
 RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
 COPY app ./app

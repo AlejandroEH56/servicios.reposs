@@ -1,0 +1,74 @@
+<h2>Revisión y ocupación de laboratorios</h2>
+<nav aria-label="Navegación de laboratorio"><a routerLink="/dashboard">Inicio</a> <a routerLink="/laboratory-requests">Capturar solicitud</a></nav>
+@if (conflictMessage()) { <p role="alert">{{ conflictMessage() }}</p> }
+@else if (work.message()) { <p role="alert">{{ work.message() }}</p> }
+@if (notice()) { <p role="status">{{ notice() }}</p> }
+<section aria-labelledby="all-my-requests">
+  <h3 id="all-my-requests">Mis solicitudes e historial</h3>
+  <button type="button" [disabled]="work.busy()" (click)="loadMine()">Actualizar mis solicitudes</button>
+  <ul>@for (row of mine(); track row.id) { <li><button type="button" [disabled]="work.busy()" (click)="open(row.id)">{{ row.title }} · {{ row.status }} · {{ displayDate(row.startAt) }}</button></li> }
+  @empty { <li>No hay solicitudes propias.</li> }</ul>
+  @if (mineCursor()) { <button type="button" [disabled]="work.busy()" (click)="loadMine(true)">Más solicitudes</button> }
+</section>
+@if (reviewer()) {
+  <section aria-labelledby="review-queue">
+    <h3 id="review-queue">Cola de revisión</h3>
+    <p>Sólo se muestran solicitudes de tu alcance. No puedes autorizar ni rechazar solicitudes propias.</p>
+    <button type="button" [disabled]="work.busy()" (click)="loadQueue()">Actualizar cola</button>
+    <ul>@for (row of queue(); track row.id) { <li><button type="button" [disabled]="work.busy()" (click)="open(row.id)">{{ row.title }} · {{ row.type }} · {{ displayDate(row.startAt) }}</button></li> }
+    @empty { <li>No hay solicitudes pendientes en tu alcance.</li> }</ul>
+    @if (queueCursor()) { <button type="button" [disabled]="work.busy()" (click)="loadQueue(true)">Más pendientes</button> }
+  </section>
+}
+@if (selected(); as row) {
+  <section aria-labelledby="request-detail">
+    <h3 id="request-detail">{{ row.title }}</h3>
+    <p>Tipo: {{ row.type }} · Estado: <strong>{{ row.status }}</strong> · Participantes: {{ row.attendees }}</p>
+    <p>{{ displayDate(row.startAt) }} a {{ displayDate(row.endAt) }} · horario de Ciudad de México.</p>
+    <p>Propósito: {{ row.purpose }}</p><p>Insumos: {{ row.supplies || 'Sin observaciones' }}</p>
+    @switch (row.type) {
+      @case ('PRACTICA') { <p>Práctica: {{ row.practice.name }} · {{ row.practice.number || 'Sin número' }}</p> }
+      @case ('VARIA') { <p>{{ row.various.useCode }}: {{ row.various.description }}</p> }
+      @case ('EXTRAORDINARIA') { <p>Justificación: {{ row.extraordinary.justification }}</p> }
+    }
+    <button type="button" [disabled]="work.busy()" (click)="open(row.id)">Actualizar solicitud</button>
+    @if (canDecide() || canCancel()) {
+      <form #decisionForm="ngForm" (ngSubmit)="resolve()">
+        <fieldset [disabled]="work.busy()">
+          <legend>Decisión o cancelación con motivo</legend>
+          <label>Motivo de decisión o cancelación <textarea name="decisionReason" required minlength="3" maxlength="2000" [(ngModel)]="reason"></textarea></label>
+          <p>Escribe un motivo de al menos tres caracteres para habilitar las acciones.</p>
+          @if (canDecide()) {
+            <label for="laboratory-decision">Decisión</label><select id="laboratory-decision" name="decision" [(ngModel)]="decision"><option value="AUTORIZADO">Autorizar</option><option value="RECHAZADO">Rechazar</option></select>
+            <button type="submit" [disabled]="decisionForm.invalid || reason.trim().length < 3">Resolver solicitud</button>
+          }
+          @if (canCancel()) { <button type="button" [disabled]="decisionForm.invalid || reason.trim().length < 3" (click)="resolve(true)">Cancelar solicitud</button> }
+        </fieldset>
+      </form>
+    }
+    <h4>Historial de decisiones</h4>
+    <ul>@for (item of history(); track item.id) { <li>{{ item.previousStatus }} → {{ item.status }} · {{ displayDate(item.decidedAt) }} · {{ item.reason }}</li> } @empty { <li>Sin decisiones.</li> }</ul>
+    @if (receipt(); as item) {
+      <h4>Comprobante de la última decisión</h4><p>Estado: {{ item.status }} · Solicitud: {{ item.requestStatus }}</p>
+      <button type="button" [disabled]="work.busy()" (click)="loadReceipt()">Actualizar comprobante</button>
+      @if (item.status === 'LISTO') { <button type="button" [disabled]="work.busy()" (click)="download()">Descargar comprobante PDF</button> }
+      @else { <p>Se prepara en segundo plano. Actualiza su estado en unos segundos.</p> }
+    }
+  </section>
+}
+<section aria-labelledby="occupancy">
+  <h3 id="occupancy">Calendario de ocupación</h3><p>Contiene sólo franjas autorizadas, sin datos personales. Las solicitudes pendientes no reservan.</p>
+  <form #calendarForm="ngForm" (ngSubmit)="loadCalendar()"><fieldset [disabled]="work.busy()"><legend>Consulta diaria</legend>
+    <label for="occupancy-laboratory">Laboratorio</label><select id="occupancy-laboratory" name="occupancyLaboratory" required [(ngModel)]="laboratory"><option value="">Selecciona un laboratorio</option>@for (lab of laboratories(); track lab.id) { <option [value]="lab.id">{{ lab.name }}</option> }</select>
+    @if (laboratoryCursor()) { <button type="button" (click)="loadLaboratories(true)">Más laboratorios</button> }
+    <label>Fecha de ocupación <input name="occupancyDay" type="date" required [(ngModel)]="day"></label>
+    <button type="submit" [disabled]="calendarForm.invalid">Consultar ocupación</button>
+  </fieldset></form>
+  @if (occupied(); as slots) { <ul>@for (slot of slots; track slot.startAt) { <li>OCUPADO: {{ displayDate(slot.startAt) }} a {{ displayDate(slot.endAt) }}</li> } @empty { <li>No hay ocupación autorizada en este intervalo. Consulta las franjas publicadas antes de solicitar.</li> }</ul> }
+</section>
+<section aria-labelledby="notifications">
+  <h3 id="notifications">Mis notificaciones</h3>
+  <button type="button" [disabled]="work.busy()" (click)="loadNotifications()">Actualizar notificaciones</button>
+  <ul>@for (item of notifications(); track item.id) { <li><button type="button" [disabled]="work.busy()" (click)="open(item.requestId)">Solicitud {{ item.status }} · {{ displayDate(item.createdAt) }}</button></li> } @empty { <li>Sin notificaciones.</li> }</ul>
+  @if (notificationCursor()) { <button type="button" [disabled]="work.busy()" (click)="loadNotifications(true)">Más notificaciones</button> }
+</section>
